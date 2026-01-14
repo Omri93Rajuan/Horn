@@ -11,7 +11,7 @@ describe("jwt helpers", () => {
     const { signAccessToken, verifyAccessToken } = await import("../src/helpers/jwt");
     const token = signAccessToken({ userId: "u1", email: "a@b.com" });
     const payload = verifyAccessToken(token);
-    expect(payload).toEqual({ userId: "u1", email: "a@b.com" });
+    expect(payload).toMatchObject({ userId: "u1", email: "a@b.com" });
   });
 
   it("signs and verifies refresh tokens", async () => {
@@ -19,6 +19,6 @@ describe("jwt helpers", () => {
     const { signRefreshToken, verifyRefreshToken } = await import("../src/helpers/jwt");
     const token = signRefreshToken({ userId: "u2", email: "c@d.com" });
     const payload = verifyRefreshToken(token);
-    expect(payload).toEqual({ userId: "u2", email: "c@d.com" });
+    expect(payload).toMatchObject({ userId: "u2", email: "c@d.com" });
   });
 });

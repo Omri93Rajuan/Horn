@@ -1,9 +1,9 @@
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
 
 const accessSecret = process.env.JWT_ACCESS_SECRET || "";
 const refreshSecret = process.env.JWT_REFRESH_SECRET || "";
-const accessTtl = process.env.JWT_ACCESS_TTL || "15m";
-const refreshTtl = process.env.JWT_REFRESH_TTL || "30d";
+const accessTtl = (process.env.JWT_ACCESS_TTL ?? "15m") as SignOptions["expiresIn"];
+const refreshTtl = (process.env.JWT_REFRESH_TTL ?? "30d") as SignOptions["expiresIn"];
 
 type JwtPayload = {
   userId: string;

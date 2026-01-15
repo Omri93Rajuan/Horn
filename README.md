@@ -55,6 +55,10 @@ npx prisma migrate dev --name init
 npx prisma generate
 ```
 
+## Seed Data (Faker)
+On the first startup, if the database is empty, the app inserts fake data for all tables (users, refresh tokens, alert events, responses).
+Default password for seeded users: `Passw0rd!`
+
 ## Run (Dev)
 ```bash
 npm run dev
@@ -90,6 +94,18 @@ npm test
   - `areaId`, `triggeredAt`, `triggeredByUserId`
 - `responses` table
   - `userId`, `eventId`, `status`, `respondedAt`
+
+## Inspecting Data
+Connect with `psql`:
+```bash
+psql "postgresql://postgres:postgres@localhost:5432/horn?schema=public"
+```
+Then:
+```sql
+\dt
+select * from users limit 5;
+select * from alert_events limit 5;
+```
 
 ## Auth (JWT)
 Most routes require `Authorization: Bearer <accessToken>`.

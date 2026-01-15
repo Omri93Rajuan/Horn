@@ -7,6 +7,7 @@ import responsesRoutes from "./routes/responses.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
 import { handleError } from "./utils/ErrorHandle";
 import { prisma } from "./db/prisma";
+import { seedIfEmpty } from "./db/seed";
 
 dotenv.config();
 
@@ -24,8 +25,23 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
-app.listen(PORT, () => {
-  console.log(`Horn backend listening on ${PORT}`);
+
+async function start() {
+  const seedResult = await seedIfEmpty();
+  if (seedResult.seeded) {
+    console.log(
+      `Seeded database: users=${seedResult.users}, events=${seedResult.events}, responses=${seedResult.responses}, refreshTokens=${seedResult.refreshTokens}`
+    );
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Horn backend listening on ${PORT}`);
+  });
+}
+
+start().catch((err) => {
+  console.error("Failed to start server", err);
+  process.exit(1);
 });
 
 function shutdown(signal: string) {

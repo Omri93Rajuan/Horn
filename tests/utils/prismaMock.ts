@@ -136,7 +136,14 @@ function createStore(): Store {
 export function createPrismaMock() {
   const store = createStore();
 
-  const prisma = {
+  let prisma: any;
+  prisma = {
+    $transaction: jest.fn(async (input: any) => {
+      if (typeof input === "function") {
+        return input(prisma);
+      }
+      return Promise.all(input);
+    }),
     user: {
       findUnique: jest.fn(async ({ where }: any) => {
         if (where?.id) {
@@ -288,6 +295,28 @@ export function createPrismaMock() {
         const updated = { ...existing, ...data };
         store.responses.set(where.id, updated);
         return updated;
+      }),
+      upsert: jest.fn(async ({ where, update, create }: any) => {
+        const existing = where?.userId_eventId
+          ? Array.from(store.responses.values()).find(
+              (row) => row.userId === where.userId_eventId.userId && row.eventId === where.userId_eventId.eventId
+            )
+          : null;
+        if (existing) {
+          const updated = { ...existing, ...update };
+          store.responses.set(existing.id, updated);
+          return updated;
+        }
+        const id = create.id ?? nextId("response");
+        const created: ResponseRow = {
+          id,
+          userId: create.userId,
+          eventId: create.eventId,
+          status: create.status,
+          respondedAt: toDate(create.respondedAt),
+        };
+        store.responses.set(id, created);
+        return created;
       }),
     },
   };

@@ -6,6 +6,7 @@ import alertsRoutes from "./routes/alerts.routes";
 import responsesRoutes from "./routes/responses.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
 import { handleError } from "./utils/ErrorHandle";
+import { prisma } from "./db/prisma";
 
 dotenv.config();
 
@@ -26,3 +27,11 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 app.listen(PORT, () => {
   console.log(`Horn backend listening on ${PORT}`);
 });
+
+function shutdown(signal: string) {
+  console.log(`Received ${signal}. Closing server...`);
+  prisma.$disconnect().finally(() => process.exit(0));
+}
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));

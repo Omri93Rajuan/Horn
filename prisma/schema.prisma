@@ -18,6 +18,8 @@ model User {
   refreshToken AuthRefreshToken?
   responses    Response[]
   triggered    AlertEvent[]       @relation("TriggeredBy")
+
+  @@index([areaId])
 }
 
 model AuthRefreshToken {
@@ -34,6 +36,8 @@ model AlertEvent {
   triggeredByUserId String?
   triggeredByUser   User?      @relation("TriggeredBy", fields: [triggeredByUserId], references: [id])
   responses         Response[]
+
+  @@index([areaId])
 }
 
 enum ResponseStatus {
@@ -51,4 +55,6 @@ model Response {
   event       AlertEvent     @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
+  @@index([eventId])
+  @@index([userId])
 }

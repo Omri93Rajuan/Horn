@@ -1,5 +1,6 @@
 import { prisma } from "../db/prisma";
 import { User } from "../types/domain";
+import { mapPrismaError } from "../utils/prismaErrors";
 
 type RegisterDeviceInput = {
   userId: string;
@@ -26,28 +27,32 @@ function toPublicUser(id: string, doc: UserDoc): User {
 }
 
 export async function registerDevice(input: RegisterDeviceInput) {
-  const existing = await prisma.user.findUnique({ where: { id: input.userId } });
-  if (!existing) {
-    const err: any = new Error("User not found");
-    err.status = 404;
-    throw err;
+  try {
+    const existing = await prisma.user.findUnique({ where: { id: input.userId } });
+    if (!existing) {
+      const err: any = new Error("User not found");
+      err.status = 404;
+      throw err;
+    }
+
+    const updated: UserDoc = {
+      name: input.name || existing.name,
+      areaId: input.areaId,
+      deviceToken: input.deviceToken,
+      createdAt: existing.createdAt,
+    };
+
+    await prisma.user.update({
+      where: { id: input.userId },
+      data: {
+        name: updated.name,
+        areaId: updated.areaId,
+        deviceToken: updated.deviceToken,
+      },
+    });
+
+    return { user: toPublicUser(input.userId, updated) };
+  } catch (err) {
+    throw mapPrismaError(err, "Server error");
   }
-
-  const updated: UserDoc = {
-    name: input.name || existing.name,
-    areaId: input.areaId,
-    deviceToken: input.deviceToken,
-    createdAt: existing.createdAt,
-  };
-
-  await prisma.user.update({
-    where: { id: input.userId },
-    data: {
-      name: updated.name,
-      areaId: updated.areaId,
-      deviceToken: updated.deviceToken,
-    },
-  });
-
-  return { user: toPublicUser(input.userId, updated) };
 }

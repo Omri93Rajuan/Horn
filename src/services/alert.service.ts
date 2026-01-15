@@ -1,8 +1,6 @@
-import { db } from "../db/firestore";
+import { prisma } from "../db/prisma";
 import { AlertEvent } from "../types/domain";
 import { sendPushToArea } from "./push.service";
-
-const alertsCol = db.collection("alert_events");
 
 type TriggerResult = {
   event: AlertEvent;
@@ -16,14 +14,19 @@ export async function triggerAlert(areaId: string, triggeredByUserId?: string): 
     throw err;
   }
 
-  const now = new Date().toISOString();
-  const eventRef = alertsCol.doc();
-  await eventRef.set({ areaId, triggeredAt: now, triggeredByUserId: triggeredByUserId || null });
+  const now = new Date();
+  const event = await prisma.alertEvent.create({
+    data: {
+      areaId,
+      triggeredAt: now,
+      triggeredByUserId: triggeredByUserId || null,
+    },
+  });
 
-  const push = await sendPushToArea(areaId, eventRef.id);
+  const push = await sendPushToArea(areaId, event.id);
 
   return {
-    event: { id: eventRef.id, areaId, triggeredAt: now },
+    event: { id: event.id, areaId, triggeredAt: now.toISOString() },
     push,
   };
 }

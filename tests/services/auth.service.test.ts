@@ -1,6 +1,6 @@
-jest.mock("../../src/db/firestore", () => {
-  const { createFirestoreMock } = require("../utils/firestoreMock");
-  return createFirestoreMock();
+jest.mock("../../src/db/prisma", () => {
+  const { createPrismaMock } = require("../utils/prismaMock");
+  return createPrismaMock();
 });
 
 jest.mock("../../src/helpers/bcrypt", () => ({
@@ -17,7 +17,7 @@ jest.mock("../../src/helpers/jwt", () => ({
 import * as authService from "../../src/services/auth.service";
 import { verifyRefreshToken } from "../../src/helpers/jwt";
 
-const { __mock } = require("../../src/db/firestore");
+const { __mock } = require("../../src/db/prisma");
 
 describe("auth.service", () => {
   beforeEach(() => {

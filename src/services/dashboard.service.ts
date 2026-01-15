@@ -1,9 +1,5 @@
-import { db } from "../db/firestore";
+import { prisma } from "../db/prisma";
 import { AlertEvent, ResponseStatus, User } from "../types/domain";
-
-const eventsCol = db.collection("alert_events");
-const usersCol = db.collection("users");
-const responsesCol = db.collection("responses");
 
 type EventStatusItem = {
   user: User;
@@ -21,31 +17,31 @@ type UserDoc = {
   name: string;
   areaId: string;
   deviceToken: string;
-  createdAt: string;
+  createdAt: Date;
 };
 
 export async function getEventStatus(eventId: string): Promise<EventStatusResult> {
-  const eventSnap = await eventsCol.doc(eventId).get();
-  if (!eventSnap.exists) {
+  const eventRow = await prisma.alertEvent.findUnique({ where: { id: eventId } });
+  if (!eventRow) {
     const err: any = new Error("Event not found");
     err.status = 404;
     throw err;
   }
 
-  const eventData = eventSnap.data() as { areaId: string; triggeredAt: string };
   const event: AlertEvent = {
-    id: eventSnap.id,
-    areaId: eventData.areaId,
-    triggeredAt: eventData.triggeredAt,
+    id: eventRow.id,
+    areaId: eventRow.areaId,
+    triggeredAt: eventRow.triggeredAt.toISOString(),
   };
 
-  const usersSnap = await usersCol.where("areaId", "==", event.areaId).get();
-  const responsesSnap = await responsesCol.where("eventId", "==", eventId).get();
+  const [users, responses] = await Promise.all([
+    prisma.user.findMany({ where: { areaId: event.areaId } }),
+    prisma.response.findMany({ where: { eventId } }),
+  ]);
 
   const responseMap = new Map<string, { status: ResponseStatus; respondedAt: string }>();
-  responsesSnap.forEach((doc) => {
-    const data = doc.data() as { userId: string; status: ResponseStatus; respondedAt: string };
-    responseMap.set(data.userId, { status: data.status, respondedAt: data.respondedAt });
+  responses.forEach((row) => {
+    responseMap.set(row.userId, { status: row.status as ResponseStatus, respondedAt: row.respondedAt.toISOString() });
   });
 
   const list: EventStatusItem[] = [];
@@ -53,17 +49,17 @@ export async function getEventStatus(eventId: string): Promise<EventStatusResult
   let help = 0;
   let pending = 0;
 
-  usersSnap.forEach((doc) => {
-    const data = doc.data() as UserDoc;
+  users.forEach((row) => {
+    const data = row as UserDoc;
     const user: User = {
-      id: doc.id,
+      id: row.id,
       name: data.name,
       areaId: data.areaId,
       deviceToken: data.deviceToken,
-      createdAt: data.createdAt,
+      createdAt: data.createdAt.toISOString(),
     };
 
-    const response = responseMap.get(doc.id);
+    const response = responseMap.get(row.id);
     if (response) {
       if (response.status === "OK") {
         ok += 1;

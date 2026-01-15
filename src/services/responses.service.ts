@@ -1,8 +1,5 @@
-import { db } from "../db/firestore";
+import { prisma } from "../db/prisma";
 import { Response, ResponseStatus } from "../types/domain";
-
-const eventsCol = db.collection("alert_events");
-const responsesCol = db.collection("responses");
 
 type SubmitResponseInput = {
   userId: string;
@@ -11,45 +8,46 @@ type SubmitResponseInput = {
 };
 
 export async function submitResponse(input: SubmitResponseInput): Promise<Response> {
-  const eventSnap = await eventsCol.doc(input.eventId).get();
-  if (!eventSnap.exists) {
+  const event = await prisma.alertEvent.findUnique({ where: { id: input.eventId } });
+  if (!event) {
     const err: any = new Error("Event not found");
     err.status = 404;
     throw err;
   }
 
-  const now = new Date().toISOString();
-  const existing = await responsesCol
-    .where("userId", "==", input.userId)
-    .where("eventId", "==", input.eventId)
-    .limit(1)
-    .get();
+  const now = new Date();
+  const existing = await prisma.response.findUnique({
+    where: { userId_eventId: { userId: input.userId, eventId: input.eventId } },
+  });
 
-  if (!existing.empty) {
-    const doc = existing.docs[0];
-    await doc.ref.update({ status: input.status, respondedAt: now });
+  if (existing) {
+    const updated = await prisma.response.update({
+      where: { id: existing.id },
+      data: { status: input.status, respondedAt: now },
+    });
     return {
-      id: doc.id,
+      id: updated.id,
+      userId: updated.userId,
+      eventId: updated.eventId,
+      status: updated.status as ResponseStatus,
+      respondedAt: updated.respondedAt.toISOString(),
+    };
+  }
+
+  const created = await prisma.response.create({
+    data: {
       userId: input.userId,
       eventId: input.eventId,
       status: input.status,
       respondedAt: now,
-    };
-  }
-
-  const ref = responsesCol.doc();
-  await ref.set({
-    userId: input.userId,
-    eventId: input.eventId,
-    status: input.status,
-    respondedAt: now,
+    },
   });
 
   return {
-    id: ref.id,
-    userId: input.userId,
-    eventId: input.eventId,
-    status: input.status,
-    respondedAt: now,
+    id: created.id,
+    userId: created.userId,
+    eventId: created.eventId,
+    status: created.status as ResponseStatus,
+    respondedAt: created.respondedAt.toISOString(),
   };
 }

@@ -1,11 +1,11 @@
-jest.mock("../../src/db/firestore", () => {
-  const { createFirestoreMock } = require("../utils/firestoreMock");
-  return createFirestoreMock();
+jest.mock("../../src/db/prisma", () => {
+  const { createPrismaMock } = require("../utils/prismaMock");
+  return createPrismaMock();
 });
 
 import * as usersService from "../../src/services/users.service";
 
-const { __mock } = require("../../src/db/firestore");
+const { __mock } = require("../../src/db/prisma");
 
 describe("users.service", () => {
   beforeEach(() => {

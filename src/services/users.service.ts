@@ -1,7 +1,5 @@
-import { db } from "../db/firestore";
+import { prisma } from "../db/prisma";
 import { User } from "../types/domain";
-
-const usersCol = db.collection("users");
 
 type RegisterDeviceInput = {
   userId: string;
@@ -14,7 +12,7 @@ type UserDoc = {
   name: string;
   areaId: string;
   deviceToken: string;
-  createdAt: string;
+  createdAt: Date;
 };
 
 function toPublicUser(id: string, doc: UserDoc): User {
@@ -23,32 +21,33 @@ function toPublicUser(id: string, doc: UserDoc): User {
     name: doc.name,
     areaId: doc.areaId,
     deviceToken: doc.deviceToken,
-    createdAt: doc.createdAt,
+    createdAt: doc.createdAt.toISOString(),
   };
 }
 
 export async function registerDevice(input: RegisterDeviceInput) {
-  const docRef = usersCol.doc(input.userId);
-  const snap = await docRef.get();
-  if (!snap.exists) {
+  const existing = await prisma.user.findUnique({ where: { id: input.userId } });
+  if (!existing) {
     const err: any = new Error("User not found");
     err.status = 404;
     throw err;
   }
 
-  const data = snap.data() as UserDoc;
   const updated: UserDoc = {
-    name: input.name || data.name,
+    name: input.name || existing.name,
     areaId: input.areaId,
     deviceToken: input.deviceToken,
-    createdAt: data.createdAt,
+    createdAt: existing.createdAt,
   };
 
-  await docRef.update({
-    name: updated.name,
-    areaId: updated.areaId,
-    deviceToken: updated.deviceToken,
+  await prisma.user.update({
+    where: { id: input.userId },
+    data: {
+      name: updated.name,
+      areaId: updated.areaId,
+      deviceToken: updated.deviceToken,
+    },
   });
 
-  return { user: toPublicUser(docRef.id, updated) };
+  return { user: toPublicUser(input.userId, updated) };
 }

@@ -1,15 +1,9 @@
-import { admin, db } from "../db/firestore";
+import { admin } from "../db/firebase";
+import { prisma } from "../db/prisma";
 
 export async function sendPushToArea(areaId: string, eventId: string): Promise<{ sent: number; failed: number }> {
-  const usersSnap = await db.collection("users").where("areaId", "==", areaId).get();
-  const tokens: string[] = [];
-
-  usersSnap.forEach((doc) => {
-    const data = doc.data() as { deviceToken?: string };
-    if (data.deviceToken) {
-      tokens.push(data.deviceToken);
-    }
-  });
+  const users = await prisma.user.findMany({ where: { areaId } });
+  const tokens = users.map((user) => user.deviceToken).filter((token) => Boolean(token));
 
   if (tokens.length === 0) {
     return { sent: 0, failed: 0 };

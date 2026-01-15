@@ -17,6 +17,4 @@ function initAdmin() {
 
 initAdmin();
 
-const db = admin.firestore();
-
-export { admin, db };
+export { admin };

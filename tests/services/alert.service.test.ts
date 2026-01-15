@@ -1,6 +1,6 @@
-jest.mock("../../src/db/firestore", () => {
-  const { createFirestoreMock } = require("../utils/firestoreMock");
-  return createFirestoreMock();
+jest.mock("../../src/db/prisma", () => {
+  const { createPrismaMock } = require("../utils/prismaMock");
+  return createPrismaMock();
 });
 
 jest.mock("../../src/services/push.service", () => ({
@@ -10,7 +10,7 @@ jest.mock("../../src/services/push.service", () => ({
 import * as alertService from "../../src/services/alert.service";
 import { sendPushToArea } from "../../src/services/push.service";
 
-const { __mock } = require("../../src/db/firestore");
+const { __mock } = require("../../src/db/prisma");
 
 describe("alert.service", () => {
   beforeEach(() => {

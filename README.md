@@ -1,331 +1,341 @@
-# Horn Backend
+# 🎯 Horn System
 
-Backend service for emergency roll-call alerts, user registration, push notifications, and response collection by area.
+מערכת דיווח נוכחות וסטטוס לצוותים - Server + Mobile App
 
-## Core Features
-- User registration and login with JWT (access + refresh).
-- Device registration (FCM device token) per user and area.
-- Trigger emergency alerts and push to all users in an area.
-- Collect user responses per event (OK / HELP).
-- Event status dashboard with counts and user list.
+---
 
-## Tech Stack
-- Node.js + TypeScript
-- Express
-- PostgreSQL + Prisma
-- Firebase Admin SDK (FCM only)
-- Zod validation
-- JWT + bcryptjs
-- Jest + Supertest
+## 📂 מבנה הפרויקט
 
-## Requirements
-- Node.js 18+ recommended
-- PostgreSQL database
-- Firebase Service Account credentials (or Application Default Credentials)
+```
+Horn/
+├── server/              ← Backend API (Node.js + PostgreSQL)
+│   ├── src/
+│   ├── prisma/
+│   ├── tests/
+│   └── README.md       📄 תיעוד מלא
+│
+├── mobile/              ← Mobile App (React Native)
+│   ├── src/
+│   ├── android/
+│   ├── ios/
+│   └── README.md       📄 תיעוד מלא
+│
+└── README.md           📘 (הקובץ הזה)
+```
 
-## Install
+---
+
+## 🚀 התקנה מהירה
+
+### 1️⃣ Server (Backend)
+
 ```bash
+cd server
 npm install
-```
-
-## Environment Variables
-Copy/fill `.env`:
-```env
-PORT=3000
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/horn?schema=public
-JWT_ACCESS_SECRET=replace_me_access_secret
-JWT_REFRESH_SECRET=replace_me_refresh_secret
-JWT_ACCESS_TTL=15m
-JWT_REFRESH_TTL=30d
-# Use one of the following:
-# FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
-# GOOGLE_APPLICATION_CREDENTIALS=C:\\path\\to\\service-account.json
-```
-
-Notes:
-- `DATABASE_URL` must point to your PostgreSQL instance.
-- `FIREBASE_SERVICE_ACCOUNT_JSON` allows setting the Service Account as inline JSON.
-- Alternatively, use `GOOGLE_APPLICATION_CREDENTIALS` pointing to a local JSON file.
-- The server will fail to start if JWT secrets are missing.
-
-## Database Setup (PostgreSQL)
-Create the database and run migrations:
-```bash
 npx prisma migrate dev --name init
 npx prisma generate
-```
-
-## Seed Data (Faker)
-On the first startup, if the database is empty, the app inserts fake data for all tables (users, refresh tokens, alert events, responses).
-Default password for seeded users: `Passw0rd!`
-
-## Run (Dev)
-```bash
 npm run dev
 ```
 
-## Run (Production)
+**Server רץ על:** `http://localhost:3000`
+
+📖 **תיעוד מלא:** [server/README.md](server/README.md)
+
+---
+
+### 2️⃣ Mobile (Client)
+
 ```bash
-npm run build
+cd mobile
+npm install
+
+# iOS בלבד (Mac)
+cd ios && pod install && cd ..
+
+# הרצת Metro
 npm start
 ```
 
-## Tests
+**בטרמינל נפרד:**
 ```bash
+# Android
+npx react-native run-android
+
+# iOS (Mac)
+npx react-native run-ios
+```
+
+📖 **תיעוד מלא:** [mobile/README.md](mobile/README.md)
+
+---
+
+## 🔗 חיבור Mobile ל-Server
+
+ערוך: `mobile/src/services/api.ts`
+
+```typescript
+const API_BASE_URL = __DEV__ 
+  ? 'http://10.0.2.2:3000/api'  // Android Emulator
+  // ? 'http://localhost:3000/api'  // iOS Simulator
+  // ? 'http://192.168.X.XXX:3000/api'  // Physical Device
+  : 'https://your-production-api.com/api';
+```
+
+---
+
+## ✨ תכונות
+
+### למפקדים 👨‍✈️
+- 🚨 הפעלת אירועי התרעה
+- 📊 מעקב בזמן אמת אחר תגובות
+- 📞 גישה למספרי טלפון
+- 📝 צפייה בהערות והיסטוריה
+
+### לחברי צוות 👤
+- 🔔 קבלת התראות Push
+- ✅ דיווח סטטוס: OK / HELP
+- 💬 הוספת הערות
+- 📜 צפייה בהיסטוריה
+
+---
+
+## 🛠️ טכנולוגיות
+
+### Server
+- Node.js 18+ & TypeScript 5.3
+- Express + PostgreSQL + Prisma ORM
+- JWT Authentication
+- Jest Testing
+
+### Mobile
+- React Native 0.73.2
+- TypeScript 5.3
+- Redux Toolkit
+- React Navigation
+
+---
+
+## 📊 API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - הרשמה
+- `POST /api/auth/login` - התחברות
+- `GET /api/auth/me` - פרטי משתמש
+
+### Alerts
+- `POST /api/alerts/trigger` - הפעלת אירוע
+- `GET /api/alerts` - היסטוריית אירועים
+
+### Responses
+- `POST /api/responses` - שליחת תגובה (OK/HELP)
+- `GET /api/responses/my` - התגובות שלי
+
+### Dashboard
+- `GET /api/dashboard/event/:eventId` - סטטוס אירוע מפורט
+
+---
+
+## 🏃 העלאת המערכת
+
+### אופציה 1: שני טרמינלים
+
+**Terminal 1 - Server:**
+```bash
+cd server
+npm run dev
+```
+
+**Terminal 2 - Mobile:**
+```bash
+cd mobile
+npm start
+```
+
+**Terminal 3 - Run App:**
+```bash
+cd mobile
+npx react-native run-android
+```
+
+---
+
+## 🗄️ מסד נתונים
+
+### Models
+
+**User**
+```
+id, email, passwordHash, name, phone, areaId, deviceToken
+```
+
+**AlertEvent**
+```
+id, areaId, triggeredAt, triggeredByUserId
+```
+
+**Response**
+```
+id, userId, eventId, status (OK/HELP), notes, respondedAt
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### Mobile לא מתחבר ל-Server
+1. ✅ וודא ש-Server רץ: `http://localhost:3000`
+2. ✅ בדוק IP נכון ב-`mobile/src/services/api.ts`
+3. ✅ לפיזי device - אותה רשת WiFi
+4. ✅ Firewall לא חוסם port 3000
+
+### Database Errors
+```bash
+cd server
+npx prisma migrate reset
+npx prisma migrate dev
+```
+
+### Metro Bundler Issues
+```bash
+cd mobile
+npm start -- --reset-cache
+```
+
+### Android Build Fails
+```bash
+cd mobile/android
+./gradlew clean
+cd ..
+npx react-native run-android
+```
+
+---
+
+## 🧪 בדיקות
+
+### Server Tests
+```bash
+cd server
 npm test
 ```
 
-## Project Structure (Summary)
-- `src/index.ts` Express bootstrap and route registration.
-- `src/routes/` route definitions.
-- `src/controllers/` HTTP layer.
-- `src/services/` business logic and Postgres/FCM access.
-- `src/validation/` Zod schemas.
-- `src/db/prisma.ts` Prisma client.
-- `src/db/firebase.ts` Firebase Admin initialization.
-- `tests/` unit tests.
-
-## Data Model (PostgreSQL)
-- `users` table
-  - `name`, `email`, `passwordHash`, `areaId`, `deviceToken`, `createdAt`
-- `auth_refresh_tokens` table
-  - `refreshTokenHash`, `updatedAt`
-- `alert_events` table
-  - `areaId`, `triggeredAt`, `triggeredByUserId`
-- `responses` table
-  - `userId`, `eventId`, `status`, `respondedAt`
-
-## Inspecting Data
-Connect with `psql`:
+### בדיקת חיבור
 ```bash
-psql "postgresql://postgres:postgres@localhost:5432/horn?schema=public"
-```
-Then:
-```sql
-\dt
-select * from users limit 5;
-select * from alert_events limit 5;
+# בדוק Server
+curl http://localhost:3000
+
+# בדוק API endpoint
+curl http://localhost:3000/api/auth/me
 ```
 
-## Auth (JWT)
-Most routes require `Authorization: Bearer <accessToken>`.
-Token TTLs are controlled by `JWT_ACCESS_TTL` and `JWT_REFRESH_TTL`.
+---
 
-## Error Format
-All errors return:
-```json
-{
-  "success": false,
-  "error": {
-    "message": "Validation error",
-    "status": 400,
-    "issues": []
-  }
-}
-```
-`issues` appears only for validation errors.
+## 🌐 Deploy
 
-## API
-Base URL: `/api`
+### Server
+- **Platforms:** Railway, Heroku, Render, DigitalOcean
+- **Requirements:** PostgreSQL database, Environment variables
+- **Details:** ראה [server/README.md](server/README.md)
 
-### Auth
-#### POST `/api/auth/register`
-Create a new user.
-```json
-{
-  "email": "user@example.com",
-  "password": "secret123",
-  "name": "Omri",
-  "areaId": "area-1"
-}
-```
-Response:
-```json
-{
-  "success": true,
-  "user": {
-    "id": "uid",
-    "name": "Omri",
-    "areaId": "area-1",
-    "deviceToken": "",
-    "createdAt": "2026-01-13T12:00:00.000Z"
-  },
-  "accessToken": "...",
-  "refreshToken": "..."
-}
+### Mobile
+- **Android:** Google Play Store (.apk/.aab)
+- **iOS:** Apple App Store (Archive via Xcode)
+- **Details:** ראה [mobile/README.md](mobile/README.md)
+
+---
+
+## 📁 קבצים חשובים
+
+### Environment Variables (Server)
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/horn_db"
+JWT_SECRET="your-secret"
+JWT_REFRESH_SECRET="your-refresh-secret"
+PORT=3000
 ```
 
-#### POST `/api/auth/login`
-```json
-{
-  "email": "user@example.com",
-  "password": "secret123"
-}
-```
-Response is the same as `register`.
-
-#### POST `/api/auth/refresh`
-```json
-{
-  "refreshToken": "..."
-}
-```
-Response:
-```json
-{
-  "success": true,
-  "accessToken": "..."
-}
+### API Configuration (Mobile)
+```typescript
+// mobile/src/services/api.ts
+const API_BASE_URL = 'http://10.0.2.2:3000/api';
 ```
 
-#### POST `/api/auth/logout`
-Requires `Authorization`.
-Request body must be `{}`.
-Response:
-```json
-{
-  "success": true,
-  "loggedOut": true
-}
+---
+
+## 🔒 אבטחה
+
+- ✅ JWT Authentication
+- ✅ bcrypt Password Hashing
+- ✅ Zod Input Validation
+- ✅ Prisma ORM (SQL Injection Protection)
+- ✅ Environment Variables
+
+---
+
+## 📖 תיעוד נוסף
+
+- **Server:** [server/README.md](server/README.md) - API מלא, Prisma, Deployment
+- **Mobile:** [mobile/README.md](mobile/README.md) - Screens, Navigation, Build
+
+---
+
+## 🎉 הכל מוכן!
+
+המערכת מוכנה לעבודה:
+1. ✅ הרץ Server: `cd server && npm run dev`
+2. ✅ הרץ Mobile: `cd mobile && npm start`
+3. ✅ הרץ App: `cd mobile && npx react-native run-android`
+4. ✅ התחל לפתח!
+
+---
+
+## 📞 תמיכה
+
+- 📖 Server: [server/README.md](server/README.md)
+- 📱 Mobile: [mobile/README.md](mobile/README.md)
+- 🧪 Tests: `npm test` בכל תיקייה
+- 📋 Logs: `npm run dev` (server) או `npx react-native log-android` (mobile)
+
+---
+
+**Built with ❤️ for Horn Team**
+
+---
+
+## ⚡ Quick Reference
+
+| Task | Command |
+|------|---------|
+| **Start Server** | `cd server && npm run dev` |
+| **Start Mobile** | `cd mobile && npm start` |
+| **Run Android** | `cd mobile && npx react-native run-android` |
+| **Run iOS** | `cd mobile && npx react-native run-ios` |
+| **Tests (Server)** | `cd server && npm test` |
+| **DB Migration** | `cd server && npx prisma migrate dev` |
+| **DB Studio** | `cd server && npx prisma studio` |
+| **Clean Cache** | `cd mobile && npm start -- --reset-cache` |
+| **Clean Build** | `cd mobile/android && ./gradlew clean` |
+
+---
+
+## 🎯 Git Workflow
+
+```bash
+# בדיקת שינויים
+git status
+
+# הוספת קבצים
+git add .
+
+# Commit
+git commit -m "הודעה"
+
+# Push
+git push origin main
 ```
 
-#### GET `/api/auth/me`
-Requires `Authorization`.
-Response:
-```json
-{
-  "success": true,
-  "user": {
-    "id": "uid",
-    "name": "Omri",
-    "areaId": "area-1",
-    "deviceToken": "token",
-    "createdAt": "..."
-  }
-}
-```
+**שים ❤️:** `.gitignore` כולל node_modules, build outputs, .env ועוד.
 
-### Users
-#### POST `/api/users/register-device`
-Requires `Authorization`.
-```json
-{
-  "areaId": "area-1",
-  "deviceToken": "fcm_device_token",
-  "name": "Omri"
-}
-```
-Response:
-```json
-{
-  "success": true,
-  "user": {
-    "id": "uid",
-    "name": "Omri",
-    "areaId": "area-1",
-    "deviceToken": "fcm_device_token",
-    "createdAt": "..."
-  }
-}
-```
+---
 
-### Alerts
-#### POST `/api/alerts/trigger`
-Requires `Authorization`.
-```json
-{
-  "areaId": "area-1"
-}
-```
-Response:
-```json
-{
-  "success": true,
-  "event": {
-    "id": "eventId",
-    "areaId": "area-1",
-    "triggeredAt": "..."
-  },
-  "push": {
-    "sent": 12,
-    "failed": 0
-  }
-}
-```
-
-### Responses
-#### POST `/api/responses`
-Requires `Authorization`.
-```json
-{
-  "eventId": "eventId",
-  "status": "OK"
-}
-```
-Allowed statuses: `OK`, `HELP`.
-
-Response:
-```json
-{
-  "success": true,
-  "id": "responseId",
-  "userId": "uid",
-  "eventId": "eventId",
-  "status": "OK",
-  "respondedAt": "..."
-}
-```
-
-### Dashboard
-#### GET `/api/dashboard/events/:eventId`
-Requires `Authorization`.
-Response:
-```json
-{
-  "success": true,
-  "event": {
-    "id": "eventId",
-    "areaId": "area-1",
-    "triggeredAt": "..."
-  },
-  "counts": {
-    "ok": 10,
-    "help": 2,
-    "pending": 4
-  },
-  "list": [
-    {
-      "user": {
-        "id": "uid",
-        "name": "Omri",
-        "areaId": "area-1",
-        "deviceToken": "token",
-        "createdAt": "..."
-      },
-      "responseStatus": "OK",
-      "respondedAt": "..."
-    }
-  ]
-}
-```
-`responseStatus` can be `OK`, `HELP`, or `PENDING`.
-
-## Push Notifications (FCM)
-The system sends a multicast message to all users with a `deviceToken` in the same `areaId`.
-Message payload:
-```json
-{
-  "data": {
-    "type": "ALERT_EVENT",
-    "eventId": "eventId",
-    "areaId": "area-1"
-  },
-  "notification": {
-    "title": "Emergency Roll-Call",
-    "body": "Please confirm your status immediately."
-  }
-}
-```
-
-## Future Work
-There is a placeholder for integrating external alert sources in `src/services/alert-source.service.ts`.
+**Good Luck! 💪**

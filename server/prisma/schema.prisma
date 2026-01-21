@@ -12,6 +12,7 @@ model User {
   email        String             @unique
   passwordHash String
   name         String
+  phone        String?
   areaId       String             @default("")
   deviceToken  String             @default("")
   createdAt    DateTime           @default(now())
@@ -50,6 +51,7 @@ model Response {
   userId      String
   eventId     String
   status      ResponseStatus
+  notes       String?
   respondedAt DateTime       @default(now())
   user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   event       AlertEvent     @relation(fields: [eventId], references: [id], onDelete: Cascade)

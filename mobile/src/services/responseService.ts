@@ -15,6 +15,6 @@ export const responseService = {
   // Get my responses history
   getMyResponses: async (): Promise<Response[]> => {
     const response = await api.get('/responses/my');
-    return response.data;
+    return response.data.responses || [];
   },
 };

@@ -5,6 +5,7 @@ export const registerSchema = {
     email: z.string().email(),
     password: z.string().min(6),
     name: z.string().min(1),
+    phone: z.string().optional(),
     areaId: z.string().optional(),
   }),
 };

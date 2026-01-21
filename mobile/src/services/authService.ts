@@ -14,6 +14,7 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
+  success: boolean;
   user: {
     id: string;
     email: string;
@@ -21,18 +22,24 @@ export interface AuthResponse {
     phone?: string;
     areaId: string;
   };
-  token: string;
+  accessToken: string;
 }
 
 export const authService = {
-  login: async (data: LoginRequest): Promise<AuthResponse> => {
+  login: async (data: LoginRequest): Promise<{user: AuthResponse['user']; token: string}> => {
     const response = await api.post('/auth/login', data);
-    return response.data;
+    return {
+      user: response.data.user,
+      token: response.data.accessToken,
+    };
   },
 
-  register: async (data: RegisterRequest): Promise<AuthResponse> => {
+  register: async (data: RegisterRequest): Promise<{user: AuthResponse['user']; token: string}> => {
     const response = await api.post('/auth/register', data);
-    return response.data;
+    return {
+      user: response.data.user,
+      token: response.data.accessToken,
+    };
   },
 
   logout: async (): Promise<void> => {
@@ -40,7 +47,7 @@ export const authService = {
   },
 
   getProfile: async () => {
-    const response = await api.get('/auth/profile');
+    const response = await api.get('/auth/me');
     return response.data;
   },
 };

@@ -25,6 +25,7 @@ export interface EventStatusItem {
     phone?: string;
   };
   responseStatus: ResponseStatus;
+  notes?: string;
   respondedAt?: string;
 }
 

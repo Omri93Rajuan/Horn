@@ -5,12 +5,12 @@ export const dashboardService = {
   // Get event status (who responded, counts)
   getEventStatus: async (eventId: string): Promise<EventStatusResult> => {
     const response = await api.get(`/dashboard/event/${eventId}`);
-    return response.data;
+    return response.data.result || response.data;
   },
 
   // Get recent events
   getRecentEvents: async () => {
     const response = await api.get('/alerts');
-    return response.data;
+    return response.data.events || response.data;
   },
 };

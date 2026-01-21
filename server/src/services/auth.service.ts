@@ -8,6 +8,7 @@ type RegisterInput = {
   email: string;
   password: string;
   name: string;
+  phone?: string;
   areaId?: string;
 };
 
@@ -32,6 +33,7 @@ type UserDoc = {
   email: string;
   passwordHash: string;
   name: string;
+  phone?: string;
   areaId: string;
   deviceToken: string;
   createdAt: Date;
@@ -41,6 +43,7 @@ function toPublicUser(id: string, doc: UserDoc): User {
   return {
     id,
     name: doc.name,
+    phone: doc.phone,
     areaId: doc.areaId,
     deviceToken: doc.deviceToken,
     createdAt: doc.createdAt.toISOString(),
@@ -59,6 +62,7 @@ export async function register(input: RegisterInput) {
     const passwordHash = await hashPassword(input.password);
     const userDoc: UserDoc = {
       email: input.email,
+      phone: input.phone,
       passwordHash,
       name: input.name,
       areaId: input.areaId || "",
@@ -120,7 +124,7 @@ export async function login(input: LoginInput) {
     });
 
     return {
-      user: toPublicUser(user.id, user),
+      user: toPublicUser(user.id, { ...user, phone: user.phone ?? undefined }),
       accessToken,
       refreshToken,
     };
@@ -179,7 +183,7 @@ export async function getMe(input: MeInput) {
       throw err;
     }
 
-    return { user: toPublicUser(user.id, user) };
+    return { user: toPublicUser(user.id, { ...user, phone: user.phone ?? undefined }) };
   } catch (err) {
     throw mapPrismaError(err, "Server error");
   }

@@ -5,6 +5,7 @@ import { mapPrismaError } from "../utils/prismaErrors";
 type EventStatusItem = {
   user: User;
   responseStatus: ResponseStatus | "PENDING";
+  notes?: string;
   respondedAt?: string;
 };
 
@@ -16,6 +17,7 @@ type EventStatusResult = {
 
 type UserDoc = {
   name: string;
+  phone?: string;
   areaId: string;
   deviceToken: string;
   createdAt: Date;
@@ -41,9 +43,13 @@ export async function getEventStatus(eventId: string): Promise<EventStatusResult
       prisma.response.findMany({ where: { eventId } }),
     ]);
 
-    const responseMap = new Map<string, { status: ResponseStatus; respondedAt: string }>();
+    const responseMap = new Map<string, { status: ResponseStatus; notes?: string; respondedAt: string }>();
     responses.forEach((row) => {
-      responseMap.set(row.userId, { status: row.status as ResponseStatus, respondedAt: row.respondedAt.toISOString() });
+      responseMap.set(row.userId, { 
+        status: row.status as ResponseStatus, 
+        notes: row.notes || undefined,
+        respondedAt: row.respondedAt.toISOString() 
+      });
     });
 
     const list: EventStatusItem[] = [];
@@ -52,13 +58,13 @@ export async function getEventStatus(eventId: string): Promise<EventStatusResult
     let pending = 0;
 
     users.forEach((row) => {
-      const data = row as UserDoc;
       const user: User = {
         id: row.id,
-        name: data.name,
-        areaId: data.areaId,
-        deviceToken: data.deviceToken,
-        createdAt: data.createdAt.toISOString(),
+        name: row.name,
+        phone: row.phone ?? undefined,
+        areaId: row.areaId,
+        deviceToken: row.deviceToken,
+        createdAt: row.createdAt.toISOString(),
       };
 
       const response = responseMap.get(row.id);
@@ -68,7 +74,12 @@ export async function getEventStatus(eventId: string): Promise<EventStatusResult
         } else {
           help += 1;
         }
-        list.push({ user, responseStatus: response.status, respondedAt: response.respondedAt });
+        list.push({ 
+          user, 
+          responseStatus: response.status, 
+          notes: response.notes,
+          respondedAt: response.respondedAt 
+        });
       } else {
         pending += 1;
         list.push({ user, responseStatus: "PENDING" });

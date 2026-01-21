@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16
+    container_name: horn-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: horn
+    ports:
+      - "5432:5432"
+    volumes:
+      - horn_pgdata:/var/lib/postgresql/data
+
+volumes:
+  horn_pgdata:

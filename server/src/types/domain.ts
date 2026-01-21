@@ -1,6 +1,7 @@
 export type User = {
   id: string;
   name: string;
+  phone?: string;
   areaId: string;
   deviceToken: string;
   createdAt: string;
@@ -19,5 +20,6 @@ export type Response = {
   userId: string;
   eventId: string;
   status: ResponseStatus;
+  notes?: string;
   respondedAt: string;
 };

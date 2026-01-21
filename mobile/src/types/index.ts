@@ -28,6 +28,7 @@ export interface Response {
 export interface EventStatusItem {
   user: User;
   responseStatus: ResponseStatus;
+  notes?: string;
   respondedAt?: string;
 }
 

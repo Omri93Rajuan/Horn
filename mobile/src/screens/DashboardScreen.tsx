@@ -50,9 +50,9 @@ const DashboardScreen: React.FC<Props> = ({navigation}) => {
           onPress: async () => {
             setTriggering(true);
             try {
-              const result = await alertService.triggerEvent(user.areaId);
-              dispatch(addEvent(result.event));
-              dispatch(setCurrentEvent(result.event));
+              const event = await alertService.triggerEvent(user.areaId);
+              dispatch(addEvent(event));
+              dispatch(setCurrentEvent(event));
               Alert.alert('הצלחה', 'האירוע הופץ בהצלחה לכל המשתמשים');
               
               // Navigate to event status

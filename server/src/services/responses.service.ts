@@ -6,6 +6,7 @@ type SubmitResponseInput = {
   userId: string;
   eventId: string;
   status: ResponseStatus;
+  notes?: string;
 };
 
 export async function submitResponse(input: SubmitResponseInput): Promise<Response> {
@@ -21,11 +22,12 @@ export async function submitResponse(input: SubmitResponseInput): Promise<Respon
 
       return tx.response.upsert({
         where: { userId_eventId: { userId: input.userId, eventId: input.eventId } },
-        update: { status: input.status, respondedAt: now },
+        update: { status: input.status, notes: input.notes, respondedAt: now },
         create: {
           userId: input.userId,
           eventId: input.eventId,
           status: input.status,
+          notes: input.notes,
           respondedAt: now,
         },
       });
@@ -36,6 +38,7 @@ export async function submitResponse(input: SubmitResponseInput): Promise<Respon
       userId: result.userId,
       eventId: result.eventId,
       status: result.status as ResponseStatus,
+      notes: result.notes || undefined,
       respondedAt: result.respondedAt.toISOString(),
     };
   } catch (err) {

@@ -1,5 +1,4 @@
 {
-  "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
     "target": "esnext",
     "module": "commonjs",
@@ -19,11 +18,7 @@
       "@/*": ["src/*"]
     }
   },
-  "include": [
-    "src/**/*",
-    "index.js",
-    "App.tsx"
-  ],
+  "include": ["src/**/*", "index.js", "App.tsx"],
   "exclude": [
     "node_modules",
     "babel.config.js",

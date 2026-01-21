@@ -147,6 +147,11 @@ const AlertsScreen = () => {
         <Text style={[styles.statusText, {color: getStatusColor(item.responseStatus)}]}>
           {getStatusText(item.responseStatus)}
         </Text>
+        {item.notes && (
+          <Text style={styles.notesText} numberOfLines={2}>
+            {item.notes}
+          </Text>
+        )}
         {item.respondedAt && (
           <Text style={styles.respondedTime}>
             {new Date(item.respondedAt).toLocaleTimeString('he-IL')}
@@ -396,17 +401,24 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   statusItemFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
   },
   statusText: {
     fontSize: 14,
     fontWeight: 'bold',
   },
+  notesText: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 4,
+    fontStyle: 'italic',
+    textAlign: 'right',
+  },
   respondedTime: {
     fontSize: 12,
     color: '#999',
+    marginTop: 4,
   },
 });
 

@@ -1,5 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
+import rateLimit from "express-rate-limit";
 import authRoutes from "./routes/auth.routes";
 import usersRoutes from "./routes/users.routes";
 import alertsRoutes from "./routes/alerts.routes";
@@ -12,7 +14,33 @@ import { seedIfEmpty } from "./db/seed";
 dotenv.config();
 
 const app = express();
+
+// CORS
+app.use(cors());
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later.",
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 login attempts per 15 minutes
+  message: "Too many login attempts, please try again later.",
+});
+
 app.use(express.json());
+
+// Health check
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
+app.use("/api", limiter);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", usersRoutes);

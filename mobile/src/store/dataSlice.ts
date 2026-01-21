@@ -1,4 +1,4 @@
-import {createSlice, PayloadAction} from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface AlertEvent {
   id: string;
@@ -7,7 +7,7 @@ export interface AlertEvent {
   triggeredByUserId?: string;
 }
 
-export type ResponseStatus = 'OK' | 'HELP' | 'PENDING';
+export type ResponseStatus = "OK" | "HELP" | "PENDING";
 
 export interface Response {
   id: string;
@@ -33,7 +33,7 @@ interface DataState {
   events: AlertEvent[];
   currentEvent: AlertEvent | null;
   eventStatus: {
-    counts: {ok: number; help: number; pending: number};
+    counts: { ok: number; help: number; pending: number };
     list: EventStatusItem[];
   } | null;
   myResponses: Response[];
@@ -51,7 +51,7 @@ const initialState: DataState = {
 };
 
 const dataSlice = createSlice({
-  name: 'data',
+  name: "data",
   initialState,
   reducers: {
     setEvents: (state, action: PayloadAction<AlertEvent[]>) => {
@@ -67,7 +67,7 @@ const dataSlice = createSlice({
     setEventStatus: (
       state,
       action: PayloadAction<{
-        counts: {ok: number; help: number; pending: number};
+        counts: { ok: number; help: number; pending: number };
         list: EventStatusItem[];
       }>,
     ) => {
@@ -86,10 +86,10 @@ const dataSlice = createSlice({
       state.error = action.payload;
       state.isLoading = false;
     },
-    clearError: state => {
+    clearError: (state) => {
       state.error = null;
     },
-    clearEventStatus: state => {
+    clearEventStatus: (state) => {
       state.eventStatus = null;
     },
   },

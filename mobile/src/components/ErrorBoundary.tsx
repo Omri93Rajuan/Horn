@@ -1,6 +1,6 @@
-import React, {Component, ErrorInfo, ReactNode} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import React, { Component, ErrorInfo, ReactNode } from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 interface Props {
   children: ReactNode;
@@ -28,7 +28,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
   }
 
   handleReset = () => {
@@ -44,13 +44,9 @@ class ErrorBoundary extends Component<Props, State> {
         <View style={styles.container}>
           <Icon name="error-outline" size={64} color="#F44336" />
           <Text style={styles.title}>משהו השתבש</Text>
-          <Text style={styles.message}>
-            אירעה שגיאה בלתי צפויה באפליקציה
-          </Text>
+          <Text style={styles.message}>אירעה שגיאה בלתי צפויה באפליקציה</Text>
           {__DEV__ && this.state.error && (
-            <Text style={styles.errorText}>
-              {this.state.error.toString()}
-            </Text>
+            <Text style={styles.errorText}>{this.state.error.toString()}</Text>
           )}
           <TouchableOpacity style={styles.button} onPress={this.handleReset}>
             <Text style={styles.buttonText}>נסה שוב</Text>
@@ -66,45 +62,45 @@ class ErrorBoundary extends Component<Props, State> {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
     padding: 20,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginTop: 20,
     marginBottom: 10,
   },
   message: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginBottom: 20,
   },
   errorText: {
     fontSize: 12,
-    color: '#999',
-    fontFamily: 'monospace',
+    color: "#999",
+    fontFamily: "monospace",
     marginTop: 10,
     padding: 10,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     borderRadius: 5,
-    textAlign: 'left',
+    textAlign: "left",
   },
   button: {
-    backgroundColor: '#2196F3',
+    backgroundColor: "#2196F3",
     paddingHorizontal: 30,
     paddingVertical: 15,
     borderRadius: 10,
     marginTop: 20,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 

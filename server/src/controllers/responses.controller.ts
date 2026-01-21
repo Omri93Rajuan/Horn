@@ -6,7 +6,10 @@ import { prisma } from "../db/prisma";
 export async function submitResponse(req: Request, res: Response) {
   try {
     const userId = req.user?.userId || "";
-    const result = await responsesService.submitResponse({ userId, ...req.body });
+    const result = await responsesService.submitResponse({
+      userId,
+      ...req.body,
+    });
     return res.json({ success: true, ...result });
   } catch (err: any) {
     return handleError(res, err.status || 500, err.message || "Server error");

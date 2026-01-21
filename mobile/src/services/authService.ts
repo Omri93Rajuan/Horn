@@ -1,4 +1,4 @@
-import api from './api';
+import api from "./api";
 
 export interface LoginRequest {
   email: string;
@@ -26,16 +26,20 @@ export interface AuthResponse {
 }
 
 export const authService = {
-  login: async (data: LoginRequest): Promise<{user: AuthResponse['user']; token: string}> => {
-    const response = await api.post('/auth/login', data);
+  login: async (
+    data: LoginRequest,
+  ): Promise<{ user: AuthResponse["user"]; token: string }> => {
+    const response = await api.post("/auth/login", data);
     return {
       user: response.data.user,
       token: response.data.accessToken,
     };
   },
 
-  register: async (data: RegisterRequest): Promise<{user: AuthResponse['user']; token: string}> => {
-    const response = await api.post('/auth/register', data);
+  register: async (
+    data: RegisterRequest,
+  ): Promise<{ user: AuthResponse["user"]; token: string }> => {
+    const response = await api.post("/auth/register", data);
     return {
       user: response.data.user,
       token: response.data.accessToken,
@@ -43,11 +47,11 @@ export const authService = {
   },
 
   logout: async (): Promise<void> => {
-    await api.post('/auth/logout');
+    await api.post("/auth/logout");
   },
 
   getProfile: async () => {
-    const response = await api.get('/auth/me');
+    const response = await api.get("/auth/me");
     return response.data;
   },
 };

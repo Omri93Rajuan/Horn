@@ -1,16 +1,16 @@
-import api from './api';
-import {AlertEvent, EventStatusResult} from '../types';
+import api from "./api";
+import { AlertEvent, EventStatusResult } from "../types";
 
 export const alertService = {
   // Trigger new event (for commanders)
   triggerEvent: async (areaId: string): Promise<AlertEvent> => {
-    const response = await api.post('/alerts/trigger', {areaId});
+    const response = await api.post("/alerts/trigger", { areaId });
     return response.data.event;
   },
 
   // Get all events (history)
   getEvents: async (): Promise<AlertEvent[]> => {
-    const response = await api.get('/alerts');
+    const response = await api.get("/alerts");
     return response.data.events || [];
   },
 

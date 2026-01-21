@@ -58,7 +58,7 @@ async function start() {
   const seedResult = await seedIfEmpty();
   if (seedResult.seeded) {
     console.log(
-      `Seeded database: users=${seedResult.users}, events=${seedResult.events}, responses=${seedResult.responses}, refreshTokens=${seedResult.refreshTokens}`
+      `Seeded database: users=${seedResult.users}, events=${seedResult.events}, responses=${seedResult.responses}, refreshTokens=${seedResult.refreshTokens}`,
     );
   }
 

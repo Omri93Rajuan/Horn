@@ -1,6 +1,10 @@
 import { prisma } from "../db/prisma";
 import { comparePassword, hashPassword } from "../helpers/bcrypt";
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../helpers/jwt";
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyRefreshToken,
+} from "../helpers/jwt";
 import { User } from "../types/domain";
 import { mapPrismaError } from "../utils/prismaErrors";
 
@@ -52,7 +56,9 @@ function toPublicUser(id: string, doc: UserDoc): User {
 
 export async function register(input: RegisterInput) {
   try {
-    const existing = await prisma.user.findUnique({ where: { email: input.email } });
+    const existing = await prisma.user.findUnique({
+      where: { email: input.email },
+    });
     if (existing) {
       const err: any = new Error("Email already in use");
       err.status = 400;
@@ -72,8 +78,14 @@ export async function register(input: RegisterInput) {
 
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({ data: userDoc });
-      const accessToken = signAccessToken({ userId: user.id, email: input.email });
-      const refreshToken = signRefreshToken({ userId: user.id, email: input.email });
+      const accessToken = signAccessToken({
+        userId: user.id,
+        email: input.email,
+      });
+      const refreshToken = signRefreshToken({
+        userId: user.id,
+        email: input.email,
+      });
       const refreshHash = await hashPassword(refreshToken);
 
       await tx.authRefreshToken.create({
@@ -99,7 +111,9 @@ export async function register(input: RegisterInput) {
 
 export async function login(input: LoginInput) {
   try {
-    const user = await prisma.user.findUnique({ where: { email: input.email } });
+    const user = await prisma.user.findUnique({
+      where: { email: input.email },
+    });
     if (!user) {
       const err: any = new Error("Invalid credentials");
       err.status = 401;
@@ -113,8 +127,14 @@ export async function login(input: LoginInput) {
       throw err;
     }
 
-    const accessToken = signAccessToken({ userId: user.id, email: input.email });
-    const refreshToken = signRefreshToken({ userId: user.id, email: input.email });
+    const accessToken = signAccessToken({
+      userId: user.id,
+      email: input.email,
+    });
+    const refreshToken = signRefreshToken({
+      userId: user.id,
+      email: input.email,
+    });
     const refreshHash = await hashPassword(refreshToken);
 
     await prisma.authRefreshToken.upsert({
@@ -144,21 +164,29 @@ export async function refresh(input: RefreshInput) {
   }
 
   try {
-    const refreshRow = await prisma.authRefreshToken.findUnique({ where: { userId: payload.userId } });
+    const refreshRow = await prisma.authRefreshToken.findUnique({
+      where: { userId: payload.userId },
+    });
     if (!refreshRow) {
       const err: any = new Error("Refresh token revoked");
       err.status = 401;
       throw err;
     }
 
-    const match = await comparePassword(input.refreshToken, refreshRow.refreshTokenHash);
+    const match = await comparePassword(
+      input.refreshToken,
+      refreshRow.refreshTokenHash,
+    );
     if (!match) {
       const err: any = new Error("Invalid refresh token");
       err.status = 401;
       throw err;
     }
 
-    const accessToken = signAccessToken({ userId: payload.userId, email: payload.email });
+    const accessToken = signAccessToken({
+      userId: payload.userId,
+      email: payload.email,
+    });
     return { accessToken };
   } catch (err) {
     throw mapPrismaError(err, "Server error");
@@ -167,7 +195,9 @@ export async function refresh(input: RefreshInput) {
 
 export async function logout(input: LogoutInput) {
   try {
-    await prisma.authRefreshToken.delete({ where: { userId: input.userId } }).catch(() => null);
+    await prisma.authRefreshToken
+      .delete({ where: { userId: input.userId } })
+      .catch(() => null);
     return { loggedOut: true };
   } catch (err) {
     throw mapPrismaError(err, "Server error");
@@ -183,7 +213,9 @@ export async function getMe(input: MeInput) {
       throw err;
     }
 
-    return { user: toPublicUser(user.id, { ...user, phone: user.phone ?? undefined }) };
+    return {
+      user: toPublicUser(user.id, { ...user, phone: user.phone ?? undefined }),
+    };
   } catch (err) {
     throw mapPrismaError(err, "Server error");
   }

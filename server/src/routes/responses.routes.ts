@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { submitResponse, getMyResponses } from "../controllers/responses.controller";
+import {
+  submitResponse,
+  getMyResponses,
+} from "../controllers/responses.controller";
 import { requireAuth } from "../middlewares/requireAuth";
 import { validate } from "../middlewares/validate";
 import { submitResponseSchema } from "../validation/responses.zod";

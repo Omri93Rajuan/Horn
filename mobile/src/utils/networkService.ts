@@ -1,23 +1,23 @@
-import NetInfo from '@react-native-community/netinfo';
-import {Alert} from 'react-native';
+import NetInfo from "@react-native-community/netinfo";
+import { Alert } from "react-native";
 
 let isOnline = true;
 let hasShownOfflineAlert = false;
 
 // Monitor network connection
 export const initNetworkMonitoring = () => {
-  NetInfo.addEventListener(state => {
+  NetInfo.addEventListener((state) => {
     const wasOnline = isOnline;
     isOnline = state.isConnected ?? false;
 
     if (!isOnline && !hasShownOfflineAlert) {
       hasShownOfflineAlert = true;
       Alert.alert(
-        'אין חיבור לאינטרנט',
-        'נראה שאין לך חיבור אינטרנט. חלק מהפונקציות עלולות לא לעבוד.',
+        "אין חיבור לאינטרנט",
+        "נראה שאין לך חיבור אינטרנט. חלק מהפונקציות עלולות לא לעבוד.",
         [
           {
-            text: 'אישור',
+            text: "אישור",
             onPress: () => {
               hasShownOfflineAlert = false;
             },

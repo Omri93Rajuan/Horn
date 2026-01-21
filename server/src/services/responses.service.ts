@@ -9,11 +9,15 @@ type SubmitResponseInput = {
   notes?: string;
 };
 
-export async function submitResponse(input: SubmitResponseInput): Promise<Response> {
+export async function submitResponse(
+  input: SubmitResponseInput,
+): Promise<Response> {
   try {
     const now = new Date();
     const result = await prisma.$transaction(async (tx) => {
-      const event = await tx.alertEvent.findUnique({ where: { id: input.eventId } });
+      const event = await tx.alertEvent.findUnique({
+        where: { id: input.eventId },
+      });
       if (!event) {
         const err: any = new Error("Event not found");
         err.status = 404;
@@ -21,7 +25,9 @@ export async function submitResponse(input: SubmitResponseInput): Promise<Respon
       }
 
       return tx.response.upsert({
-        where: { userId_eventId: { userId: input.userId, eventId: input.eventId } },
+        where: {
+          userId_eventId: { userId: input.userId, eventId: input.eventId },
+        },
         update: { status: input.status, notes: input.notes, respondedAt: now },
         create: {
           userId: input.userId,

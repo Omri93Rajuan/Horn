@@ -23,9 +23,13 @@ type UserDoc = {
   createdAt: Date;
 };
 
-export async function getEventStatus(eventId: string): Promise<EventStatusResult> {
+export async function getEventStatus(
+  eventId: string,
+): Promise<EventStatusResult> {
   try {
-    const eventRow = await prisma.alertEvent.findUnique({ where: { id: eventId } });
+    const eventRow = await prisma.alertEvent.findUnique({
+      where: { id: eventId },
+    });
     if (!eventRow) {
       const err: any = new Error("Event not found");
       err.status = 404;
@@ -43,12 +47,15 @@ export async function getEventStatus(eventId: string): Promise<EventStatusResult
       prisma.response.findMany({ where: { eventId } }),
     ]);
 
-    const responseMap = new Map<string, { status: ResponseStatus; notes?: string; respondedAt: string }>();
+    const responseMap = new Map<
+      string,
+      { status: ResponseStatus; notes?: string; respondedAt: string }
+    >();
     responses.forEach((row) => {
-      responseMap.set(row.userId, { 
-        status: row.status as ResponseStatus, 
+      responseMap.set(row.userId, {
+        status: row.status as ResponseStatus,
         notes: row.notes || undefined,
-        respondedAt: row.respondedAt.toISOString() 
+        respondedAt: row.respondedAt.toISOString(),
       });
     });
 
@@ -74,11 +81,11 @@ export async function getEventStatus(eventId: string): Promise<EventStatusResult
         } else {
           help += 1;
         }
-        list.push({ 
-          user, 
-          responseStatus: response.status, 
+        list.push({
+          user,
+          responseStatus: response.status,
           notes: response.notes,
-          respondedAt: response.respondedAt 
+          respondedAt: response.respondedAt,
         });
       } else {
         pending += 1;

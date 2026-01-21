@@ -14,7 +14,7 @@ export interface AlertEvent {
   triggeredByUserId?: string;
 }
 
-export type ResponseStatus = 'OK' | 'HELP' | 'PENDING';
+export type ResponseStatus = "OK" | "HELP" | "PENDING";
 
 export interface Response {
   id: string;

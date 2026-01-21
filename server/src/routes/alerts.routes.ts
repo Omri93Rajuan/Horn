@@ -6,7 +6,12 @@ import { triggerAlertSchema } from "../validation/alerts.zod";
 
 const router = Router();
 
-router.post("/trigger", requireAuth, validate(triggerAlertSchema), triggerAlert);
+router.post(
+  "/trigger",
+  requireAuth,
+  validate(triggerAlertSchema),
+  triggerAlert,
+);
 router.get("/", requireAuth, getAlerts);
 
 export default router;

@@ -11,5 +11,32 @@ services:
     volumes:
       - horn_pgdata:/var/lib/postgresql/data
 
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: horn-server
+    depends_on:
+      - db
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/horn?schema=public
+      JWT_ACCESS_SECRET: replace_me_access_secret
+      JWT_REFRESH_SECRET: replace_me_refresh_secret
+      JWT_ACCESS_TTL: 15m
+      JWT_REFRESH_TTL: 30d
+    ports:
+      - "3000:3000"
+
+  mobile:
+    build:
+      context: ./mobile
+      dockerfile: Dockerfile
+    container_name: horn-mobile
+    environment:
+      REACT_NATIVE_PACKAGER_HOSTNAME: 0.0.0.0
+    ports:
+      - "8081:8081"
+
 volumes:
   horn_pgdata:

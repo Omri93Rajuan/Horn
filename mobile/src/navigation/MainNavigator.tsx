@@ -5,6 +5,7 @@ import DashboardScreen from '../screens/DashboardScreen';
 import AlertsScreen from '../screens/AlertsScreen';
 import ResponsesScreen from '../screens/ResponsesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import {colors} from '../utils/theme';
 
 export type MainTabParamList = {
   Dashboard: undefined;
@@ -41,9 +42,25 @@ const MainNavigator = () => {
 
           return <Icon name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#2196F3',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.muted,
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+        },
         headerShown: true,
+        headerStyle: {
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.border,
+          borderBottomWidth: 1,
+        },
+        headerTitleStyle: {
+          color: colors.text,
+          fontWeight: '700',
+        },
+        headerTintColor: colors.primary,
+        headerTitleAlign: 'center',
       })}>
       <Tab.Screen 
         name="Dashboard" 

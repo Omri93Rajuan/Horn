@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+﻿import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {AuthStackParamList} from '../navigation/AuthNavigator';
 import {authService} from '../services/authService';
 import {setCredentials, setLoading} from '../store/authSlice';
+import {borderRadius, colors, fontSize, spacing} from '../utils/theme';
 
 type RegisterScreenNavigationProp = StackNavigationProp<
   AuthStackParamList,
@@ -79,14 +80,21 @@ const RegisterScreen: React.FC<Props> = ({navigation}) => {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
+      <View style={styles.backgroundDecor} pointerEvents="none">
+        <View style={styles.decorCircleOne} />
+        <View style={styles.decorCircleTwo} />
+      </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled">
+        <View style={styles.card}>
           <Text style={styles.title}>הרשמה</Text>
           <Text style={styles.subtitle}>צור חשבון חדש במערכת Horn</Text>
 
           <TextInput
             style={styles.input}
             placeholder="שם מלא *"
+            placeholderTextColor={colors.muted}
             value={name}
             onChangeText={setName}
             textAlign="right"
@@ -95,6 +103,7 @@ const RegisterScreen: React.FC<Props> = ({navigation}) => {
           <TextInput
             style={styles.input}
             placeholder="אימייל *"
+            placeholderTextColor={colors.muted}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -105,6 +114,7 @@ const RegisterScreen: React.FC<Props> = ({navigation}) => {
           <TextInput
             style={styles.input}
             placeholder="מספר טלפון (אופציונלי)"
+            placeholderTextColor={colors.muted}
             value={phone}
             onChangeText={setPhone}
             keyboardType="phone-pad"
@@ -114,6 +124,7 @@ const RegisterScreen: React.FC<Props> = ({navigation}) => {
           <TextInput
             style={styles.input}
             placeholder="קוד אזור/יחידה *"
+            placeholderTextColor={colors.muted}
             value={areaId}
             onChangeText={setAreaId}
             textAlign="right"
@@ -122,6 +133,7 @@ const RegisterScreen: React.FC<Props> = ({navigation}) => {
           <TextInput
             style={styles.input}
             placeholder="סיסמה *"
+            placeholderTextColor={colors.muted}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -131,6 +143,7 @@ const RegisterScreen: React.FC<Props> = ({navigation}) => {
           <TextInput
             style={styles.input}
             placeholder="אימות סיסמה *"
+            placeholderTextColor={colors.muted}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
@@ -142,7 +155,7 @@ const RegisterScreen: React.FC<Props> = ({navigation}) => {
             onPress={handleRegister}
             disabled={isLoading}>
             {isLoading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.textInverse} />
             ) : (
               <Text style={styles.buttonText}>הירשם</Text>
             )}
@@ -162,59 +175,93 @@ const RegisterScreen: React.FC<Props> = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
+  },
+  backgroundDecor: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
+  },
+  decorCircleOne: {
+    position: 'absolute',
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: colors.primarySoft,
+    opacity: 0.12,
+    top: -60,
+    right: -80,
+  },
+  decorCircleTwo: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: colors.accentSoft,
+    opacity: 0.2,
+    bottom: -50,
+    left: -70,
   },
   scrollContent: {
     flexGrow: 1,
-  },
-  content: {
-    flex: 1,
+    padding: spacing.lg,
     justifyContent: 'center',
-    padding: 20,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.large,
+    padding: spacing.lg,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 10},
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 6,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: fontSize.xxxlarge,
+    fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 10,
-    color: '#2196F3',
+    marginBottom: spacing.sm,
+    color: colors.primary,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: fontSize.large,
     textAlign: 'center',
-    marginBottom: 30,
-    color: '#666',
+    marginBottom: spacing.lg,
+    color: colors.muted,
   },
   input: {
+    backgroundColor: colors.surfaceAlt,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 15,
-    fontSize: 16,
+    borderColor: colors.border,
+    borderRadius: borderRadius.medium,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    fontSize: fontSize.large,
+    color: colors.text,
   },
   button: {
-    backgroundColor: '#2196F3',
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    padding: spacing.md,
+    borderRadius: borderRadius.medium,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: spacing.sm,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: colors.textInverse,
+    fontSize: fontSize.large,
+    fontWeight: '700',
   },
   linkButton: {
-    marginTop: 20,
+    marginTop: spacing.md,
     alignItems: 'center',
   },
   linkText: {
-    color: '#2196F3',
-    fontSize: 14,
+    color: colors.accent,
+    fontSize: fontSize.medium,
+    fontWeight: '600',
   },
 });
 

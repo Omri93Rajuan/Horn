@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, {useEffect, useState} from "react";
 import {
   View,
   Text,
@@ -9,16 +9,17 @@ import {
   ActivityIndicator,
   Modal,
 } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { RootState } from "../store";
+import {RootState} from "../store";
 import {
   setEvents,
   setEventStatus,
   clearEventStatus,
 } from "../store/dataSlice";
-import { alertService } from "../services/alertService";
-import { AlertEvent, EventStatusItem } from "../types";
+import {alertService} from "../services/alertService";
+import {AlertEvent, EventStatusItem} from "../types";
+import {borderRadius, colors, fontSize, spacing} from "../utils/theme";
 
 const AlertsScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
@@ -26,7 +27,7 @@ const AlertsScreen = () => {
   const [selectedEvent, setSelectedEvent] = useState<AlertEvent | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const dispatch = useDispatch();
-  const { events, eventStatus } = useSelector((state: RootState) => state.data);
+  const {events, eventStatus} = useSelector((state: RootState) => state.data);
 
   const loadEvents = async () => {
     try {
@@ -75,13 +76,13 @@ const AlertsScreen = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "OK":
-        return "#4CAF50";
+        return colors.success;
       case "HELP":
-        return "#F44336";
+        return colors.danger;
       case "PENDING":
-        return "#FFC107";
+        return colors.warning;
       default:
-        return "#9E9E9E";
+        return colors.muted;
     }
   };
 
@@ -111,13 +112,12 @@ const AlertsScreen = () => {
     }
   };
 
-  const renderEvent = ({ item }: { item: AlertEvent }) => (
+  const renderEvent = ({item}: {item: AlertEvent}) => (
     <TouchableOpacity
       style={styles.eventCard}
-      onPress={() => handleEventPress(item)}
-    >
+      onPress={() => handleEventPress(item)}>
       <View style={styles.eventHeader}>
-        <Icon name="event" size={24} color="#2196F3" />
+        <Icon name="event" size={24} color={colors.primary} />
         <Text style={styles.eventTime}>
           {new Date(item.triggeredAt).toLocaleString("he-IL")}
         </Text>
@@ -129,19 +129,18 @@ const AlertsScreen = () => {
     </TouchableOpacity>
   );
 
-  const renderStatusItem = ({ item }: { item: EventStatusItem }) => (
+  const renderStatusItem = ({item}: {item: EventStatusItem}) => (
     <View style={styles.statusItem}>
       <View style={styles.statusItemHeader}>
         <View
           style={[
             styles.statusBadge,
-            { backgroundColor: getStatusColor(item.responseStatus) },
-          ]}
-        >
+            {backgroundColor: getStatusColor(item.responseStatus)},
+          ]}>
           <Icon
             name={getStatusIcon(item.responseStatus)}
             size={16}
-            color="#fff"
+            color={colors.textInverse}
           />
         </View>
         <View style={styles.statusItemInfo}>
@@ -155,9 +154,8 @@ const AlertsScreen = () => {
         <Text
           style={[
             styles.statusText,
-            { color: getStatusColor(item.responseStatus) },
-          ]}
-        >
+            {color: getStatusColor(item.responseStatus)},
+          ]}>
           {getStatusText(item.responseStatus)}
         </Text>
         {item.notes && (
@@ -177,24 +175,32 @@ const AlertsScreen = () => {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#2196F3" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      <View style={styles.backgroundDecor} pointerEvents="none">
+        <View style={styles.decorCircleOne} />
+        <View style={styles.decorCircleTwo} />
+      </View>
       <FlatList
         data={events}
         renderItem={renderEvent}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Icon name="event-note" size={64} color="#ccc" />
+            <Icon name="event-note" size={64} color={colors.border} />
             <Text style={styles.emptyText}>אין אירועים להצגה</Text>
           </View>
         }
@@ -203,15 +209,14 @@ const AlertsScreen = () => {
       <Modal
         visible={modalVisible}
         animationType="slide"
-        onRequestClose={closeModal}
-      >
+        onRequestClose={closeModal}>
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={closeModal}>
-              <Icon name="close" size={28} color="#333" />
+              <Icon name="close" size={28} color={colors.text} />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>סטטוס אירוע</Text>
-            <View style={{ width: 28 }} />
+            <View style={{width: 28}} />
           </View>
 
           {selectedEvent && (
@@ -227,15 +232,15 @@ const AlertsScreen = () => {
 
           {eventStatus && (
             <View style={styles.statsContainer}>
-              <View style={[styles.statBox, { backgroundColor: "#4CAF50" }]}>
+              <View style={[styles.statBox, {backgroundColor: colors.success}]}>
                 <Text style={styles.statNumber}>{eventStatus.counts.ok}</Text>
                 <Text style={styles.statLabel}>תקין</Text>
               </View>
-              <View style={[styles.statBox, { backgroundColor: "#F44336" }]}>
+              <View style={[styles.statBox, {backgroundColor: colors.danger}]}>
                 <Text style={styles.statNumber}>{eventStatus.counts.help}</Text>
                 <Text style={styles.statLabel}>עזרה</Text>
               </View>
-              <View style={[styles.statBox, { backgroundColor: "#FFC107" }]}>
+              <View style={[styles.statBox, {backgroundColor: colors.warning}]}>
                 <Text style={styles.statNumber}>
                   {eventStatus.counts.pending}
                 </Text>
@@ -251,7 +256,7 @@ const AlertsScreen = () => {
             contentContainerStyle={styles.statusList}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <ActivityIndicator size="large" color="#2196F3" />
+                <ActivityIndicator size="large" color={colors.primary} />
                 <Text style={styles.emptyText}>טוען נתונים...</Text>
               </View>
             }
@@ -265,7 +270,31 @@ const AlertsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: colors.background,
+  },
+  backgroundDecor: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
+  },
+  decorCircleOne: {
+    position: "absolute",
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: colors.primarySoft,
+    opacity: 0.12,
+    top: -60,
+    left: -90,
+  },
+  decorCircleTwo: {
+    position: "absolute",
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: colors.accentSoft,
+    opacity: 0.18,
+    bottom: -50,
+    right: -60,
   },
   centerContainer: {
     flex: 1,
@@ -273,44 +302,47 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   listContent: {
-    padding: 15,
+    padding: spacing.md,
   },
   eventCard: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.large,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 3,
   },
   eventHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
   eventTime: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginRight: 10,
+    fontSize: fontSize.large,
+    fontWeight: "700",
+    marginRight: spacing.sm,
     textAlign: "right",
     flex: 1,
+    color: colors.text,
   },
   eventArea: {
-    fontSize: 14,
-    color: "#666",
+    fontSize: fontSize.medium,
+    color: colors.muted,
     textAlign: "right",
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
   viewDetailsButton: {
     alignItems: "flex-start",
   },
   viewDetailsText: {
-    fontSize: 14,
-    color: "#2196F3",
-    fontWeight: "bold",
+    fontSize: fontSize.medium,
+    color: colors.primary,
+    fontWeight: "700",
   },
   emptyContainer: {
     flex: 1,
@@ -319,78 +351,80 @@ const styles = StyleSheet.create({
     paddingTop: 100,
   },
   emptyText: {
-    fontSize: 16,
-    color: "#999",
-    marginTop: 10,
+    fontSize: fontSize.large,
+    color: colors.muted,
+    marginTop: spacing.sm,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 15,
+    padding: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: colors.border,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: fontSize.xxlarge,
+    fontWeight: "700",
+    color: colors.text,
   },
   modalEventInfo: {
-    padding: 15,
-    backgroundColor: "#f5f5f5",
+    padding: spacing.md,
+    backgroundColor: colors.surfaceAlt,
   },
   modalEventTime: {
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: fontSize.large,
+    fontWeight: "700",
     textAlign: "right",
+    color: colors.text,
   },
   modalEventArea: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 5,
+    fontSize: fontSize.medium,
+    color: colors.muted,
+    marginTop: spacing.xs,
     textAlign: "right",
   },
   statsContainer: {
     flexDirection: "row",
-    padding: 15,
+    padding: spacing.md,
     justifyContent: "space-around",
   },
   statBox: {
     flex: 1,
-    padding: 15,
-    borderRadius: 10,
+    padding: spacing.md,
+    borderRadius: borderRadius.medium,
     alignItems: "center",
-    marginHorizontal: 5,
+    marginHorizontal: spacing.xs,
   },
   statNumber: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#fff",
+    fontSize: fontSize.xxxlarge,
+    fontWeight: "700",
+    color: colors.textInverse,
   },
   statLabel: {
-    fontSize: 14,
-    color: "#fff",
-    marginTop: 5,
+    fontSize: fontSize.medium,
+    color: colors.textInverse,
+    marginTop: spacing.xs,
   },
   statusList: {
-    padding: 15,
+    padding: spacing.md,
   },
   statusItem: {
-    backgroundColor: "#f9f9f9",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
+    backgroundColor: colors.surfaceAlt,
+    padding: spacing.md,
+    borderRadius: borderRadius.medium,
+    marginBottom: spacing.sm,
     borderLeftWidth: 4,
-    borderLeftColor: "#2196F3",
+    borderLeftColor: colors.primary,
   },
   statusItemHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
   statusBadge: {
     width: 32,
@@ -398,19 +432,20 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
-    marginLeft: 10,
+    marginLeft: spacing.sm,
   },
   statusItemInfo: {
     flex: 1,
   },
   statusItemName: {
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: fontSize.large,
+    fontWeight: "700",
     textAlign: "right",
+    color: colors.text,
   },
   statusItemPhone: {
-    fontSize: 14,
-    color: "#666",
+    fontSize: fontSize.medium,
+    color: colors.muted,
     marginTop: 2,
     textAlign: "right",
   },
@@ -419,20 +454,20 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   statusText: {
-    fontSize: 14,
-    fontWeight: "bold",
+    fontSize: fontSize.medium,
+    fontWeight: "700",
   },
   notesText: {
-    fontSize: 13,
-    color: "#666",
-    marginTop: 4,
+    fontSize: fontSize.small,
+    color: colors.muted,
+    marginTop: spacing.xs,
     fontStyle: "italic",
     textAlign: "right",
   },
   respondedTime: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 4,
+    fontSize: fontSize.small,
+    color: colors.muted,
+    marginTop: spacing.xs,
   },
 });
 

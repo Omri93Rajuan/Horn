@@ -1,24 +1,32 @@
 export const colors = {
-  primary: '#2196F3',
-  secondary: '#FFC107',
-  success: '#4CAF50',
-  danger: '#F44336',
-  warning: '#FF9800',
-  info: '#00BCD4',
-  light: '#f5f5f5',
-  dark: '#212121',
-  white: '#FFFFFF',
-  black: '#000000',
-  gray: '#9E9E9E',
-  border: '#E0E0E0',
+  primary: '#163B57',
+  primarySoft: '#2C5876',
+  accent: '#E76F51',
+  accentSoft: '#F3A98F',
+  success: '#2A9D8F',
+  successSoft: '#E6F4F1',
+  danger: '#D6453D',
+  dangerSoft: '#FCE8E6',
+  warning: '#E9C46A',
+  warningSoft: '#FEF4D5',
+  info: '#3A7CA5',
+  infoSoft: '#E4EEF4',
+  background: '#F6F2EA',
+  surface: '#FFFFFF',
+  surfaceAlt: '#FFF8EE',
+  border: '#E6DED2',
+  muted: '#7A7F87',
+  text: '#1E2930',
+  textInverse: '#FFFFFF',
+  shadow: 'rgba(13, 24, 33, 0.15)',
 };
 
 export const spacing = {
-  xs: 5,
-  sm: 10,
-  md: 15,
-  lg: 20,
-  xl: 30,
+  xs: 6,
+  sm: 12,
+  md: 16,
+  lg: 24,
+  xl: 32,
 };
 
 export const fontSize = {
@@ -31,8 +39,8 @@ export const fontSize = {
 };
 
 export const borderRadius = {
-  small: 5,
-  medium: 10,
-  large: 15,
-  round: 50,
+  small: 8,
+  medium: 12,
+  large: 18,
+  round: 999,
 };

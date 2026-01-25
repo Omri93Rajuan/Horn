@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+﻿import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {RootState} from '../store';
 import {addResponse} from '../store/dataSlice';
 import {responseService} from '../services/responseService';
+import {borderRadius, colors, fontSize, spacing} from '../utils/theme';
 
 const ResponsesScreen = () => {
   const [responseType, setResponseType] = useState<'OK' | 'HELP' | null>(null);
@@ -21,7 +22,6 @@ const ResponsesScreen = () => {
   const [submitting, setSubmitting] = useState(false);
   const dispatch = useDispatch();
   const {currentEvent} = useSelector((state: RootState) => state.data);
-  const {user} = useSelector((state: RootState) => state.auth);
 
   const handleSubmitResponse = async () => {
     if (!currentEvent) {
@@ -42,7 +42,7 @@ const ResponsesScreen = () => {
         status: responseType,
         notes: notes.trim() || undefined,
       });
-      
+
       dispatch(addResponse(response));
       Alert.alert('הצלחה', 'התגובה נשלחה בהצלחה');
       setResponseType(null);
@@ -60,7 +60,7 @@ const ResponsesScreen = () => {
   if (!currentEvent) {
     return (
       <View style={styles.centerContainer}>
-        <Icon name="event-busy" size={64} color="#ccc" />
+        <Icon name="event-busy" size={64} color={colors.border} />
         <Text style={styles.emptyText}>אין אירוע פעיל כרגע</Text>
         <Text style={styles.emptySubtext}>
           כשיהיה אירוע פעיל, תוכל לדווח כאן
@@ -69,11 +69,19 @@ const ResponsesScreen = () => {
     );
   }
 
+  const isOkSelected = responseType === 'OK';
+  const isHelpSelected = responseType === 'HELP';
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <View style={styles.container}>
+      <View style={styles.backgroundDecor} pointerEvents="none">
+        <View style={styles.decorCircleOne} />
+        <View style={styles.decorCircleTwo} />
+      </View>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.eventCard}>
         <View style={styles.eventHeader}>
-          <Icon name="notifications-active" size={32} color="#FF5722" />
+          <Icon name="notifications-active" size={32} color={colors.accent} />
           <Text style={styles.eventTitle}>אירוע פעיל</Text>
         </View>
         <Text style={styles.eventTime}>
@@ -93,18 +101,18 @@ const ResponsesScreen = () => {
             style={[
               styles.responseButton,
               styles.okButton,
-              responseType === 'OK' && styles.selectedButton,
+              isOkSelected && styles.selectedOk,
             ]}
             onPress={() => setResponseType('OK')}>
             <Icon
               name="check-circle"
               size={48}
-              color={responseType === 'OK' ? '#fff' : '#4CAF50'}
+              color={isOkSelected ? colors.textInverse : colors.success}
             />
             <Text
               style={[
                 styles.responseButtonText,
-                responseType === 'OK' && styles.selectedButtonText,
+                isOkSelected && styles.selectedButtonText,
               ]}>
               הכל תקין
             </Text>
@@ -114,18 +122,18 @@ const ResponsesScreen = () => {
             style={[
               styles.responseButton,
               styles.helpButton,
-              responseType === 'HELP' && styles.selectedButton,
+              isHelpSelected && styles.selectedHelp,
             ]}
             onPress={() => setResponseType('HELP')}>
             <Icon
               name="error"
               size={48}
-              color={responseType === 'HELP' ? '#fff' : '#F44336'}
+              color={isHelpSelected ? colors.textInverse : colors.danger}
             />
             <Text
               style={[
                 styles.responseButtonText,
-                responseType === 'HELP' && styles.selectedButtonText,
+                isHelpSelected && styles.selectedButtonText,
               ]}>
               זקוק לעזרה
             </Text>
@@ -138,6 +146,7 @@ const ResponsesScreen = () => {
         <TextInput
           style={styles.notesInput}
           placeholder="הוסף הערות או פרטים נוספים..."
+          placeholderTextColor={colors.muted}
           value={notes}
           onChangeText={setNotes}
           multiline
@@ -154,94 +163,124 @@ const ResponsesScreen = () => {
         onPress={handleSubmitResponse}
         disabled={!responseType || submitting}>
         {submitting ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.textInverse} />
         ) : (
           <>
-            <Icon name="send" size={24} color="#fff" />
+            <Icon name="send" size={24} color={colors.textInverse} />
             <Text style={styles.submitButtonText}>שלח דיווח</Text>
           </>
         )}
       </TouchableOpacity>
 
       <View style={styles.infoBox}>
-        <Icon name="info" size={20} color="#2196F3" />
+        <Icon name="info" size={20} color={colors.info} />
         <Text style={styles.infoText}>
           המפקד יקבל את הדיווח שלך ויוכל לראות מי דיווח ומי עדיין לא
         </Text>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
+  },
+  backgroundDecor: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
+  },
+  decorCircleOne: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: colors.primarySoft,
+    opacity: 0.1,
+    top: -70,
+    right: -80,
+  },
+  decorCircleTwo: {
+    position: 'absolute',
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: colors.accentSoft,
+    opacity: 0.16,
+    bottom: -60,
+    left: -70,
+  },
+  scroll: {
+    flex: 1,
   },
   content: {
-    padding: 15,
+    padding: spacing.md,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.lg,
+    backgroundColor: colors.background,
   },
   emptyText: {
-    fontSize: 18,
-    color: '#999',
-    marginTop: 20,
+    fontSize: fontSize.xlarge,
+    color: colors.muted,
+    marginTop: spacing.md,
     textAlign: 'center',
   },
   emptySubtext: {
-    fontSize: 14,
-    color: '#ccc',
-    marginTop: 10,
+    fontSize: fontSize.medium,
+    color: colors.muted,
+    marginTop: spacing.sm,
     textAlign: 'center',
   },
   eventCard: {
-    backgroundColor: '#FFF3E0',
-    padding: 20,
-    borderRadius: 10,
-    marginBottom: 20,
+    backgroundColor: colors.surfaceAlt,
+    padding: spacing.lg,
+    borderRadius: borderRadius.large,
+    marginBottom: spacing.lg,
     borderLeftWidth: 4,
-    borderLeftColor: '#FF5722',
+    borderLeftColor: colors.accent,
   },
   eventHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
   eventTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FF5722',
-    marginRight: 10,
+    fontSize: fontSize.xxlarge,
+    fontWeight: '700',
+    color: colors.accent,
+    marginRight: spacing.sm,
   },
   eventTime: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: fontSize.large,
+    color: colors.muted,
     textAlign: 'right',
-    marginBottom: 5,
+    marginBottom: spacing.xs,
   },
   eventArea: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: fontSize.medium,
+    color: colors.muted,
     textAlign: 'right',
   },
   section: {
-    marginBottom: 25,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontSize: fontSize.xlarge,
+    fontWeight: '700',
+    marginBottom: spacing.xs,
     textAlign: 'right',
+    color: colors.text,
   },
   sectionSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 15,
+    fontSize: fontSize.medium,
+    color: colors.muted,
+    marginBottom: spacing.md,
     textAlign: 'right',
   },
   responseButtons: {
@@ -250,74 +289,77 @@ const styles = StyleSheet.create({
   },
   responseButton: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: borderRadius.large,
     alignItems: 'center',
-    marginHorizontal: 5,
+    marginHorizontal: spacing.xs,
     borderWidth: 2,
-    borderColor: '#ddd',
-    elevation: 2,
+    borderColor: colors.border,
   },
   okButton: {
-    borderColor: '#4CAF50',
+    borderColor: colors.success,
   },
   helpButton: {
-    borderColor: '#F44336',
+    borderColor: colors.danger,
   },
-  selectedButton: {
-    borderWidth: 3,
+  selectedOk: {
+    backgroundColor: colors.success,
+  },
+  selectedHelp: {
+    backgroundColor: colors.danger,
   },
   selectedButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: colors.textInverse,
+    fontWeight: '700',
   },
   responseButtonText: {
-    fontSize: 16,
-    marginTop: 10,
+    fontSize: fontSize.large,
+    marginTop: spacing.sm,
     textAlign: 'center',
+    color: colors.text,
   },
   notesInput: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    padding: 15,
-    fontSize: 16,
+    borderColor: colors.border,
+    borderRadius: borderRadius.medium,
+    padding: spacing.md,
+    fontSize: fontSize.large,
     minHeight: 100,
     textAlignVertical: 'top',
+    color: colors.text,
   },
   submitButton: {
-    backgroundColor: '#2196F3',
-    padding: 18,
-    borderRadius: 10,
+    backgroundColor: colors.primary,
+    padding: spacing.md,
+    borderRadius: borderRadius.medium,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4,
-    marginBottom: 15,
+    marginBottom: spacing.md,
   },
   submitButtonDisabled: {
     opacity: 0.5,
   },
   submitButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginRight: 10,
+    color: colors.textInverse,
+    fontSize: fontSize.large,
+    fontWeight: '700',
+    marginRight: spacing.sm,
   },
   infoBox: {
     flexDirection: 'row',
-    backgroundColor: '#E3F2FD',
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: colors.infoSoft,
+    padding: spacing.md,
+    borderRadius: borderRadius.medium,
     alignItems: 'center',
   },
   infoText: {
     flex: 1,
-    fontSize: 14,
-    color: '#1976D2',
-    marginRight: 10,
+    fontSize: fontSize.medium,
+    color: colors.info,
+    marginRight: spacing.sm,
     textAlign: 'right',
   },
 });

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, {useState} from "react";
 import {
   View,
   Text,
@@ -9,24 +9,24 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { RootState } from "../store";
-import { addEvent, setCurrentEvent } from "../store/dataSlice";
-import { alertService } from "../services/alertService";
-import { NavigationProp } from "@react-navigation/native";
+import {NavigationProp} from "@react-navigation/native";
+import {RootState} from "../store";
+import {addEvent, setCurrentEvent} from "../store/dataSlice";
+import {alertService} from "../services/alertService";
+import {borderRadius, colors, fontSize, spacing} from "../utils/theme";
 
 type Props = {
   navigation: NavigationProp<any>;
 };
 
-const DashboardScreen: React.FC<Props> = ({ navigation }) => {
+const DashboardScreen: React.FC<Props> = ({navigation}) => {
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [triggering, setTriggering] = useState(false);
   const dispatch = useDispatch();
-  const { user } = useSelector((state: RootState) => state.auth);
-  const { currentEvent } = useSelector((state: RootState) => state.data);
+  const {user} = useSelector((state: RootState) => state.auth);
+  const {currentEvent} = useSelector((state: RootState) => state.data);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -43,7 +43,7 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       "הקפצת אירוע",
       "האם אתה בטוח שברצונך להקפיץ אירוע לכל המשתמשים באזור?",
       [
-        { text: "ביטול", style: "cancel" },
+        {text: "ביטול", style: "cancel"},
         {
           text: "הקפץ",
           style: "destructive",
@@ -55,7 +55,6 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
               dispatch(setCurrentEvent(event));
               Alert.alert("הצלחה", "האירוע הופץ בהצלחה לכל המשתמשים");
 
-              // Navigate to event status
               navigation.navigate("Alerts");
             } catch (error: any) {
               Alert.alert(
@@ -75,10 +74,15 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     <ScrollView
       style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={colors.primary}
+        />
+      }>
       <View style={styles.header}>
+        <View style={styles.headerDecorOne} />
+        <View style={styles.headerDecorTwo} />
         <Text style={styles.welcomeText}>שלום, {user?.name}</Text>
         <Text style={styles.subText}>אזור: {user?.areaId}</Text>
         {user?.phone && <Text style={styles.subText}>טלפון: {user.phone}</Text>}
@@ -90,12 +94,11 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
         <TouchableOpacity
           style={[styles.triggerButton, triggering && styles.buttonDisabled]}
           onPress={handleTriggerEvent}
-          disabled={triggering}
-        >
-          <Icon name="notifications-active" size={32} color="#fff" />
+          disabled={triggering}>
+          <Icon name="notifications-active" size={32} color={colors.textInverse} />
           <View style={styles.triggerButtonText}>
             {triggering ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.textInverse} />
             ) : (
               <>
                 <Text style={styles.triggerTitle}>הקפץ אירוע</Text>
@@ -113,10 +116,9 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.sectionTitle}>אירוע פעיל</Text>
           <TouchableOpacity
             style={styles.activeEventCard}
-            onPress={() => navigation.navigate("Alerts")}
-          >
+            onPress={() => navigation.navigate("Alerts")}>
             <View style={styles.activeEventHeader}>
-              <Icon name="event" size={24} color="#FF5722" />
+              <Icon name="event" size={24} color={colors.accent} />
               <Text style={styles.activeEventTitle}>אירוע מתחולל כעת</Text>
             </View>
             <Text style={styles.activeEventTime}>
@@ -134,29 +136,26 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.navCard}
-          onPress={() => navigation.navigate("Alerts")}
-        >
-          <Icon name="notifications" size={24} color="#2196F3" />
+          onPress={() => navigation.navigate("Alerts")}>
+          <Icon name="notifications" size={24} color={colors.primary} />
           <Text style={styles.navText}>אירועים והיסטוריה</Text>
-          <Icon name="chevron-left" size={24} color="#ccc" />
+          <Icon name="chevron-left" size={24} color={colors.muted} />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.navCard}
-          onPress={() => navigation.navigate("Responses")}
-        >
-          <Icon name="check-circle" size={24} color="#4CAF50" />
+          onPress={() => navigation.navigate("Responses")}>
+          <Icon name="check-circle" size={24} color={colors.success} />
           <Text style={styles.navText}>התגובות שלי</Text>
-          <Icon name="chevron-left" size={24} color="#ccc" />
+          <Icon name="chevron-left" size={24} color={colors.muted} />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.navCard}
-          onPress={() => navigation.navigate("Profile")}
-        >
-          <Icon name="person" size={24} color="#666" />
+          onPress={() => navigation.navigate("Profile")}>
+          <Icon name="person" size={24} color={colors.muted} />
           <Text style={styles.navText}>פרופיל והגדרות</Text>
-          <Icon name="chevron-left" size={24} color="#ccc" />
+          <Icon name="chevron-left" size={24} color={colors.muted} />
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -166,117 +165,149 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: "#2196F3",
-    padding: 20,
-    paddingTop: 10,
+    backgroundColor: colors.primary,
+    padding: spacing.lg,
+    paddingTop: spacing.md,
+    borderBottomLeftRadius: borderRadius.large,
+    borderBottomRightRadius: borderRadius.large,
+    overflow: "hidden",
+  },
+  headerDecorOne: {
+    position: "absolute",
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: colors.primarySoft,
+    opacity: 0.4,
+    top: -60,
+    left: -40,
+  },
+  headerDecorTwo: {
+    position: "absolute",
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: colors.accentSoft,
+    opacity: 0.35,
+    bottom: -50,
+    right: -30,
   },
   welcomeText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
+    fontSize: fontSize.xxlarge,
+    fontWeight: "700",
+    color: colors.textInverse,
     textAlign: "right",
   },
   subText: {
-    fontSize: 14,
-    color: "#fff",
+    fontSize: fontSize.medium,
+    color: colors.textInverse,
     opacity: 0.9,
-    marginTop: 5,
+    marginTop: spacing.xs,
     textAlign: "right",
   },
   section: {
-    padding: 15,
+    padding: spacing.md,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 15,
+    fontSize: fontSize.xlarge,
+    fontWeight: "700",
+    marginBottom: spacing.sm,
     textAlign: "right",
+    color: colors.text,
   },
   triggerButton: {
-    backgroundColor: "#FF5722",
-    padding: 20,
-    borderRadius: 10,
+    backgroundColor: colors.accent,
+    padding: spacing.lg,
+    borderRadius: borderRadius.large,
     flexDirection: "row",
     alignItems: "center",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 8},
     shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowRadius: 12,
+    elevation: 5,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   triggerButtonText: {
     flex: 1,
-    marginRight: 15,
+    marginRight: spacing.md,
   },
   triggerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
+    fontSize: fontSize.xlarge,
+    fontWeight: "700",
+    color: colors.textInverse,
     textAlign: "right",
   },
   triggerSubtitle: {
-    fontSize: 14,
-    color: "#fff",
+    fontSize: fontSize.medium,
+    color: colors.textInverse,
     opacity: 0.9,
-    marginTop: 5,
+    marginTop: spacing.xs,
     textAlign: "right",
   },
   activeEventCard: {
-    backgroundColor: "#FFF3E0",
-    padding: 20,
-    borderRadius: 10,
+    backgroundColor: colors.surfaceAlt,
+    padding: spacing.lg,
+    borderRadius: borderRadius.large,
     borderLeftWidth: 4,
-    borderLeftColor: "#FF5722",
+    borderLeftColor: colors.accent,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 3,
   },
   activeEventHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
   activeEventTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#FF5722",
-    marginRight: 10,
+    fontSize: fontSize.large,
+    fontWeight: "700",
+    color: colors.accent,
+    marginRight: spacing.sm,
   },
   activeEventTime: {
-    fontSize: 14,
-    color: "#666",
+    fontSize: fontSize.medium,
+    color: colors.muted,
     textAlign: "right",
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
   viewStatusButton: {
     alignItems: "flex-start",
   },
   viewStatusText: {
-    fontSize: 14,
-    color: "#2196F3",
-    fontWeight: "bold",
+    fontSize: fontSize.medium,
+    color: colors.primary,
+    fontWeight: "700",
   },
   navCard: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: borderRadius.medium,
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 8,
+    elevation: 2,
   },
   navText: {
     flex: 1,
-    fontSize: 16,
-    marginRight: 15,
+    fontSize: fontSize.large,
+    marginRight: spacing.sm,
     textAlign: "right",
+    color: colors.text,
   },
 });
 

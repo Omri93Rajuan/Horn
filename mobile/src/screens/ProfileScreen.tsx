@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {RootState} from '../store';
 import {logout} from '../store/authSlice';
+import {borderRadius, colors, fontSize, spacing} from '../utils/theme';
 
 const ProfileScreen = () => {
   const dispatch = useDispatch();
@@ -61,14 +62,15 @@ const ProfileScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
+        <View style={styles.headerDecor} />
         <View style={styles.avatarContainer}>
-          <Icon name="account-circle" size={80} color="#2196F3" />
+          <View style={styles.avatarBadge}>
+            <Icon name="account-circle" size={80} color={colors.primary} />
+          </View>
         </View>
         <Text style={styles.nameText}>{user?.name}</Text>
         <Text style={styles.emailText}>{user?.email}</Text>
-        {user?.phone && (
-          <Text style={styles.emailText}>{user.phone}</Text>
-        )}
+        {user?.phone && <Text style={styles.emailText}>{user.phone}</Text>}
         <View style={styles.roleBadge}>
           <Text style={styles.roleText}>אזור: {user?.areaId}</Text>
         </View>
@@ -81,16 +83,16 @@ const ProfileScreen = () => {
             style={styles.menuItem}
             onPress={item.onPress}>
             <View style={styles.menuItemContent}>
-              <Icon name={item.icon} size={24} color="#666" />
+              <Icon name={item.icon} size={24} color={colors.muted} />
               <Text style={styles.menuItemText}>{item.title}</Text>
             </View>
-            <Icon name="chevron-left" size={24} color="#ccc" />
+            <Icon name="chevron-left" size={24} color={colors.border} />
           </TouchableOpacity>
         ))}
       </View>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Icon name="exit-to-app" size={24} color="#F44336" />
+        <Icon name="exit-to-app" size={24} color={colors.danger} />
         <Text style={styles.logoutText}>התנתק</Text>
       </TouchableOpacity>
 
@@ -104,86 +106,108 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: '#fff',
-    padding: 30,
+    backgroundColor: colors.primary,
+    padding: spacing.xl,
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomLeftRadius: borderRadius.large,
+    borderBottomRightRadius: borderRadius.large,
+    overflow: 'hidden',
+  },
+  headerDecor: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: colors.accentSoft,
+    opacity: 0.35,
+    top: -80,
+    right: -60,
   },
   avatarContainer: {
-    marginBottom: 15,
+    marginBottom: spacing.md,
+  },
+  avatarBadge: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.round,
+    padding: spacing.xs,
   },
   nameText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontSize: fontSize.xxlarge,
+    fontWeight: '700',
+    marginBottom: spacing.xs,
+    color: colors.textInverse,
   },
   emailText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 10,
+    fontSize: fontSize.medium,
+    color: colors.textInverse,
+    opacity: 0.85,
+    marginBottom: spacing.xs,
   },
   roleBadge: {
-    backgroundColor: '#2196F3',
-    paddingHorizontal: 15,
-    paddingVertical: 5,
-    borderRadius: 15,
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.round,
+    marginTop: spacing.sm,
   },
   roleText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
+    color: colors.textInverse,
+    fontSize: fontSize.small,
+    fontWeight: '700',
   },
   menuContainer: {
-    backgroundColor: '#fff',
-    marginTop: 20,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
+    backgroundColor: colors.surface,
+    marginTop: spacing.lg,
+    borderRadius: borderRadius.large,
+    marginHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   menuItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
   menuItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   menuItemText: {
-    fontSize: 16,
-    marginRight: 15,
+    fontSize: fontSize.large,
+    marginRight: spacing.sm,
+    color: colors.text,
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
-    margin: 20,
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: colors.surface,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.lg,
+    padding: spacing.md,
+    borderRadius: borderRadius.medium,
     borderWidth: 1,
-    borderColor: '#F44336',
+    borderColor: colors.danger,
   },
   logoutText: {
-    color: '#F44336',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginRight: 10,
+    color: colors.danger,
+    fontSize: fontSize.large,
+    fontWeight: '700',
+    marginRight: spacing.sm,
   },
   footer: {
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.lg,
   },
   versionText: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: fontSize.small,
+    color: colors.muted,
   },
 });
 

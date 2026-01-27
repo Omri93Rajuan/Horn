@@ -39,6 +39,8 @@ type UserDoc = {
   name: string;
   phone?: string;
   areaId: string;
+  role: "USER" | "COMMANDER";
+  commanderAreas: string[];
   deviceToken: string;
   createdAt: Date;
 };
@@ -49,6 +51,8 @@ function toPublicUser(id: string, doc: UserDoc): User {
     name: doc.name,
     phone: doc.phone,
     areaId: doc.areaId,
+    role: doc.role,
+    commanderAreas: doc.commanderAreas,
     deviceToken: doc.deviceToken,
     createdAt: doc.createdAt.toISOString(),
   };
@@ -72,6 +76,8 @@ export async function register(input: RegisterInput) {
       passwordHash,
       name: input.name,
       areaId: input.areaId || "",
+      role: "USER",
+      commanderAreas: [],
       deviceToken: "",
       createdAt: new Date(),
     };
@@ -144,7 +150,12 @@ export async function login(input: LoginInput) {
     });
 
     return {
-      user: toPublicUser(user.id, { ...user, phone: user.phone ?? undefined }),
+      user: toPublicUser(user.id, {
+        ...user,
+        phone: user.phone ?? undefined,
+        role: user.role as "USER" | "COMMANDER",
+        commanderAreas: user.commanderAreas,
+      }),
       accessToken,
       refreshToken,
     };
@@ -214,7 +225,12 @@ export async function getMe(input: MeInput) {
     }
 
     return {
-      user: toPublicUser(user.id, { ...user, phone: user.phone ?? undefined }),
+      user: toPublicUser(user.id, {
+        ...user,
+        phone: user.phone ?? undefined,
+        role: user.role as "USER" | "COMMANDER",
+        commanderAreas: user.commanderAreas,
+      }),
     };
   } catch (err) {
     throw mapPrismaError(err, "Server error");

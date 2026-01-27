@@ -1,6 +1,7 @@
 import { prisma } from "../db/prisma";
 import { Response, ResponseStatus } from "../types/domain";
 import { mapPrismaError } from "../utils/prismaErrors";
+import { ACTIVE_EVENT_WINDOW_MINUTES } from "../config/events";
 
 type SubmitResponseInput = {
   userId: string;
@@ -21,6 +22,12 @@ export async function submitResponse(
       if (!event) {
         const err: any = new Error("Event not found");
         err.status = 404;
+        throw err;
+      }
+      const windowMs = ACTIVE_EVENT_WINDOW_MINUTES * 60 * 1000;
+      if (now.getTime() - event.triggeredAt.getTime() > windowMs) {
+        const err: any = new Error("חלון הזמן לאישור האירוע נסגר");
+        err.status = 403;
         throw err;
       }
 

@@ -1,4 +1,4 @@
-import { prisma } from "../db/prisma";
+﻿import { prisma } from "../db/prisma";
 import { User } from "../types/domain";
 import { mapPrismaError } from "../utils/prismaErrors";
 
@@ -11,7 +11,10 @@ type RegisterDeviceInput = {
 
 type UserDoc = {
   name: string;
+  phone?: string;
   areaId: string;
+  role: "USER" | "COMMANDER";
+  commanderAreas: string[];
   deviceToken: string;
   createdAt: Date;
 };
@@ -20,7 +23,10 @@ function toPublicUser(id: string, doc: UserDoc): User {
   return {
     id,
     name: doc.name,
+    phone: doc.phone,
     areaId: doc.areaId,
+    role: doc.role,
+    commanderAreas: doc.commanderAreas,
     deviceToken: doc.deviceToken,
     createdAt: doc.createdAt.toISOString(),
   };
@@ -37,7 +43,10 @@ export async function registerDevice(input: RegisterDeviceInput) {
 
     const updated: UserDoc = {
       name: input.name || existing.name,
+      phone: existing.phone ?? undefined,
       areaId: input.areaId,
+      role: existing.role as "USER" | "COMMANDER",
+      commanderAreas: existing.commanderAreas,
       deviceToken: input.deviceToken,
       createdAt: existing.createdAt,
     };

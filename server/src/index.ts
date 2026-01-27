@@ -7,6 +7,7 @@ import usersRoutes from "./routes/users.routes";
 import alertsRoutes from "./routes/alerts.routes";
 import responsesRoutes from "./routes/responses.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
+import areasRoutes from "./routes/areas.routes";
 import { handleError } from "./utils/ErrorHandle";
 import { prisma } from "./db/prisma";
 import { seedIfEmpty } from "./db/seed";
@@ -44,6 +45,7 @@ app.use("/api", limiter);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", usersRoutes);
+app.use("/api/areas", areasRoutes);
 app.use("/api/alerts", alertsRoutes);
 app.use("/api/responses", responsesRoutes);
 app.use("/api/dashboard", dashboardRoutes);

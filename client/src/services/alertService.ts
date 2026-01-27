@@ -13,7 +13,7 @@ export const alertService = {
   },
 
   getEventStatus: async (eventId: string): Promise<EventStatusResult> => {
-    const response = await api.get(`/dashboard/event/${eventId}`);
+    const response = await api.get(`/dashboard/events/${eventId}`);
     return response.data.result || response.data;
   },
 };

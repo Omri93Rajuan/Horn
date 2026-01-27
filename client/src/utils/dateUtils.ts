@@ -1,4 +1,4 @@
-export const formatDate = (dateString: string): string => {
+﻿export const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
   return date.toLocaleDateString("he-IL", {
     year: "numeric",
@@ -30,4 +30,14 @@ export const getTimeAgo = (dateString: string): string => {
 
   const days = Math.floor(diffInSeconds / 86400);
   return `לפני ${days} ימים`;
+};
+
+export const formatEventLabel = (dateString: string, action: string): string => {
+  return `${action} • ${formatDate(dateString)}`;
+};
+
+export const isEventActive = (dateString: string, windowMinutes = 10): boolean => {
+  const triggeredAt = new Date(dateString).getTime();
+  const now = Date.now();
+  return now - triggeredAt <= windowMinutes * 60 * 1000;
 };

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { RouterProvider } from "@tanstack/react-router";
 import { useSelector } from "react-redux";
 import { router } from "./router";
@@ -9,7 +9,7 @@ import { initNetworkMonitoring } from "./utils/networkService";
 export const App: React.FC = () => {
   const auth = useSelector((state: RootState) => state.auth);
 
-  useEffect(() => {
+  React.useEffect(() => {
     initNetworkMonitoring();
   }, []);
 

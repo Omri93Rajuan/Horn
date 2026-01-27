@@ -36,28 +36,33 @@ const ResponsesScreen: React.FC = () => {
   }, [responses, filter, search]);
 
   return (
-    <section className="page">
-      <header className="page-header">
+    <section className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2>התגובות שלי</h2>
-          <p>מעקב אחר תגובות לאירועים האחרונים.</p>
+          <h2 className="text-2xl font-semibold text-text dark:text-text-dark">התגובות שלי</h2>
+          <p className="text-sm text-text-muted dark:text-text-dark-muted">מעקב אחר תגובות לאירועים האחרונים.</p>
         </div>
         <button
           type="button"
           onClick={() => responsesQuery.refetch()}
           disabled={responsesQuery.isFetching}
+          className="action-btn ghost"
         >
           רענן
         </button>
-      </header>
+      </div>
 
-      <div className="card filters">
-        <div className="filter-row">
+      <div className="card space-y-4">
+        <div className="flex flex-wrap items-center gap-3">
           {(["ALL", "OK", "HELP"] as const).map((status) => (
             <button
               key={status}
               type="button"
-              className={`chip ${filter === status ? "active" : ""}`}
+              className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition ${
+                filter === status
+                  ? "bg-primary/10 text-primary"
+                  : "border border-border dark:border-border-dark text-text-muted dark:text-text-dark-muted hover:border-primary/40"
+              }`}
               onClick={() => setFilter(status)}
             >
               {status}
@@ -65,6 +70,7 @@ const ResponsesScreen: React.FC = () => {
           ))}
         </div>
         <input
+          className="input"
           type="text"
           placeholder="חיפוש לפי אירוע או הערה"
           value={search}
@@ -74,24 +80,29 @@ const ResponsesScreen: React.FC = () => {
 
       <div className="card">
         {responsesQuery.isLoading ? (
-          <p>טוען תגובות...</p>
+          <p className="text-sm text-text-muted dark:text-text-dark-muted">טוען תגובות...</p>
         ) : filteredResponses.length === 0 ? (
-          <p>אין תגובות להצגה.</p>
+          <p className="text-sm text-text-muted dark:text-text-dark-muted">אין תגובות להצגה.</p>
         ) : (
-          <ul className="list">
+          <div className="space-y-3">
             {filteredResponses.map((response) => (
-              <li key={response.id} className="list-item-row">
-                <div>
-                  <strong>אירוע #{response.eventId}</strong>
-                  <span>{formatDate(response.respondedAt)}</span>
-                  {response.notes ? <p>{response.notes}</p> : null}
+              <div
+                key={response.id}
+                className="flex flex-col gap-3 rounded-2xl border border-border dark:border-border-dark bg-surface-1/90 dark:bg-surface-1-dark/90 p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-text dark:text-text-dark">
+                    אירוע #{response.eventId}
+                  </p>
+                  <p className="text-xs text-text-muted dark:text-text-dark-muted">{formatDate(response.respondedAt)}</p>
+                  {response.notes ? (
+                    <p className="text-xs text-text-muted dark:text-text-dark-muted">{response.notes}</p>
+                  ) : null}
                 </div>
-                <span className={`pill ${response.status.toLowerCase()}`}>
-                  {response.status}
-                </span>
-              </li>
+                <span className="badge text-primary">{response.status}</span>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </section>

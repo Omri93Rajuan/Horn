@@ -1,8 +1,12 @@
+export type UserRole = "USER" | "COMMANDER";
+
 export interface PublicUser {
   id: string;
   name: string;
   phone?: string;
   areaId: string;
+  role?: UserRole;
+  commanderAreas?: string[];
   deviceToken?: string;
   createdAt?: string;
 }
@@ -53,6 +57,44 @@ export interface EventStatusResult {
     pending: number;
   };
   list: EventStatusItem[];
+}
+
+export interface CommanderAreaStats {
+  areaId: string;
+  totalEvents: number;
+  last30Days: number;
+  lastEventAt?: string;
+}
+
+export interface CommanderOverview {
+  areas: CommanderAreaStats[];
+  totalEvents: number;
+  totalLast30Days: number;
+}
+
+export interface CommanderActiveArea {
+  areaId: string;
+  event: AlertEvent | null;
+  totalUsers: number;
+  responded: number;
+  pending: number;
+  ok: number;
+  help: number;
+  isComplete: boolean;
+  isOverdue: boolean;
+}
+
+export interface CommanderActiveSummary {
+  windowMinutes: number;
+  areas: CommanderActiveArea[];
+  totals: {
+    totalUsers: number;
+    responded: number;
+    pending: number;
+    ok: number;
+    help: number;
+    activeAreas: number;
+  };
 }
 
 export interface DashboardStats {

@@ -14,6 +14,8 @@ model User {
   name         String
   phone        String?
   areaId       String             @default("")
+  role         UserRole           @default(USER)
+  commanderAreas String[]         @default([])
   deviceToken  String             @default("")
   createdAt    DateTime           @default(now())
   refreshToken AuthRefreshToken?
@@ -44,6 +46,11 @@ model AlertEvent {
 enum ResponseStatus {
   OK
   HELP
+}
+
+enum UserRole {
+  USER
+  COMMANDER
 }
 
 model Response {

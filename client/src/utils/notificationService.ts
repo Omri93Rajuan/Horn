@@ -1,4 +1,4 @@
-﻿class NotificationService {
+class NotificationService {
   configure = async () => {
     if (!("Notification" in window)) {
       return false;

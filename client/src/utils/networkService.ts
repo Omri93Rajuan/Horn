@@ -1,4 +1,4 @@
-﻿let isOnline = navigator.onLine;
+let isOnline = navigator.onLine;
 let hasShownOfflineAlert = false;
 
 export const initNetworkMonitoring = () => {

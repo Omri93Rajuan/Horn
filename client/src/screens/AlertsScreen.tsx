@@ -1,10 +1,15 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { alertService } from "../services/alertService";
 import { dashboardService } from "../services/dashboardService";
 import { responseService } from "../services/responseService";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { addResponse, setCurrentEvent, setEventStatus, setEvents } from "../store/dataSlice";
+import {
+  addResponse,
+  setCurrentEvent,
+  setEventStatus,
+  setEvents,
+} from "../store/dataSlice";
 import { formatDate } from "../utils/dateUtils";
 
 const AlertsScreen: React.FC = () => {
@@ -34,7 +39,15 @@ const AlertsScreen: React.FC = () => {
   const respondMutation = useMutation({
     mutationFn: responseService.submitResponse,
     onSuccess: (response) => {
-      dispatch(addResponse(response));
+      dispatch(
+        addResponse({
+          id: response.id,
+          eventId: response.eventId,
+          status: response.status,
+          notes: response.notes,
+          respondedAt: response.respondedAt,
+        }),
+      );
       alert("התגובה נשלחה בהצלחה");
       setNotes("");
     },
@@ -183,7 +196,9 @@ const AlertsScreen: React.FC = () => {
                           <span>{item.user.phone}</span>
                         ) : null}
                       </div>
-                      <span className={`pill ${item.responseStatus.toLowerCase()}`}>
+                      <span
+                        className={`pill ${item.responseStatus.toLowerCase()}`}
+                      >
                         {item.responseStatus}
                       </span>
                     </div>

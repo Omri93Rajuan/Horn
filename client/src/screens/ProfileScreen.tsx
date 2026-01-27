@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { authService } from "../services/authService";
@@ -18,7 +18,7 @@ const ProfileScreen: React.FC = () => {
     mutationFn: authService.logout,
     onSettled: () => {
       dispatch(logout());
-      navigate({ to: "/login" });
+      navigate({ to: "/login", search: { redirect: undefined } });
     },
   });
 
@@ -54,7 +54,7 @@ const ProfileScreen: React.FC = () => {
               <strong>שם:</strong> {user?.name}
             </div>
             <div>
-              <strong>אימייל:</strong> {user?.email}
+              <strong>אימייל:</strong> {user?.email || "לא זמין"}
             </div>
             <div>
               <strong>טלפון:</strong> {user?.phone || "לא הוגדר"}

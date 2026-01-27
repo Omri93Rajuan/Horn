@@ -1,6 +1,6 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate, Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { authService } from "../services/authService";
 import { useAppDispatch } from "../store/hooks";
 import { setCredentials, setLoading } from "../store/authSlice";
@@ -27,9 +27,7 @@ const RegisterScreen: React.FC = () => {
       navigate({ to: "/dashboard" });
     },
     onError: (error: any) => {
-      alert(
-        error.response?.data?.message || "אירעה שגיאה בהרשמה",
-      );
+      alert(error.response?.data?.message || "אירעה שגיאה בהרשמה");
     },
     onSettled: () => dispatch(setLoading(false)),
   });
@@ -124,7 +122,9 @@ const RegisterScreen: React.FC = () => {
         </form>
         <div className="auth-footer">
           <span>כבר יש לך חשבון?</span>
-          <Link to="/login">התחבר</Link>
+          <Link to="/login" search={{ redirect: undefined }}>
+            התחבר
+          </Link>
         </div>
       </div>
     </section>

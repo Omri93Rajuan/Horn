@@ -1,10 +1,14 @@
-﻿export interface User {
+export interface PublicUser {
   id: string;
-  email: string;
   name: string;
   phone?: string;
   areaId: string;
   deviceToken?: string;
+  createdAt?: string;
+}
+
+export interface AuthUser extends PublicUser {
+  email?: string;
 }
 
 export interface AlertEvent {
@@ -25,8 +29,17 @@ export interface Response {
   respondedAt: string;
 }
 
+export interface MyResponse {
+  id: string;
+  eventId: string;
+  status: ResponseStatus;
+  notes?: string;
+  respondedAt: string;
+  event?: AlertEvent;
+}
+
 export interface EventStatusItem {
-  user: User;
+  user: PublicUser;
   responseStatus: ResponseStatus;
   notes?: string;
   respondedAt?: string;

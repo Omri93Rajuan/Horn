@@ -1,4 +1,5 @@
-﻿import api from "./api";
+import api from "./api";
+import type { AuthUser } from "../types";
 
 export interface LoginRequest {
   email: string;
@@ -15,33 +16,28 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   success: boolean;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    phone?: string;
-    areaId: string;
-  };
+  user: AuthUser;
   accessToken: string;
+  refreshToken?: string;
 }
 
 export const authService = {
   login: async (
     data: LoginRequest,
-  ): Promise<{ user: AuthResponse["user"]; token: string }> => {
+  ): Promise<{ user: AuthUser; token: string }> => {
     const response = await api.post("/auth/login", data);
     return {
-      user: response.data.user,
+      user: { ...response.data.user, email: data.email },
       token: response.data.accessToken,
     };
   },
 
   register: async (
     data: RegisterRequest,
-  ): Promise<{ user: AuthResponse["user"]; token: string }> => {
+  ): Promise<{ user: AuthUser; token: string }> => {
     const response = await api.post("/auth/register", data);
     return {
-      user: response.data.user,
+      user: { ...response.data.user, email: data.email },
       token: response.data.accessToken,
     };
   },
@@ -50,7 +46,7 @@ export const authService = {
     await api.post("/auth/logout");
   },
 
-  getProfile: async () => {
+  getProfile: async (): Promise<AuthResponse> => {
     const response = await api.get("/auth/me");
     return response.data;
   },

@@ -1,6 +1,6 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate, Link } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { authService } from "../services/authService";
 import { useAppDispatch } from "../store/hooks";
 import { setCredentials, setLoading } from "../store/authSlice";
@@ -9,6 +9,7 @@ import { validateEmail, validatePassword } from "../utils/validators";
 const LoginScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const search = useSearch({ from: "/login" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -19,12 +20,10 @@ const LoginScreen: React.FC = () => {
     },
     onSuccess: (data) => {
       dispatch(setCredentials(data));
-      navigate({ to: "/dashboard" });
+      navigate({ to: search.redirect ?? "/dashboard" });
     },
     onError: (error: any) => {
-      alert(
-        error.response?.data?.message || "אירעה שגיאה בהתחברות",
-      );
+      alert(error.response?.data?.message || "אירעה שגיאה בהתחברות");
     },
     onSettled: () => {
       dispatch(setLoading(false));

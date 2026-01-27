@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from "react";
+import React, { useEffect } from "react";
 import { RouterProvider } from "@tanstack/react-router";
 import { useSelector } from "react-redux";
 import { router } from "./router";

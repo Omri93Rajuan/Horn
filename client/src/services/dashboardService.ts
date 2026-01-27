@@ -1,4 +1,4 @@
-﻿import api from "./api";
+import api from "./api";
 import type { EventStatusResult } from "../types";
 
 export const dashboardService = {

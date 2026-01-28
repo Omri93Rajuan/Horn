@@ -2,6 +2,7 @@ import { prisma } from "../db/prisma";
 import { AlertEvent } from "../types/domain";
 import { sendPushToArea } from "./push.service";
 import { mapPrismaError } from "../utils/prismaErrors";
+import { io } from "../index";
 
 type TriggerResult = {
   event: AlertEvent;
@@ -26,6 +27,22 @@ export async function triggerAlert(areaId: string, triggeredByUserId?: string): 
     });
 
     const push = await sendPushToArea(areaId, event.id);
+
+    // Emit real-time update to commanders
+    io.to("commanders").emit("new-alert", {
+      eventId: event.id,
+      areaId,
+      triggeredAt: now.toISOString(),
+    });
+
+    // Emit real-time update to soldiers in this area
+    io.to(`area-${areaId}`).emit("new-alert", {
+      eventId: event.id,
+      areaId,
+      triggeredAt: now.toISOString(),
+    });
+
+    console.log(`📡 WebSocket: Alert sent to commanders and area-${areaId}`);
 
     return {
       event: { id: event.id, areaId, triggeredAt: now.toISOString() },

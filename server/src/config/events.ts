@@ -1,0 +1,1 @@
+export const ACTIVE_EVENT_WINDOW_MINUTES = 10;

@@ -1,6 +1,7 @@
-import { faker } from "@faker-js/faker";
+﻿import { faker } from "@faker-js/faker";
 import { prisma } from "./prisma";
 import { hashPassword } from "../helpers/bcrypt";
+import { AREAS } from "../config/areas";
 
 type SeedResult = {
   seeded: boolean;
@@ -10,27 +11,64 @@ type SeedResult = {
   refreshTokens: number;
 };
 
-const AREAS = ["area-1", "area-2", "area-3"];
+const USERS_PER_AREA = 5;
 
 export async function seedIfEmpty(): Promise<SeedResult> {
   const userCount = await prisma.user.count();
+  const commanderEmail = "commander@horn.local";
+  const existingCommander = await prisma.user.findUnique({
+    where: { email: commanderEmail },
+  });
+  let commanderCreated = false;
+  if (!existingCommander) {
+    await prisma.user.create({
+      data: {
+        email: commanderEmail,
+        passwordHash: await hashPassword("Commander!1"),
+        name: "מפקד קומנדור",
+        areaId: "area-1",
+        role: "COMMANDER",
+        commanderAreas: AREAS,
+        deviceToken: faker.string.uuid(),
+        createdAt: faker.date.recent({ days: 10 }),
+      },
+    });
+    commanderCreated = true;
+  }
+
   if (userCount > 0) {
     return { seeded: false, users: 0, events: 0, responses: 0, refreshTokens: 0 };
   }
 
-  const usersToCreate = 12;
   const passwordHash = await hashPassword("Passw0rd!");
   const users = [];
 
-  for (let i = 0; i < usersToCreate; i += 1) {
+  if (!commanderCreated) {
     users.push({
-      email: faker.internet.email().toLowerCase(),
-      passwordHash,
-      name: faker.person.fullName(),
-      areaId: faker.helpers.arrayElement(AREAS),
+      email: commanderEmail,
+      passwordHash: await hashPassword("Commander!1"),
+      name: "מפקד קומנדור",
+      areaId: "area-1",
+      role: "COMMANDER" as const,
+      commanderAreas: AREAS,
       deviceToken: faker.string.uuid(),
-      createdAt: faker.date.recent({ days: 30 }),
+      createdAt: faker.date.recent({ days: 10 }),
     });
+  }
+
+  for (const areaId of AREAS) {
+    for (let i = 0; i < USERS_PER_AREA; i += 1) {
+      users.push({
+        email: faker.internet.email().toLowerCase(),
+        passwordHash,
+        name: faker.person.fullName(),
+        areaId,
+        role: "USER" as const,
+        commanderAreas: [],
+        deviceToken: faker.string.uuid(),
+        createdAt: faker.date.recent({ days: 30 }),
+      });
+    }
   }
 
   const createdUsers = [];

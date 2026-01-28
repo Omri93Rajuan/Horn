@@ -21,4 +21,9 @@ export const dashboardService = {
     const response = await api.get("/dashboard/commander/active");
     return response.data;
   },
+
+  getAreaSoldiers: async (areaId: string) => {
+    const response = await api.get(`/dashboard/commander/areas/${areaId}/soldiers`);
+    return response.data;
+  },
 };

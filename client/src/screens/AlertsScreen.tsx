@@ -54,7 +54,7 @@ const AlertsScreen: React.FC = () => {
           respondedAt: response.respondedAt,
         }),
       );
-      alert("התגובה נשלחה בהצלחה");
+      // Removed alert - silent success
       setNotes("");
     },
     onError: (error: any) => {

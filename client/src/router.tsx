@@ -15,6 +15,7 @@ import CommanderDashboard from "./screens/CommanderDashboard";
 import AlertsScreen from "./screens/AlertsScreen";
 import ResponsesScreen from "./screens/ResponsesScreen";
 import ProfileScreen from "./screens/ProfileScreen";
+import NotFoundScreen from "./screens/NotFoundScreen";
 import type { RootState } from "./store";
 import { useAppSelector } from "./store/hooks";
 import logoUrl from "./assets/mainlogo.webp";
@@ -130,6 +131,12 @@ const RootLayout = () => {
 
 const rootRoute = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
+  beforeLoad: ({ context, location }) => {
+    // If accessing root and not logged in, redirect to login
+    if (location.pathname === "/" && !context.auth.token) {
+      throw redirect({ to: "/login" });
+    }
+  },
 });
 
 const loginRoute = createRoute({
@@ -138,12 +145,24 @@ const loginRoute = createRoute({
   validateSearch: (search: Record<string, unknown>) => ({
     redirect: typeof search.redirect === "string" ? search.redirect : undefined,
   }),
+  beforeLoad: ({ context }) => {
+    // If already logged in, redirect to dashboard
+    if (context.auth.token) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   component: LoginScreen,
 });
 
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/register",
+  beforeLoad: ({ context }) => {
+    // If already logged in, redirect to dashboard
+    if (context.auth.token) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   component: RegisterScreen,
 });
 
@@ -199,6 +218,12 @@ const profileRoute = createRoute({
   component: ProfileScreen,
 });
 
+const notFoundRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "*",
+  component: NotFoundScreen,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
@@ -210,11 +235,13 @@ const routeTree = rootRoute.addChildren([
     responsesRoute,
     profileRoute,
   ]),
+  notFoundRoute,
 ]);
 
 export const router = createRouter({
   routeTree,
   context: {} as RouterContext,
+  defaultNotFoundComponent: NotFoundScreen,
 });
 
 declare module "@tanstack/react-router" {

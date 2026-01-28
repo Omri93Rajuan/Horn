@@ -2,6 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
+import http from "http";
+import { Server } from "socket.io";
 import authRoutes from "./routes/auth.routes";
 import usersRoutes from "./routes/users.routes";
 import alertsRoutes from "./routes/alerts.routes";
@@ -15,6 +17,16 @@ import { seedIfEmpty } from "./db/seed";
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    methods: ["GET", "POST"],
+  },
+});
+
+// Make io available to routes
+export { io };
 
 // CORS
 app.use(cors());
@@ -56,6 +68,30 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 
+// WebSocket connection handling
+io.on("connection", (socket) => {
+  console.log("Client connected:", socket.id);
+
+  socket.on("join-commander-room", () => {
+    socket.join("commanders");
+    console.log("Client joined commanders room:", socket.id);
+  });
+
+  socket.on("join-area-room", (areaId: string) => {
+    socket.join(`area-${areaId}`);
+    console.log(`Client joined area room: ${areaId}`, socket.id);
+  });
+
+  socket.on("leave-area-room", (areaId: string) => {
+    socket.leave(`area-${areaId}`);
+    console.log(`Client left area room: ${areaId}`, socket.id);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected:", socket.id);
+  });
+});
+
 async function start() {
   const seedResult = await seedIfEmpty();
   if (seedResult.seeded) {
@@ -64,8 +100,9 @@ async function start() {
     );
   }
 
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`Horn backend listening on ${PORT}`);
+    console.log(`WebSocket server ready`);
   });
 }
 

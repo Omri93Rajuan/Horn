@@ -1,8 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { dashboardService } from "../services/dashboardService";
+import { alertService } from "../services/alertService";
 import { useAppSelector } from "../store/hooks";
 import { formatDate, formatEventLabel } from "../utils/dateUtils";
+import { useCommanderSocket } from "../hooks/useSocket";
 import {
   LineChart,
   Line,
@@ -28,20 +30,73 @@ import {
 const ACTION_LABEL = "ירוק בעיניים לאירוע";
 
 const COLORS = {
-  primary: "#3b82f6",
-  success: "#10b981",
-  warning: "#f59e0b",
-  danger: "#ef4444",
-  info: "#06b6d4",
-  purple: "#8b5cf6",
-  pink: "#ec4899",
-  teal: "#14b8a6",
+  primary: "#2563eb", // כחול כהה
+  success: "#16a34a", // ירוק צבאי
+  warning: "#ea580c", // כתום אזהרה
+  danger: "#dc2626", // אדום סכנה
+  info: "#0891b2", // ציאן
+  purple: "#7c3aed",
+  pink: "#db2777",
+  teal: "#0d9488",
+  military: {
+    green: "#4d7c0f", // ירוק צבאי כהה
+    olive: "#65a30d", // ירוק זית
+    sand: "#ca8a04", // צהוב חול
+    steel: "#475569", // אפור פלדה
+    night: "#1e293b", // כחול לילה
+  }
 };
 
 const CommanderDashboard: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
+  const queryClient = useQueryClient();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"ALL" | "OK" | "HELP" | "PENDING">("ALL");
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [selectedArea, setSelectedArea] = useState<string>("");
+  const [isCreatingAlert, setIsCreatingAlert] = useState(false);
+  const [notification, setNotification] = useState<{
+    show: boolean;
+    type: 'success' | 'error' | 'info';
+    title: string;
+    message: string;
+  }>({ show: false, type: 'info', title: '', message: '' });
+
+  const showNotification = useCallback((type: 'success' | 'error' | 'info', title: string, message: string) => {
+    setNotification({ show: true, type, title, message });
+    setTimeout(() => {
+      setNotification({ show: false, type: 'info', title: '', message: '' });
+    }, 5000);
+  }, []);
+
+  // WebSocket handlers
+  const handleNewAlert = useCallback((data: { eventId: string; areaId: string; triggeredAt: string }) => {
+    console.log('🔔 New alert received:', data);
+    showNotification('info', 'התראה חדשה', `אירוע חדש בגזרה ${data.areaId}`);
+    
+    // Invalidate queries to refetch data
+    queryClient.invalidateQueries({ queryKey: ["commander-overview"] });
+    queryClient.invalidateQueries({ queryKey: ["commander-active"] });
+  }, [queryClient, showNotification]);
+
+  const handleResponseUpdate = useCallback((data: { eventId: string; userId: string; status: string; timestamp: string }) => {
+    console.log('📝 Response update received:', data);
+    console.log('🔄 Invalidating queries for event:', data.eventId);
+    
+    // Show notification
+    showNotification('success', 'דיווח חדש', `חייל דיווח ${data.status === 'OK' ? 'בסדר' : 'צריך עזרה'}`);
+    
+    // Invalidate ALL relevant queries to ensure UI updates
+    queryClient.invalidateQueries({ queryKey: ["event-status", data.eventId] });
+    queryClient.invalidateQueries({ queryKey: ["commander-active"] });
+    queryClient.invalidateQueries({ queryKey: ["commander-overview"] });
+    
+    console.log('✅ Queries invalidated successfully');
+  }, [queryClient, showNotification]);
+
+  // Connect to WebSocket
+  useCommanderSocket(handleNewAlert, handleResponseUpdate);
 
   const overviewQuery = useQuery({
     queryKey: ["commander-overview"],
@@ -53,7 +108,6 @@ const CommanderDashboard: React.FC = () => {
     queryKey: ["commander-active"],
     queryFn: dashboardService.getCommanderActive,
     enabled: user?.role === "COMMANDER",
-    refetchInterval: 10_000,
   });
 
   const statusQuery = useQuery({
@@ -62,9 +116,22 @@ const CommanderDashboard: React.FC = () => {
       console.log('🔍 Fetching event status for:', selectedEventId);
       const result = await dashboardService.getEventStatus(selectedEventId!);
       console.log('📦 Received event status:', result);
+      console.log('📋 List length:', result?.list?.length);
       return result;
     },
     enabled: !!selectedEventId && user?.role === "COMMANDER",
+  });
+
+  // Query for soldiers in selected area (when no event)
+  const areaSoldiersQuery = useQuery({
+    queryKey: ["area-soldiers", selectedAreaId],
+    queryFn: async () => {
+      console.log('👥 Fetching soldiers for area:', selectedAreaId);
+      const result = await dashboardService.getAreaSoldiers(selectedAreaId!);
+      console.log('📦 Received soldiers:', result);
+      return result;
+    },
+    enabled: !!selectedAreaId && !selectedEventId && user?.role === "COMMANDER",
   });
 
   // Query for all soldiers under commander
@@ -89,7 +156,6 @@ const CommanderDashboard: React.FC = () => {
       return allSoldiers;
     },
     enabled: user?.role === "COMMANDER" && !selectedEventId && (activeQuery.data?.areas ?? []).length > 0,
-    refetchInterval: 15_000,
   });
 
   useEffect(() => {
@@ -98,15 +164,17 @@ const CommanderDashboard: React.FC = () => {
     }
   }, [user?.role]);
 
+  // Auto-select first event only on initial load
   useEffect(() => {
-    if (selectedEventId) {
+    if (selectedEventId !== null) {
       return;
     }
     const activeWithEvent = activeQuery.data?.areas.find((area) => area.event);
     if (activeWithEvent?.event) {
+      console.log('🎯 Auto-selecting first event:', activeWithEvent.event.id);
       setSelectedEventId(activeWithEvent.event.id);
     }
-  }, [activeQuery.data, selectedEventId]);
+  }, [activeQuery.data]);
 
   const filteredStatusList = useMemo(() => {
     if (!statusQuery.data) {
@@ -195,50 +263,86 @@ const CommanderDashboard: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "OK":
-        return "border-2 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800";
+        return "border-2 bg-success bg-opacity-10 border-success border-opacity-30";
       case "HELP":
-        return "border-2 bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800";
+        return "border-2 bg-danger bg-opacity-10 border-danger border-opacity-30";
       case "PENDING":
-        return "border-2 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800";
+        return "border-2 bg-warning bg-opacity-10 border-warning border-opacity-30";
       default:
-        return "border-2 bg-slate-50 dark:bg-slate-950/30 border-slate-200 dark:border-slate-800";
+        return "border-2 bg-surface-2 dark:bg-surface-2-dark border-border dark:border-border-dark";
+    }
+  };
+
+  const handleCreateAlert = async () => {
+    if (!selectedArea) {
+      showNotification('error', 'שגיאה', 'נא לבחור גזרה');
+      return;
+    }
+
+    setIsCreatingAlert(true);
+    try {
+      await alertService.triggerEvent(selectedArea);
+
+      showNotification('success', 'הצלחה!', 'התראה נוצרה בהצלחה ונשלחה לכל החיילים ✓');
+      setShowAlertModal(false);
+      setSelectedArea("");
+      
+      // Refresh queries
+      activeQuery.refetch();
+      overviewQuery.refetch();
+    } catch (error) {
+      console.error('Error creating alert:', error);
+      showNotification('error', 'שגיאה', 'אירעה שגיאה ביצירת ההתראה. נסה שוב.');
+    } finally {
+      setIsCreatingAlert(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-bg dark:bg-bg-dark p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            <h1 className="text-3xl font-bold tracking-tight text-text dark:text-text-dark">
               מרכז פיקוד
             </h1>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            <p className="mt-2 text-sm text-text-muted dark:text-text-dark-muted">
               ניהול ומעקב אחר מצב הכוחות בזמן אמת
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-full bg-white dark:bg-slate-800 px-4 py-2 shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              מעודכן לפני {Math.floor(Math.random() * 30)} שניות
-            </span>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowAlertModal(true)}
+              className="flex items-center gap-2 rounded-lg bg-danger px-4 py-2.5 text-sm font-semibold text-surface-1 shadow-lg hover:opacity-90 active:scale-95 transition-all duration-200"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>הקפץ התראה חדשה</span>
+            </button>
+            <div className="flex items-center gap-2 rounded-full bg-surface-1 dark:bg-surface-1-dark px-4 py-2 shadow-sm ring-1 ring-border dark:ring-border-dark">
+              <div className="h-2 w-2 animate-pulse rounded-full bg-success" />
+              <span className="text-sm font-medium text-text dark:text-text-dark">
+                מעודכן לפני {Math.floor(Math.random() * 30)} שניות
+              </span>
+            </div>
           </div>
         </div>
 
         {/* KPI Cards with Mini Charts */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {/* Response Rate Card */}
-          <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg ring-1 ring-slate-900/5 dark:ring-white/10">
+          <div className="relative overflow-hidden rounded-2xl bg-surface-1 dark:bg-surface-1-dark p-6 shadow-hud ring-1 ring-border dark:ring-border-dark">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-medium uppercase tracking-wider text-text-muted dark:text-text-dark-muted">
                   היענות כוללת
                 </p>
-                <p className="mt-2 text-4xl font-bold text-blue-600 dark:text-blue-400">
+                <p className="mt-2 text-4xl font-bold text-text dark:text-text-dark">
                   {responseRate}%
                 </p>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                <p className="mt-1 text-sm text-text-muted dark:text-text-dark-muted">
                   {responded} / {totalUsers}
                 </p>
               </div>
@@ -246,23 +350,23 @@ const CommanderDashboard: React.FC = () => {
             <div className="mt-4 h-16">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={areaChartData.slice(0, 7)}>
-                  <Line type="monotone" dataKey="אירועים" stroke={COLORS.primary} strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="אירועים" stroke={COLORS.military.steel} strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* Responded Card */}
-          <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg ring-1 ring-slate-900/5 dark:ring-white/10">
+          <div className="relative overflow-hidden rounded-2xl bg-surface-1 dark:bg-surface-1-dark p-6 shadow-hud ring-1 ring-border dark:ring-border-dark">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-medium uppercase tracking-wider text-text-muted dark:text-text-dark-muted">
                   אישרו הגעה
                 </p>
-                <p className="mt-2 text-4xl font-bold text-emerald-600 dark:text-emerald-400">
+                <p className="mt-2 text-4xl font-bold text-success">
                   {responded}
                 </p>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                <p className="mt-1 text-sm text-text-muted dark:text-text-dark-muted">
                   חיילים מוכנים
                 </p>
               </div>
@@ -283,16 +387,16 @@ const CommanderDashboard: React.FC = () => {
           </div>
 
           {/* Pending Card */}
-          <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg ring-1 ring-slate-900/5 dark:ring-white/10">
+          <div className="relative overflow-hidden rounded-2xl bg-surface-1 dark:bg-surface-1-dark p-6 shadow-hud ring-1 ring-border dark:ring-border-dark">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-medium uppercase tracking-wider text-text-muted dark:text-text-dark-muted">
                   ממתינים
                 </p>
-                <p className="mt-2 text-4xl font-bold text-amber-600 dark:text-amber-400">
+                <p className="mt-2 text-4xl font-bold text-warning">
                   {pending}
                 </p>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                <p className="mt-1 text-sm text-text-muted dark:text-text-dark-muted">
                   טרם הגיבו
                 </p>
               </div>
@@ -300,23 +404,23 @@ const CommanderDashboard: React.FC = () => {
             <div className="mt-4 h-16">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={areaChartData.slice(0, 7)}>
-                  <Line type="monotone" dataKey="ממוצע" stroke={COLORS.warning} strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                  <Line type="monotone" dataKey="ממוצע" stroke={COLORS.military.sand} strokeWidth={2} strokeDasharray="5 5" dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* Help Needed Card with Radial */}
-          <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg ring-1 ring-slate-900/5 dark:ring-white/10">
+          <div className="relative overflow-hidden rounded-2xl bg-surface-1 dark:bg-surface-1-dark p-6 shadow-hud ring-1 ring-border dark:ring-border-dark">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-medium uppercase tracking-wider text-text-muted dark:text-text-dark-muted">
                   דורשים סיוע
                 </p>
-                <p className="mt-2 text-4xl font-bold text-rose-600 dark:text-rose-400">
+                <p className="mt-2 text-4xl font-bold text-danger">
                   {helpCount}
                 </p>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                <p className="mt-1 text-sm text-text-muted dark:text-text-dark-muted">
                   דרוש טיפול
                 </p>
               </div>
@@ -334,12 +438,12 @@ const CommanderDashboard: React.FC = () => {
         {/* Analytics Section */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Bar Chart - Area Events */}
-          <div className="lg:col-span-2 rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg ring-1 ring-slate-900/5 dark:ring-white/10">
+          <div className="lg:col-span-2 rounded-2xl bg-surface-1 dark:bg-surface-1-dark p-6 shadow-hud ring-1 ring-border dark:ring-border-dark">
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              <h2 className="text-lg font-semibold text-text dark:text-text-dark">
                 אירועים לפי גזרה
               </h2>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              <p className="mt-1 text-sm text-text-muted dark:text-text-dark-muted">
                 30 יום אחרונים • {activeAreas} גזרות פעילות
               </p>
             </div>
@@ -357,19 +461,19 @@ const CommanderDashboard: React.FC = () => {
                   }}
                 />
                 <Legend />
-                <Bar dataKey="אירועים" fill={COLORS.primary} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="ממוצע" fill={COLORS.teal} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="אירועים" fill={COLORS.military.steel} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="ממוצע" fill={COLORS.military.olive} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           {/* Pie Chart - Distribution */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg ring-1 ring-slate-900/5 dark:ring-white/10">
+          <div className="rounded-2xl bg-surface-1 dark:bg-surface-1-dark p-6 shadow-hud ring-1 ring-border dark:ring-border-dark">
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              <h2 className="text-lg font-semibold text-text dark:text-text-dark">
                 התפלגות כוחות
               </h2>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              <p className="mt-1 text-sm text-text-muted dark:text-text-dark-muted">
                 לפי גזרות
               </p>
             </div>
@@ -404,63 +508,26 @@ const CommanderDashboard: React.FC = () => {
                     className="h-3 w-3 rounded-full"
                     style={{ backgroundColor: Object.values(COLORS)[idx % Object.values(COLORS).length] }}
                   />
-                  <span className="text-slate-600 dark:text-slate-400">{item.name}: {item.value}</span>
+                  <span className="text-text-muted dark:text-text-dark-muted">{item.name}: {item.value}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Scatter & Active Areas */}
-        <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-          {/* Scatter Chart */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg ring-1 ring-slate-900/5 dark:ring-white/10">
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                מתאם כוחות-היענות
-              </h2>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                היענות לעומת גודל גזרה
-              </p>
-            </div>
-            <ResponsiveContainer width="100%" height={300}>
-              <ScatterChart>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis type="number" dataKey="x" name="סה״כ חיילים" tick={{ fontSize: 12 }} stroke="#64748b" />
-                <YAxis type="number" dataKey="y" name="ענו" tick={{ fontSize: 12 }} stroke="#64748b" />
-                <Tooltip
-                  cursor={{ strokeDasharray: "3 3" }}
-                  contentStyle={{
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
-                  }}
-                />
-                <Scatter name="גזרות" data={scatterData} fill={COLORS.primary}>
-                  {scatterData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={entry.z > 80 ? COLORS.success : entry.z > 50 ? COLORS.warning : COLORS.danger}
-                    />
-                  ))}
-                </Scatter>
-              </ScatterChart>
-            </ResponsiveContainer>
+        {/* Active Areas - Full Width */}
+        <div className="rounded-2xl bg-surface-1 dark:bg-surface-1-dark p-6 shadow-hud ring-1 ring-border dark:ring-border-dark">
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-text dark:text-text-dark">
+              גזרות פעילות
+            </h2>
+            <p className="mt-1 text-sm text-text-muted dark:text-text-dark-muted">
+              מצב זמן אמת
+            </p>
           </div>
 
-          {/* Active Areas */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg ring-1 ring-slate-900/5 dark:ring-white/10">
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                גזרות פעילות
-              </h2>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                מצב זמן אמת
-              </p>
-            </div>
-
-            <div className="space-y-3 max-h-[300px] overflow-y-auto">
-              {(activeQuery.data?.areas ?? []).map((area) => {
+          <div className="space-y-3 max-h-[300px] overflow-y-auto">
+            {(activeQuery.data?.areas ?? []).map((area) => {
                 const percent = area.totalUsers
                   ? Math.round((area.responded / area.totalUsers) * 100)
                   : 0;
@@ -475,49 +542,54 @@ const CommanderDashboard: React.FC = () => {
                       if (area.event) {
                         console.log('✅ Setting event ID:', area.event.id);
                         setSelectedEventId(area.event.id);
+                        setSelectedAreaId(null);
+                        setFilter("ALL");
                       } else {
-                        console.log('❌ No event for this area');
+                        console.log('📌 No event - showing all soldiers in area:', area.areaId);
+                        setSelectedEventId(null);
+                        setSelectedAreaId(area.areaId);
+                        setFilter("ALL");
                       }
                     }}
                     className={`w-full rounded-xl border-2 p-4 text-right transition-all ${
-                      isSelected
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 shadow-md"
-                        : "border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md"
+                      isSelected || (!selectedEventId && selectedAreaId === area.areaId)
+                        ? "border-primary bg-primary/10 dark:bg-primary/5 shadow-md"
+                        : "border-border dark:border-border-dark hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className={`flex h-10 w-10 items-center justify-center rounded-lg font-bold text-sm ${
                           area.isComplete
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                            ? "bg-success bg-opacity-20 text-success dark:bg-success dark:bg-opacity-30"
                             : area.isOverdue
-                            ? "bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400"
-                            : "bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400"
+                            ? "bg-danger bg-opacity-20 text-danger dark:bg-danger dark:bg-opacity-30"
+                            : "bg-secondary/20 text-secondary dark:bg-secondary/30 dark:text-secondary-dark"
                         }`}>
                           {area.areaId}
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          <p className="text-sm font-semibold text-text dark:text-text-dark">
                             גזרה {area.areaId}
                           </p>
-                          <p className="text-xs text-slate-600 dark:text-slate-400">
+                          <p className="text-xs text-text-muted dark:text-text-dark-muted">
                             {area.responded}/{area.totalUsers}
                           </p>
                         </div>
                       </div>
-                      <span className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                      <span className="text-lg font-bold text-text dark:text-text-dark">
                         {percent}%
                       </span>
                     </div>
                     
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-surface-2 dark:bg-surface-2-dark">
                       <div
                         className={`h-full rounded-full transition-all ${
                           area.isComplete
-                            ? "bg-emerald-500"
+                            ? "bg-success"
                             : area.isOverdue
-                            ? "bg-rose-500"
-                            : "bg-blue-500"
+                            ? "bg-danger"
+                            : "bg-secondary"
                         }`}
                         style={{ width: `${percent}%` }}
                       />
@@ -527,21 +599,20 @@ const CommanderDashboard: React.FC = () => {
               })}
               {activeQuery.isLoading && (
                 <div className="flex items-center justify-center p-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
                 </div>
               )}
             </div>
           </div>
-        </div>
 
         {/* Response Distribution Chart */}
         {selectedEventId && statusQuery.data && (
-          <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg ring-1 ring-slate-900/5 dark:ring-white/10">
+          <div className="rounded-2xl bg-surface-1 dark:bg-surface-1-dark p-6 shadow-hud ring-1 ring-border dark:ring-border-dark">
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              <h2 className="text-lg font-semibold text-text dark:text-text-dark">
                 התפלגות תגובות
               </h2>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              <p className="mt-1 text-sm text-text-muted dark:text-text-dark-muted">
                 {formatEventLabel(statusQuery.data.event.triggeredAt, ACTION_LABEL)}
               </p>
             </div>
@@ -568,17 +639,17 @@ const CommanderDashboard: React.FC = () => {
 
               <div className="flex flex-col justify-center space-y-3">
                 {responseDistribution.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 p-4">
+                  <div key={idx} className="flex items-center justify-between rounded-lg border border-border dark:border-border-dark p-4">
                     <div className="flex items-center gap-3">
                       <div
                         className="h-4 w-4 rounded-full"
                         style={{ backgroundColor: item.color }}
                       />
-                      <span className="font-medium text-slate-900 dark:text-slate-100">{item.name}</span>
+                      <span className="font-medium text-text dark:text-text-dark">{item.name}</span>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{item.value}</p>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                      <p className="text-2xl font-bold text-text dark:text-text-dark">{item.value}</p>
+                      <p className="text-xs text-text-muted dark:text-text-dark-muted">
                         {Math.round((item.value / (statusQuery.data.counts.ok + statusQuery.data.counts.help + statusQuery.data.counts.pending)) * 100)}%
                       </p>
                     </div>
@@ -590,14 +661,14 @@ const CommanderDashboard: React.FC = () => {
         )}
 
         {/* Event Details with Data Table */}
-        <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg ring-1 ring-slate-900/5 dark:ring-white/10">
+        <div className="rounded-2xl bg-surface-1 dark:bg-surface-1-dark p-6 shadow-hud ring-1 ring-border dark:ring-border-dark">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+              <h2 className="text-xl font-bold text-text dark:text-text-dark">
                 פרטי חיילים
               </h2>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                מעקב מפורט לפי אירוע
+              <p className="mt-1 text-sm text-text-muted dark:text-text-dark-muted">
+                {selectedAreaId ? `גזרה ${selectedAreaId} - כל החיילים` : 'מעקב מפורט לפי אירוע'}
               </p>
             </div>
             {selectedEventId && statusQuery.data && (
@@ -608,8 +679,8 @@ const CommanderDashboard: React.FC = () => {
                     type="button"
                     className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
                       filter === status
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                        ? "bg-primary text-primary-contrast shadow-md"
+                        : "border border-border dark:border-border-dark text-text dark:text-text-dark hover:bg-surface-2 dark:hover:bg-surface-2-dark"
                     }`}
                     onClick={() => setFilter(status)}
                   >
@@ -620,98 +691,194 @@ const CommanderDashboard: React.FC = () => {
             )}
           </div>
 
-          {!selectedEventId ? (
+          {selectedAreaId && !selectedEventId ? (
+            <div className="space-y-6">
+              <div className="text-center py-4">
+                <div className="inline-flex items-center gap-2 rounded-lg bg-secondary/10 dark:bg-secondary/20 px-4 py-2">
+                  <svg className="h-5 w-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span className="text-sm font-medium text-secondary dark:text-secondary-dark">
+                    גזרה {selectedAreaId}
+                  </span>
+                </div>
+              </div>
+
+              {areaSoldiersQuery.isLoading ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+                  <p className="mt-4 text-sm text-text-muted dark:text-text-dark-muted">
+                    טוען חיילים...
+                  </p>
+                </div>
+              ) : areaSoldiersQuery.data?.soldiers && areaSoldiersQuery.data.soldiers.length > 0 ? (
+                <div className="overflow-hidden rounded-xl border border-border dark:border-border-dark">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-surface-2 dark:bg-surface-2-dark">
+                        <tr>
+                          <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
+                            חייל
+                          </th>
+                          <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
+                            אימייל
+                          </th>
+                          <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
+                            טלפון
+                          </th>
+                          <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
+                            תאריך הצטרפות
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border dark:divide-border-dark">
+                        {areaSoldiersQuery.data.soldiers.map((soldier: any) => (
+                          <tr
+                            key={soldier.id}
+                            className="transition-colors hover:bg-surface-2 dark:hover:bg-surface-2-dark"
+                          >
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary/20 text-secondary dark:bg-secondary/30 dark:text-secondary-dark text-sm font-bold">
+                                  {soldier.name.charAt(0)}
+                                </div>
+                                <span className="font-medium text-text dark:text-text-dark">
+                                  {soldier.name}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-text-muted dark:text-text-dark-muted">
+                              {soldier.email}
+                            </td>
+                            <td className="px-6 py-4">
+                              {soldier.phone ? (
+                                <a
+                                  href={`tel:${soldier.phone}`}
+                                  className="text-primary hover:text-primary-hover dark:text-primary dark:hover:text-primary-hover"
+                                >
+                                  {soldier.phone}
+                                </a>
+                              ) : (
+                                <span className="text-text-muted dark:text-text-dark-muted">-</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 text-text-muted dark:text-text-dark-muted">
+                              {new Date(soldier.createdAt).toLocaleDateString('he-IL')}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="border-t border-border dark:border-border-dark bg-surface-2 dark:bg-surface-2-dark px-6 py-3 text-sm text-text-muted dark:text-text-dark-muted">
+                    מציג {areaSoldiersQuery.data.soldiers.length} חיילים
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 rounded-xl border-2 border-dashed border-border dark:border-border-dark">
+                  <div className="rounded-full bg-surface-2 dark:bg-surface-2-dark p-6">
+                    <svg className="h-16 w-16 text-text-muted dark:text-text-dark-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <p className="mt-4 text-lg font-medium text-text-muted dark:text-text-dark-muted">
+                    אין חיילים בגזרה זו
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : !selectedEventId ? (
             <div className="space-y-6">
               <div className="text-center py-8">
-                <div className="inline-flex items-center gap-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 px-4 py-2">
-                  <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="inline-flex items-center gap-2 rounded-lg bg-secondary/10 dark:bg-secondary/20 px-4 py-2">
+                  <svg className="h-5 w-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
-                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  <span className="text-sm font-medium text-secondary dark:text-secondary-dark">
                     כל החיילים בפיקודך
                   </span>
                 </div>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-text-muted dark:text-text-dark-muted">
                   לחץ על גזרה פעילה לראות פרטים מדויקים
                 </p>
               </div>
 
               {allSoldiersQuery.isLoading ? (
                 <div className="flex items-center justify-center py-16">
-                  <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+                  <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
                 </div>
               ) : allSoldiersQuery.data && allSoldiersQuery.data.length > 0 ? (
-                <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div className="overflow-hidden rounded-xl border border-border dark:border-border-dark">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead className="bg-slate-50 dark:bg-slate-900/50">
+                      <thead className="bg-surface-2 dark:bg-surface-2-dark">
                         <tr>
-                          <th className="px-6 py-4 text-right font-semibold text-slate-900 dark:text-slate-100">
+                          <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
                             חייל
                           </th>
-                          <th className="px-6 py-4 text-right font-semibold text-slate-900 dark:text-slate-100">
+                          <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
                             גזרה
                           </th>
-                          <th className="px-6 py-4 text-right font-semibold text-slate-900 dark:text-slate-100">
+                          <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
                             טלפון
                           </th>
-                          <th className="px-6 py-4 text-right font-semibold text-slate-900 dark:text-slate-100">
+                          <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
                             סטטוס
                           </th>
-                          <th className="px-6 py-4 text-right font-semibold text-slate-900 dark:text-slate-100">
+                          <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
                             הערות
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                      <tbody className="divide-y divide-border dark:divide-border-dark">
                         {allSoldiersQuery.data.map((item: any) => (
                           <tr
                             key={`${item.user.id}-${item.eventId}`}
-                            className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                            className="transition-colors hover:bg-surface-2 dark:hover:bg-surface-2-dark"
                           >
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
                                 <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
                                   item.responseStatus === 'OK'
-                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                    ? 'bg-success bg-opacity-20 text-success'
                                     : item.responseStatus === 'HELP'
-                                    ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                    ? 'bg-danger bg-opacity-20 text-danger'
+                                    : 'bg-warning bg-opacity-20 text-warning'
                                 }`}>
                                   {item.user.name.charAt(0)}
                                 </div>
-                                <span className="font-medium text-slate-900 dark:text-slate-100">
+                                <span className="font-medium text-text dark:text-text-dark">
                                   {item.user.name}
                                 </span>
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                            <td className="px-6 py-4 text-text-muted dark:text-text-dark-muted">
                               {item.areaId}
                             </td>
                             <td className="px-6 py-4">
                               {item.user.phone ? (
                                 <a
                                   href={`tel:${item.user.phone}`}
-                                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                                  className="text-primary hover:text-primary-hover dark:text-primary dark:hover:text-primary-hover"
                                 >
                                   {item.user.phone}
                                 </a>
                               ) : (
-                                <span className="text-slate-400">-</span>
+                                <span className="text-text-muted dark:text-text-dark-muted">-</span>
                               )}
                             </td>
                             <td className="px-6 py-4">
                               <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
                                 item.responseStatus === 'OK'
-                                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                  ? 'bg-success bg-opacity-20 text-success'
                                   : item.responseStatus === 'HELP'
-                                  ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                                  : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                  ? 'bg-danger bg-opacity-20 text-danger'
+                                  : 'bg-warning bg-opacity-20 text-warning'
                               }`}>
                                 {item.responseStatus}
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                            <td className="px-6 py-4 text-text-muted dark:text-text-dark-muted">
                               {item.notes || '-'}
                             </td>
                           </tr>
@@ -719,57 +886,60 @@ const CommanderDashboard: React.FC = () => {
                       </tbody>
                     </table>
                   </div>
-                  <div className="border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-6 py-3 text-sm text-slate-600 dark:text-slate-400">
+                  <div className="border-t border-border dark:border-border-dark bg-surface-2 dark:bg-surface-2-dark px-6 py-3 text-sm text-text-muted dark:text-text-dark-muted">
                     מציג {allSoldiersQuery.data.length} חיילים בפיקודך
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-16 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700">
-                  <div className="rounded-full bg-slate-100 dark:bg-slate-900 p-6">
-                    <svg className="h-16 w-16 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex flex-col items-center justify-center py-16 rounded-xl border-2 border-dashed border-border dark:border-border-dark">
+                  <div className="rounded-full bg-surface-2 dark:bg-surface-2-dark p-6">
+                    <svg className="h-16 w-16 text-text-muted dark:text-text-dark-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
-                  <p className="mt-4 text-lg font-medium text-slate-600 dark:text-slate-400">
+                  <p className="mt-4 text-lg font-medium text-text-muted dark:text-text-dark-muted">
                     אין אירועים פעילים כרגע
                   </p>
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-2 text-sm text-text-muted dark:text-text-dark-muted">
                     החיילים יופיעו כאן כאשר יהיה אירוע פעיל
                   </p>
                 </div>
               )}
             </div>
           ) : statusQuery.isFetching ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+              <p className="mt-4 text-sm text-text-muted dark:text-text-dark-muted">
+                טוען נתוני חיילים...
+              </p>
             </div>
           ) : statusQuery.data ? (
-            <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+            <div className="overflow-hidden rounded-xl border border-border dark:border-border-dark">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 dark:bg-slate-900/50">
+                  <thead className="bg-surface-2 dark:bg-surface-2-dark">
                     <tr>
-                      <th className="px-6 py-4 text-right font-semibold text-slate-900 dark:text-slate-100">
+                      <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
                         חייל
                       </th>
-                      <th className="px-6 py-4 text-right font-semibold text-slate-900 dark:text-slate-100">
+                      <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
                         גזרה
                       </th>
-                      <th className="px-6 py-4 text-right font-semibold text-slate-900 dark:text-slate-100">
+                      <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
                         טלפון
                       </th>
-                      <th className="px-6 py-4 text-right font-semibold text-slate-900 dark:text-slate-100">
+                      <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
                         סטטוס
                       </th>
-                      <th className="px-6 py-4 text-right font-semibold text-slate-900 dark:text-slate-100">
+                      <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
                         הערות
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                  <tbody className="divide-y divide-border dark:divide-border-dark">
                     {filteredStatusList.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                        <td colSpan={5} className="px-6 py-12 text-center text-text-muted dark:text-text-dark-muted">
                           אין חיילים בסטטוס זה
                         </td>
                       </tr>
@@ -777,51 +947,51 @@ const CommanderDashboard: React.FC = () => {
                       filteredStatusList.map((item) => (
                         <tr
                           key={item.user.id}
-                          className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                          className="transition-colors hover:bg-surface-2 dark:hover:bg-surface-2-dark"
                         >
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
                                 item.responseStatus === 'OK'
-                                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                  ? 'bg-success bg-opacity-20 text-success'
                                   : item.responseStatus === 'HELP'
-                                  ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                                  : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                  ? 'bg-danger bg-opacity-20 text-danger'
+                                  : 'bg-warning bg-opacity-20 text-warning'
                               }`}>
                                 {item.user.name.charAt(0)}
                               </div>
-                              <span className="font-medium text-slate-900 dark:text-slate-100">
+                              <span className="font-medium text-text dark:text-text-dark">
                                 {item.user.name}
                               </span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                          <td className="px-6 py-4 text-text-muted dark:text-text-dark-muted">
                             {item.user.areaId}
                           </td>
                           <td className="px-6 py-4">
                             {item.user.phone ? (
                               <a
                                 href={`tel:${item.user.phone}`}
-                                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                                className="text-primary hover:text-primary-hover dark:text-primary dark:hover:text-primary-hover"
                               >
                                 {item.user.phone}
                               </a>
                             ) : (
-                              <span className="text-slate-400">-</span>
+                              <span className="text-text-muted dark:text-text-dark-muted">-</span>
                             )}
                           </td>
                           <td className="px-6 py-4">
                             <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
                               item.responseStatus === 'OK'
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                ? 'bg-success bg-opacity-20 text-success'
                                 : item.responseStatus === 'HELP'
-                                ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                ? 'bg-danger bg-opacity-20 text-danger'
+                                : 'bg-warning bg-opacity-20 text-warning'
                             }`}>
                               {item.responseStatus}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                          <td className="px-6 py-4 text-text-muted dark:text-text-dark-muted">
                             {item.notes || '-'}
                           </td>
                         </tr>
@@ -831,20 +1001,176 @@ const CommanderDashboard: React.FC = () => {
                 </table>
               </div>
               {filteredStatusList.length > 0 && (
-                <div className="border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-6 py-3 text-sm text-slate-600 dark:text-slate-400">
+                <div className="border-t border-border dark:border-border-dark bg-surface-2 dark:bg-surface-2-dark px-6 py-3 text-sm text-text-muted dark:text-text-dark-muted">
                   מציג {filteredStatusList.length} חיילים
                 </div>
               )}
             </div>
+          ) : statusQuery.error ? (
+            <div className="flex flex-col items-center justify-center py-16 rounded-xl border-2 border-dashed border-danger bg-danger bg-opacity-5">
+              <div className="rounded-full bg-danger bg-opacity-20 p-6">
+                <svg className="h-16 w-16 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="mt-4 text-lg font-medium text-danger">
+                שגיאה בטעינת הנתונים
+              </p>
+              <p className="mt-2 text-sm text-text-muted dark:text-text-dark-muted">
+                נסה לבחור גזרה אחרת או לרענן את הדף
+              </p>
+            </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16">
-              <p className="text-lg font-medium text-slate-600 dark:text-slate-400">
-                לא נמצאו נתונים
+            <div className="flex flex-col items-center justify-center py-16 rounded-xl border-2 border-dashed border-border dark:border-border-dark">
+              <div className="rounded-full bg-surface-2 dark:bg-surface-2-dark p-6">
+                <svg className="h-16 w-16 text-text-muted dark:text-text-dark-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+              </div>
+              <p className="mt-4 text-lg font-medium text-text-muted dark:text-text-dark-muted">
+                אין נתונים להצגה
+              </p>
+              <p className="mt-2 text-sm text-text-muted dark:text-text-dark-muted">
+                בחר גזרה פעילה כדי לראות את החיילים
               </p>
             </div>
           )}
         </div>
       </div>
+
+      {/* Alert Creation Modal */}
+      {showAlertModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowAlertModal(false)}>
+          <div className="relative w-full max-w-md rounded-2xl bg-surface-1 dark:bg-surface-1-dark p-6 shadow-2xl ring-1 ring-border dark:ring-border-dark" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-danger bg-opacity-20">
+                  <svg className="h-6 w-6 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-text dark:text-text-dark">
+                    התראה חדשה
+                  </h3>
+                  <p className="text-sm text-text-muted dark:text-text-dark-muted">
+                    ירוק בעיניים
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAlertModal(false)}
+                className="text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
+                  בחר גזרה:
+                </label>
+                <select
+                  value={selectedArea}
+                  onChange={(e) => setSelectedArea(e.target.value)}
+                  className="w-full rounded-lg border border-border dark:border-border-dark bg-surface-1 dark:bg-surface-1-dark px-4 py-3 text-text dark:text-text-dark focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="">-- בחר גזרה --</option>
+                  {overviewQuery.data?.areas.map((area: any) => (
+                    <option key={area.areaId} value={area.areaId}>
+                      גזרה {area.areaId} ({area.totalUsers} חיילים)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="rounded-lg bg-warning bg-opacity-10 border border-warning border-opacity-30 p-4">
+                <div className="flex gap-3">
+                  <svg className="h-5 w-5 text-warning flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-sm text-warning">
+                    התראה תישלח לכל החיילים בגזרה שנבחרה. הם יקבלו התראה במכשיר ויתבקשו לדווח על מצבם.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleCreateAlert}
+                  disabled={!selectedArea || isCreatingAlert}
+                  className="flex-1 rounded-lg bg-danger px-4 py-3 text-sm font-semibold text-surface-1 shadow-lg hover:opacity-90 disabled:bg-text-muted disabled:cursor-not-allowed active:scale-95 transition-all duration-200"
+                >
+                  {isCreatingAlert ? "שולח..." : "שלח התראה"}
+                </button>
+                <button
+                  onClick={() => setShowAlertModal(false)}
+                  disabled={isCreatingAlert}
+                  className="flex-1 rounded-lg border-2 border-border dark:border-border-dark bg-surface-1 dark:bg-surface-1-dark px-4 py-3 text-sm font-semibold text-text dark:text-text-dark hover:bg-surface-2 dark:hover:bg-surface-2-dark disabled:cursor-not-allowed active:scale-95 transition-all duration-200"
+                >
+                  ביטול
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Toast */}
+      {notification.show && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] animate-slide-down">
+          <div className={`rounded-2xl shadow-hud p-4 min-w-[340px] max-w-md bg-surface-1 dark:bg-surface-1-dark border ${
+            notification.type === 'success'
+              ? 'border-success/30 dark:border-success/50'
+              : notification.type === 'error'
+              ? 'border-danger/30 dark:border-danger/50'
+              : 'border-info/30 dark:border-info/50'
+          }`}>
+            <div className="flex items-center gap-3">
+              <div className={`flex-shrink-0 rounded-lg p-2 ${
+                notification.type === 'success'
+                  ? 'bg-success/10 dark:bg-success/20'
+                  : notification.type === 'error'
+                  ? 'bg-danger/10 dark:bg-danger/20'
+                  : 'bg-info/10 dark:bg-info/20'
+              }`}>
+                {notification.type === 'success' ? (
+                  <svg className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : notification.type === 'error' ? (
+                  <svg className="h-5 w-5 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ) : (
+                  <svg className="h-5 w-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                )}
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-text dark:text-text-dark">
+                  {notification.title}
+                </h4>
+                <p className="text-sm text-text-muted dark:text-text-dark-muted mt-0.5">
+                  {notification.message}
+                </p>
+              </div>
+              <button
+                onClick={() => setNotification({ ...notification, show: false })}
+                className="flex-shrink-0 text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

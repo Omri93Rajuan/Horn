@@ -1,10 +1,18 @@
-﻿export interface User {
+export type UserRole = "USER" | "COMMANDER";
+
+export interface PublicUser {
   id: string;
-  email: string;
   name: string;
   phone?: string;
   areaId: string;
+  role?: UserRole;
+  commanderAreas?: string[];
   deviceToken?: string;
+  createdAt?: string;
+}
+
+export interface AuthUser extends PublicUser {
+  email?: string;
 }
 
 export interface AlertEvent {
@@ -25,8 +33,17 @@ export interface Response {
   respondedAt: string;
 }
 
+export interface MyResponse {
+  id: string;
+  eventId: string;
+  status: ResponseStatus;
+  notes?: string;
+  respondedAt: string;
+  event?: AlertEvent;
+}
+
 export interface EventStatusItem {
-  user: User;
+  user: PublicUser;
   responseStatus: ResponseStatus;
   notes?: string;
   respondedAt?: string;
@@ -40,6 +57,44 @@ export interface EventStatusResult {
     pending: number;
   };
   list: EventStatusItem[];
+}
+
+export interface CommanderAreaStats {
+  areaId: string;
+  totalEvents: number;
+  last30Days: number;
+  lastEventAt?: string;
+}
+
+export interface CommanderOverview {
+  areas: CommanderAreaStats[];
+  totalEvents: number;
+  totalLast30Days: number;
+}
+
+export interface CommanderActiveArea {
+  areaId: string;
+  event: AlertEvent | null;
+  totalUsers: number;
+  responded: number;
+  pending: number;
+  ok: number;
+  help: number;
+  isComplete: boolean;
+  isOverdue: boolean;
+}
+
+export interface CommanderActiveSummary {
+  windowMinutes: number;
+  areas: CommanderActiveArea[];
+  totals: {
+    totalUsers: number;
+    responded: number;
+    pending: number;
+    ok: number;
+    help: number;
+    activeAreas: number;
+  };
 }
 
 export interface DashboardStats {

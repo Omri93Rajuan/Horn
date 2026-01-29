@@ -1,34 +1,6 @@
-﻿import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-
-export interface AlertEvent {
-  id: string;
-  areaId: string;
-  triggeredAt: string;
-  triggeredByUserId?: string;
-}
-
-export type ResponseStatus = "OK" | "HELP" | "PENDING";
-
-export interface Response {
-  id: string;
-  userId: string;
-  eventId: string;
-  status: ResponseStatus;
-  notes?: string;
-  respondedAt: string;
-}
-
-export interface EventStatusItem {
-  user: {
-    id: string;
-    name: string;
-    phone?: string;
-  };
-  responseStatus: ResponseStatus;
-  notes?: string;
-  respondedAt?: string;
-}
+import type { AlertEvent, EventStatusItem, MyResponse } from "../types";
 
 interface DataState {
   events: AlertEvent[];
@@ -37,7 +9,7 @@ interface DataState {
     counts: { ok: number; help: number; pending: number };
     list: EventStatusItem[];
   } | null;
-  myResponses: Response[];
+  myResponses: MyResponse[];
   isLoading: boolean;
   error: string | null;
 }
@@ -74,10 +46,10 @@ const dataSlice = createSlice({
     ) => {
       state.eventStatus = action.payload;
     },
-    setMyResponses: (state, action: PayloadAction<Response[]>) => {
+    setMyResponses: (state, action: PayloadAction<MyResponse[]>) => {
       state.myResponses = action.payload;
     },
-    addResponse: (state, action: PayloadAction<Response>) => {
+    addResponse: (state, action: PayloadAction<MyResponse>) => {
       state.myResponses.unshift(action.payload);
     },
     setLoading: (state, action: PayloadAction<boolean>) => {

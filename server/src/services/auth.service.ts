@@ -39,6 +39,8 @@ type UserDoc = {
   name: string;
   phone?: string;
   areaId: string;
+  role: "USER" | "COMMANDER";
+  commanderAreas: string[];
   deviceToken: string;
   createdAt: Date;
 };
@@ -49,6 +51,8 @@ function toPublicUser(id: string, doc: UserDoc): User {
     name: doc.name,
     phone: doc.phone,
     areaId: doc.areaId,
+    role: doc.role,
+    commanderAreas: doc.commanderAreas,
     deviceToken: doc.deviceToken,
     createdAt: doc.createdAt.toISOString(),
   };
@@ -72,6 +76,8 @@ export async function register(input: RegisterInput) {
       passwordHash,
       name: input.name,
       areaId: input.areaId || "",
+      role: "USER",
+      commanderAreas: [],
       deviceToken: "",
       createdAt: new Date(),
     };
@@ -81,10 +87,12 @@ export async function register(input: RegisterInput) {
       const accessToken = signAccessToken({
         userId: user.id,
         email: input.email,
+        role: user.role,
       });
       const refreshToken = signRefreshToken({
         userId: user.id,
         email: input.email,
+        role: user.role,
       });
       const refreshHash = await hashPassword(refreshToken);
 
@@ -130,10 +138,12 @@ export async function login(input: LoginInput) {
     const accessToken = signAccessToken({
       userId: user.id,
       email: input.email,
+      role: user.role,
     });
     const refreshToken = signRefreshToken({
       userId: user.id,
       email: input.email,
+      role: user.role,
     });
     const refreshHash = await hashPassword(refreshToken);
 
@@ -144,7 +154,12 @@ export async function login(input: LoginInput) {
     });
 
     return {
-      user: toPublicUser(user.id, { ...user, phone: user.phone ?? undefined }),
+      user: toPublicUser(user.id, {
+        ...user,
+        phone: user.phone ?? undefined,
+        role: user.role as "USER" | "COMMANDER",
+        commanderAreas: user.commanderAreas,
+      }),
       accessToken,
       refreshToken,
     };
@@ -166,6 +181,7 @@ export async function refresh(input: RefreshInput) {
   try {
     const refreshRow = await prisma.authRefreshToken.findUnique({
       where: { userId: payload.userId },
+      include: { user: true },
     });
     if (!refreshRow) {
       const err: any = new Error("Refresh token revoked");
@@ -186,6 +202,7 @@ export async function refresh(input: RefreshInput) {
     const accessToken = signAccessToken({
       userId: payload.userId,
       email: payload.email,
+      role: refreshRow.user.role,
     });
     return { accessToken };
   } catch (err) {
@@ -214,7 +231,12 @@ export async function getMe(input: MeInput) {
     }
 
     return {
-      user: toPublicUser(user.id, { ...user, phone: user.phone ?? undefined }),
+      user: toPublicUser(user.id, {
+        ...user,
+        phone: user.phone ?? undefined,
+        role: user.role as "USER" | "COMMANDER",
+        commanderAreas: user.commanderAreas,
+      }),
     };
   } catch (err) {
     throw mapPrismaError(err, "Server error");

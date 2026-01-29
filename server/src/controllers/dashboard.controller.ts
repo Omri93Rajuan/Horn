@@ -4,7 +4,10 @@ import * as dashboardService from "../services/dashboard.service";
 
 export async function getEventStatus(req: Request, res: Response) {
   try {
-    const result = await dashboardService.getEventStatus(req.params.eventId);
+    const result = await dashboardService.getEventStatus(
+      req.params.eventId,
+      req.user?.userId || "",
+    );
     return res.json({ success: true, ...result });
   } catch (err: any) {
     return handleError(res, err.status || 500, err.message || "Server error");

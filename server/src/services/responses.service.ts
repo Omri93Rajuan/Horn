@@ -1,6 +1,8 @@
 import { prisma } from "../db/prisma";
 import { Response, ResponseStatus } from "../types/domain";
 import { mapPrismaError } from "../utils/prismaErrors";
+import { ACTIVE_EVENT_WINDOW_MINUTES } from "../config/events";
+import { io } from "../index";
 
 type SubmitResponseInput = {
   userId: string;
@@ -23,13 +25,28 @@ export async function submitResponse(
         err.status = 404;
         throw err;
       }
+      const windowMs = ACTIVE_EVENT_WINDOW_MINUTES * 60 * 1000;
+      if (now.getTime() - event.triggeredAt.getTime() > windowMs) {
+        const err: any = new Error("חלון הזמן לאישור האירוע נסגר");
+        err.status = 403;
+        throw err;
+      }
 
-      return tx.response.upsert({
+      // Check if response already exists
+      const existing = await tx.response.findUnique({
         where: {
           userId_eventId: { userId: input.userId, eventId: input.eventId },
         },
-        update: { status: input.status, notes: input.notes, respondedAt: now },
-        create: {
+      });
+
+      if (existing) {
+        const err: any = new Error("כבר דיווחת על אירוע זה");
+        err.status = 400;
+        throw err;
+      }
+
+      return tx.response.create({
+        data: {
           userId: input.userId,
           eventId: input.eventId,
           status: input.status,
@@ -38,6 +55,23 @@ export async function submitResponse(
         },
       });
     });
+
+    console.log(`📡 WebSocket: Emitting response-update to commanders room`);
+    console.log(`   EventID: ${result.eventId}`);
+    console.log(`   UserID: ${result.userId}`);
+    console.log(`   Status: ${result.status}`);
+
+    // Emit real-time update to commanders
+    const updateData = {
+      eventId: result.eventId,
+      userId: result.userId,
+      status: result.status,
+      timestamp: result.respondedAt.toISOString(),
+    };
+    
+    console.log(`   Emitting data:`, updateData);
+    io.to("commanders").emit("response-update", updateData);
+    console.log(`✅ Response-update emitted successfully`);
 
     return {
       id: result.id,

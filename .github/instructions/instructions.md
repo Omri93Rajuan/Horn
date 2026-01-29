@@ -7,7 +7,7 @@
 - Tests: Jest + Playwright
 
 ## Code style
-
+    
 - Prefer small, pure functions
 - Use early returns
 - Avoid magic numbers

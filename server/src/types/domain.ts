@@ -3,6 +3,8 @@ export type User = {
   name: string;
   phone?: string;
   areaId: string;
+  role: "USER" | "COMMANDER";
+  commanderAreas: string[];
   deviceToken: string;
   createdAt: string;
 };

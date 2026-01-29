@@ -13,6 +13,7 @@ import areasRoutes from "./routes/areas.routes";
 import { handleError } from "./utils/ErrorHandle";
 import { prisma } from "./db/prisma";
 import { seedIfEmpty } from "./db/seed";
+import { ACTIVE_EVENT_WINDOW_MINUTES } from "./config/events";
 
 dotenv.config();
 
@@ -20,8 +21,9 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
@@ -77,9 +79,41 @@ io.on("connection", (socket) => {
     console.log("Client joined commanders room:", socket.id);
   });
 
-  socket.on("join-area-room", (areaId: string) => {
+  socket.on("join-area-room", async (areaId: string) => {
     socket.join(`area-${areaId}`);
     console.log(`Client joined area room: ${areaId}`, socket.id);
+    
+    // Check for active events in this area and notify the user immediately
+    try {
+      const windowMs = ACTIVE_EVENT_WINDOW_MINUTES * 60 * 1000;
+      const cutoffTime = new Date(Date.now() - windowMs);
+      
+      const activeEvents = await prisma.alertEvent.findMany({
+        where: {
+          areaId,
+          triggeredAt: {
+            gte: cutoffTime,
+          },
+        },
+        orderBy: {
+          triggeredAt: 'desc',
+        },
+      });
+      
+      if (activeEvents.length > 0) {
+        console.log(`📤 Sending ${activeEvents.length} active event(s) to newly connected soldier`);
+        // Send active events to the newly connected soldier
+        for (const event of activeEvents) {
+          socket.emit("new-alert", {
+            eventId: event.id,
+            areaId: event.areaId,
+            triggeredAt: event.triggeredAt.toISOString(),
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching active events:", error);
+    }
   });
 
   socket.on("leave-area-room", (areaId: string) => {

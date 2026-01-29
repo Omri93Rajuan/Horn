@@ -31,7 +31,15 @@ export type CommanderOverview = {
 
 export type CommanderActiveArea = {
   areaId: string;
-  event: AlertEvent | null;
+  events: (AlertEvent & {
+    totalUsers: number;
+    responded: number;
+    pending: number;
+    ok: number;
+    help: number;
+    isComplete: boolean;
+    isOverdue: boolean;
+  })[];
   totalUsers: number;
   responded: number;
   pending: number;
@@ -261,15 +269,17 @@ export async function getCommanderActiveSummary(
       orderBy: { triggeredAt: "desc" },
     });
 
-    const latestByArea = new Map<string, AlertEvent>();
+    // Group ALL active events by area (not just the latest)
+    const eventsByArea = new Map<string, AlertEvent[]>();
     for (const event of events) {
-      if (!latestByArea.has(event.areaId)) {
-        latestByArea.set(event.areaId, {
-          id: event.id,
-          areaId: event.areaId,
-          triggeredAt: event.triggeredAt.toISOString(),
-        });
+      if (!eventsByArea.has(event.areaId)) {
+        eventsByArea.set(event.areaId, []);
       }
+      eventsByArea.get(event.areaId)!.push({
+        id: event.id,
+        areaId: event.areaId,
+        triggeredAt: event.triggeredAt.toISOString(),
+      });
     }
 
     const usersCount = await prisma.user.groupBy({
@@ -294,11 +304,11 @@ export async function getCommanderActiveSummary(
       const totalUsersInArea = usersCountMap.get(areaId) ?? 0;
       totalUsers += totalUsersInArea;
 
-      const event = latestByArea.get(areaId) ?? null;
-      if (!event) {
+      const areaEvents = eventsByArea.get(areaId) ?? [];
+      if (areaEvents.length === 0) {
         areaSummaries.push({
           areaId,
-          event: null,
+          events: [],
           totalUsers: totalUsersInArea,
           responded: 0,
           pending: totalUsersInArea,
@@ -312,36 +322,60 @@ export async function getCommanderActiveSummary(
       }
 
       activeAreas += 1;
-      const responses = await prisma.response.groupBy({
-        by: ["status"],
-        where: { eventId: event.id },
-        _count: { _all: true },
-      });
-      const okCount = responses.find((r) => r.status === "OK")?._count._all ?? 0;
-      const helpCount = responses.find((r) => r.status === "HELP")?._count._all ?? 0;
-      const respondedCount = okCount + helpCount;
-      const pendingCount = Math.max(totalUsersInArea - respondedCount, 0);
-      const isComplete = pendingCount === 0;
-      const isOverdue =
-        !isComplete &&
-        now - new Date(event.triggeredAt).getTime() >
-          ACTIVE_EVENT_WINDOW_MINUTES * 60 * 1000;
+      
+      // Process each event separately with its own stats
+      const eventsWithStats = [];
+      for (const event of areaEvents) {
+        const responses = await prisma.response.groupBy({
+          by: ["status"],
+          where: { eventId: event.id },
+          _count: { _all: true },
+        });
+        
+        const eventOkCount = responses.find((r) => r.status === "OK")?._count._all ?? 0;
+        const eventHelpCount = responses.find((r) => r.status === "HELP")?._count._all ?? 0;
+        const eventRespondedCount = eventOkCount + eventHelpCount;
+        const eventPendingCount = Math.max(totalUsersInArea - eventRespondedCount, 0);
+        const eventIsComplete = eventPendingCount === 0;
+        const eventIsOverdue =
+          !eventIsComplete &&
+          now - new Date(event.triggeredAt).getTime() > ACTIVE_EVENT_WINDOW_MINUTES * 60 * 1000;
 
-      ok += okCount;
-      help += helpCount;
-      responded += respondedCount;
-      pending += pendingCount;
+        eventsWithStats.push({
+          ...event,
+          totalUsers: totalUsersInArea,
+          responded: eventRespondedCount,
+          pending: eventPendingCount,
+          ok: eventOkCount,
+          help: eventHelpCount,
+          isComplete: eventIsComplete,
+          isOverdue: eventIsOverdue,
+        });
+      }
+      
+      // Calculate area totals (sum of all events, but cap at totalUsers)
+      const areaOkCount = eventsWithStats.reduce((sum, e) => sum + e.ok, 0);
+      const areaHelpCount = eventsWithStats.reduce((sum, e) => sum + e.help, 0);
+      const areaRespondedCount = Math.min(areaOkCount + areaHelpCount, totalUsersInArea);
+      const areaPendingCount = Math.max(totalUsersInArea - areaRespondedCount, 0);
+      const areaIsComplete = areaPendingCount === 0;
+      const areaIsOverdue = eventsWithStats.some((e) => e.isOverdue);
+
+      ok += areaOkCount;
+      help += areaHelpCount;
+      responded += areaRespondedCount;
+      pending += areaPendingCount;
 
       areaSummaries.push({
         areaId,
-        event,
+        events: eventsWithStats,
         totalUsers: totalUsersInArea,
-        responded: respondedCount,
-        pending: pendingCount,
-        ok: okCount,
-        help: helpCount,
-        isComplete,
-        isOverdue,
+        responded: areaRespondedCount,
+        pending: areaPendingCount,
+        ok: areaOkCount,
+        help: areaHelpCount,
+        isComplete: areaIsComplete,
+        isOverdue: areaIsOverdue,
       });
     }
 

@@ -1,33 +1,35 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
+const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3005';
 
 export function useSocket() {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    // Create socket connection
-    socketRef.current = io(SOCKET_URL, {
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
-    });
+    // Create socket connection only if it doesn't exist
+    if (!socketRef.current) {
+      socketRef.current = io(SOCKET_URL, {
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: 5,
+      });
 
-    const socket = socketRef.current;
+      const socket = socketRef.current;
 
-    socket.on('connect', () => {
-      console.log('✅ WebSocket connected:', socket.id);
-    });
+      socket.on('connect', () => {
+        console.log('✅ WebSocket connected:', socket.id);
+      });
 
-    socket.on('disconnect', () => {
-      console.log('❌ WebSocket disconnected');
-    });
+      socket.on('disconnect', () => {
+        console.log('❌ WebSocket disconnected');
+      });
 
-    socket.on('connect_error', (error) => {
-      console.error('❌ WebSocket connection error:', error);
-    });
+      socket.on('connect_error', (error) => {
+        console.error('❌ WebSocket connection error:', error);
+      });
+    }
 
     // Cleanup on unmount
     return () => {
@@ -46,6 +48,14 @@ export function useCommanderSocket(
   onResponseUpdate?: (data: { eventId: string; userId: string; status: string; timestamp: string }) => void
 ) {
   const socket = useSocket();
+  const onNewAlertRef = useRef(onNewAlert);
+  const onResponseUpdateRef = useRef(onResponseUpdate);
+  
+  // Keep callback refs updated
+  useEffect(() => {
+    onNewAlertRef.current = onNewAlert;
+    onResponseUpdateRef.current = onResponseUpdate;
+  }, [onNewAlert, onResponseUpdate]);
 
   useEffect(() => {
     if (!socket) {
@@ -57,6 +67,20 @@ export function useCommanderSocket(
     console.log('🔌 Socket connected:', socket.connected);
     console.log('🆔 Socket ID:', socket.id);
     
+    const alertHandler = (data: { eventId: string; areaId: string; triggeredAt: string }) => {
+      console.log('🔔 RAW new-alert event received:', data);
+      if (onNewAlertRef.current) {
+        onNewAlertRef.current(data);
+      }
+    };
+    
+    const responseHandler = (data: { eventId: string; userId: string; status: string; timestamp: string }) => {
+      console.log('📨 RAW response-update event received:', data);
+      if (onResponseUpdateRef.current) {
+        onResponseUpdateRef.current(data);
+      }
+    };
+    
     // Wait for connection if not connected yet
     const setupListeners = () => {
       console.log('📡 Setting up commander listeners');
@@ -66,22 +90,12 @@ export function useCommanderSocket(
       console.log('✅ Emitted join-commander-room');
 
       // Listen for new alerts
-      if (onNewAlert) {
-        socket.on('new-alert', (data) => {
-          console.log('🔔 RAW new-alert event received:', data);
-          onNewAlert(data);
-        });
-        console.log('📢 Listening for new-alert events');
-      }
+      socket.on('new-alert', alertHandler);
+      console.log('📢 Listening for new-alert events');
 
       // Listen for response updates
-      if (onResponseUpdate) {
-        socket.on('response-update', (data) => {
-          console.log('📨 RAW response-update event received:', data);
-          onResponseUpdate(data);
-        });
-        console.log('📝 Listening for response-update events');
-      }
+      socket.on('response-update', responseHandler);
+      console.log('📝 Listening for response-update events');
     };
 
     if (socket.connected) {
@@ -97,14 +111,10 @@ export function useCommanderSocket(
     // Cleanup
     return () => {
       console.log('🧹 Cleaning up commander socket listeners');
-      if (onNewAlert) {
-        socket.off('new-alert');
-      }
-      if (onResponseUpdate) {
-        socket.off('response-update');
-      }
+      socket.off('new-alert', alertHandler);
+      socket.off('response-update', responseHandler);
     };
-  }, [socket, onNewAlert, onResponseUpdate]);
+  }, [socket]);
 
   return socket;
 }
@@ -114,6 +124,12 @@ export function useSoldierSocket(
   onNewAlert?: (data: { eventId: string; areaId: string; triggeredAt: string }) => void
 ) {
   const socket = useSocket();
+  const onNewAlertRef = useRef(onNewAlert);
+  
+  // Keep callback ref updated
+  useEffect(() => {
+    onNewAlertRef.current = onNewAlert;
+  }, [onNewAlert]);
 
   useEffect(() => {
     if (!socket || !areaId) {
@@ -124,6 +140,13 @@ export function useSoldierSocket(
     console.log('🎖️ Soldier connecting to WebSocket for area:', areaId);
     console.log('🔌 Socket connected:', socket.connected);
 
+    const alertHandler = (data: { eventId: string; areaId: string; triggeredAt: string }) => {
+      console.log('🔔 RAW new-alert received by soldier:', data);
+      if (onNewAlertRef.current) {
+        onNewAlertRef.current(data);
+      }
+    };
+
     const setupListeners = () => {
       console.log('📡 Setting up soldier listeners for area:', areaId);
       
@@ -132,13 +155,8 @@ export function useSoldierSocket(
       console.log('✅ Emitted join-area-room for:', areaId);
 
       // Listen for new alerts in this area
-      if (onNewAlert) {
-        socket.on('new-alert', (data) => {
-          console.log('🔔 RAW new-alert received by soldier:', data);
-          onNewAlert(data);
-        });
-        console.log('📢 Soldier listening for new-alert events');
-      }
+      socket.on('new-alert', alertHandler);
+      console.log('📢 Soldier listening for new-alert events');
     };
 
     if (socket.connected) {
@@ -154,12 +172,10 @@ export function useSoldierSocket(
     // Cleanup
     return () => {
       console.log('🧹 Cleaning up soldier listeners for area:', areaId);
-      if (onNewAlert) {
-        socket.off('new-alert');
-      }
+      socket.off('new-alert', alertHandler);
       socket.emit('leave-area-room', areaId);
     };
-  }, [socket, areaId, onNewAlert]);
+  }, [socket, areaId]);
 
   return socket;
 }

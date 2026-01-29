@@ -143,11 +143,12 @@ const CommanderDashboard: React.FC = () => {
       const allSoldiers: any[] = [];
       
       for (const area of areas) {
-        if (area.event) {
-          const eventData = await dashboardService.getEventStatus(area.event.id);
+        if (area.events && area.events.length > 0) {
+          // Get data for the most recent event in this area
+          const eventData = await dashboardService.getEventStatus(area.events[0].id);
           allSoldiers.push(...eventData.list.map((item: any) => ({
             ...item,
-            eventId: area.event!.id,
+            eventId: area.events[0].id,
             areaId: area.areaId,
           })));
         }
@@ -169,10 +170,11 @@ const CommanderDashboard: React.FC = () => {
     if (selectedEventId !== null) {
       return;
     }
-    const activeWithEvent = activeQuery.data?.areas.find((area) => area.event);
-    if (activeWithEvent?.event) {
-      console.log('🎯 Auto-selecting first event:', activeWithEvent.event.id);
-      setSelectedEventId(activeWithEvent.event.id);
+    // Find first area with events
+    const activeWithEvents = activeQuery.data?.areas.find((area) => area.events && area.events.length > 0);
+    if (activeWithEvents?.events && activeWithEvents.events.length > 0) {
+      console.log('🎯 Auto-selecting first event:', activeWithEvents.events[0].id);
+      setSelectedEventId(activeWithEvents.events[0].id);
     }
   }, [activeQuery.data]);
 
@@ -515,95 +517,178 @@ const CommanderDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Active Areas - Full Width */}
+        {/* Active Areas - Clean Alert Style */}
         <div className="rounded-2xl bg-surface-1 dark:bg-surface-1-dark p-6 shadow-hud ring-1 ring-border dark:ring-border-dark">
           <div className="mb-6">
-            <h2 className="text-lg font-semibold text-text dark:text-text-dark">
-              גזרות פעילות
+            <h2 className="text-lg font-semibold text-text dark:text-text-dark flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-danger/20 text-danger animate-pulse">
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                </svg>
+              </span>
+              אירועים פעילים ({(activeQuery.data?.areas ?? []).reduce((sum, area) => sum + (area.events?.length ?? 0), 0)})
             </h2>
             <p className="mt-1 text-sm text-text-muted dark:text-text-dark-muted">
-              מצב זמן אמת
+              מעקב בזמן אמת אחרי כל האירועים הפעילים
             </p>
           </div>
 
-          <div className="space-y-3 max-h-[300px] overflow-y-auto">
-            {(activeQuery.data?.areas ?? []).map((area) => {
-                const percent = area.totalUsers
-                  ? Math.round((area.responded / area.totalUsers) * 100)
+          <div className="space-y-4">
+            {(activeQuery.data?.areas ?? []).flatMap((area) => {
+              // Show each active event in the area as a separate card
+              if (!area.events || area.events.length === 0) {
+                return [];
+              }
+              
+              // Show each event as a beautiful alert-style card
+              return area.events.map((event, eventIndex) => {
+                const percent = event.totalUsers
+                  ? Math.round((event.responded / event.totalUsers) * 100)
                   : 0;
-                const isSelected = area.event?.id === selectedEventId;
+                const isSelected = event.id === selectedEventId;
                 
                 return (
-                  <button
-                    key={area.areaId}
-                    type="button"
-                    onClick={() => {
-                      console.log('🖱️ Clicked on area:', area.areaId, 'Event:', area.event);
-                      if (area.event) {
-                        console.log('✅ Setting event ID:', area.event.id);
-                        setSelectedEventId(area.event.id);
-                        setSelectedAreaId(null);
-                        setFilter("ALL");
-                      } else {
-                        console.log('📌 No event - showing all soldiers in area:', area.areaId);
-                        setSelectedEventId(null);
-                        setSelectedAreaId(area.areaId);
-                        setFilter("ALL");
-                      }
-                    }}
-                    className={`w-full rounded-xl border-2 p-4 text-right transition-all ${
-                      isSelected || (!selectedEventId && selectedAreaId === area.areaId)
-                        ? "border-primary bg-primary/10 dark:bg-primary/5 shadow-md"
-                        : "border-border dark:border-border-dark hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md"
+                  <div
+                    key={`${area.areaId}-${event.id}`}
+                    className={`rounded-xl border-2 overflow-hidden transition-all ${
+                      isSelected
+                        ? "border-primary shadow-lg"
+                        : "border-border dark:border-border-dark hover:border-primary/50"
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-3">
+                    {/* Header */}
+                    <div className={`px-5 py-3 flex items-center justify-between ${
+                      event.isComplete
+                        ? "bg-success/10 border-b-2 border-success/20"
+                        : event.isOverdue
+                        ? "bg-danger/10 border-b-2 border-danger/20"
+                        : "bg-warning/10 border-b-2 border-warning/20"
+                    }`}>
                       <div className="flex items-center gap-3">
-                        <div className={`flex h-10 w-10 items-center justify-center rounded-lg font-bold text-sm ${
-                          area.isComplete
-                            ? "bg-success bg-opacity-20 text-success dark:bg-success dark:bg-opacity-30"
-                            : area.isOverdue
-                            ? "bg-danger bg-opacity-20 text-danger dark:bg-danger dark:bg-opacity-30"
-                            : "bg-secondary/20 text-secondary dark:bg-secondary/30 dark:text-secondary-dark"
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-full font-bold ${
+                          event.isComplete
+                            ? "bg-success text-white"
+                            : event.isOverdue
+                            ? "bg-danger text-white animate-pulse"
+                            : "bg-warning text-white"
                         }`}>
-                          {area.areaId}
+                          {area.areaId.replace('area-', '')}
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-semibold text-text dark:text-text-dark">
-                            גזרה {area.areaId}
-                          </p>
+                        <div>
+                          <h3 className="font-bold text-text dark:text-text-dark">
+                            גזרה {area.areaId} {area.events.length > 1 ? `(אירוע ${eventIndex + 1}/${area.events.length})` : ''}
+                          </h3>
                           <p className="text-xs text-text-muted dark:text-text-dark-muted">
-                            {area.responded}/{area.totalUsers}
+                            {formatDate(event.triggeredAt)} • {formatEventLabel(event.triggeredAt, ACTION_LABEL)}
                           </p>
                         </div>
                       </div>
-                      <span className="text-lg font-bold text-text dark:text-text-dark">
-                        {percent}%
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {event.isComplete && (
+                          <span className="flex items-center gap-1 text-success text-sm font-semibold">
+                            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            הושלם
+                          </span>
+                        )}
+                        {event.isOverdue && !event.isComplete && (
+                          <span className="flex items-center gap-1 text-danger text-sm font-semibold animate-pulse">
+                            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                            </svg>
+                            דורש טיפול
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-surface-2 dark:bg-surface-2-dark">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          area.isComplete
-                            ? "bg-success"
-                            : area.isOverdue
-                            ? "bg-danger"
-                            : "bg-secondary"
+
+                    {/* Body */}
+                    <div className="p-5 bg-surface-1 dark:bg-surface-1-dark">
+                      {/* Stats */}
+                      <div className="grid grid-cols-3 gap-3 mb-4">
+                        <div className="text-center p-3 rounded-lg bg-success/10 border border-success/20">
+                          <div className="text-2xl font-bold text-success">{event.ok}</div>
+                          <div className="text-xs text-text-muted dark:text-text-dark-muted">בסדר</div>
+                        </div>
+                        <div className="text-center p-3 rounded-lg bg-danger/10 border border-danger/20">
+                          <div className="text-2xl font-bold text-danger">{event.help}</div>
+                          <div className="text-xs text-text-muted dark:text-text-dark-muted">צריך עזרה</div>
+                        </div>
+                        <div className="text-center p-3 rounded-lg bg-warning/10 border border-warning/20">
+                          <div className="text-2xl font-bold text-warning">{event.pending}</div>
+                          <div className="text-xs text-text-muted dark:text-text-dark-muted">ממתינים</div>
+                        </div>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-text dark:text-text-dark">
+                            התקדמות דיווח
+                          </span>
+                          <span className="text-sm font-bold text-primary">{percent}%</span>
+                        </div>
+                        <div className="h-3 w-full overflow-hidden rounded-full bg-surface-2 dark:bg-surface-2-dark">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              event.isComplete
+                                ? "bg-success"
+                                : event.isOverdue
+                                ? "bg-danger"
+                                : "bg-warning"
+                            }`}
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Action Button */}
+                      <button
+                        onClick={() => {
+                          setSelectedEventId(event.id);
+                          setSelectedAreaId(null);
+                          setFilter("ALL");
+                        }}
+                        className={`w-full py-3 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
+                          isSelected
+                            ? "bg-primary text-white"
+                            : "bg-primary/10 text-primary hover:bg-primary hover:text-white"
                         }`}
-                        style={{ width: `${percent}%` }}
-                      />
+                      >
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        {isSelected ? 'מוצג כעת' : 'הצג פרטים מלאים'}
+                      </button>
                     </div>
-                  </button>
+                  </div>
                 );
-              })}
-              {activeQuery.isLoading && (
-                <div className="flex items-center justify-center p-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
-                </div>
-              )}
-            </div>
+              });
+            })}
+            
+            {activeQuery.isLoading && (
+              <div className="flex items-center justify-center p-12">
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+              </div>
+            )}
+            
+            {!activeQuery.isLoading && (activeQuery.data?.areas ?? []).every(area => !area.events || area.events.length === 0) && (
+              <div className="text-center p-12">
+                <svg className="mx-auto h-16 w-16 text-text-muted dark:text-text-dark-muted opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="mt-4 text-lg font-medium text-text-muted dark:text-text-dark-muted">
+                  אין אירועים פעילים כרגע
+                </p>
+                <p className="mt-2 text-sm text-text-muted dark:text-text-dark-muted">
+                  כל החיילים בסדר ✓
+                </p>
+              </div>
+            )}
           </div>
+        </div>
 
         {/* Response Distribution Chart */}
         {selectedEventId && statusQuery.data && (

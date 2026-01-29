@@ -10,9 +10,9 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import LoginScreen from "./screens/LoginScreen";
 import RegisterScreen from "./screens/RegisterScreen";
-import DashboardScreen from "./screens/DashboardScreen";
-import CommanderDashboard from "./screens/CommanderDashboard";
-import AlertsScreen from "./screens/AlertsScreen";
+import CommandCenter from "./screens/CommandCenter";
+import AlertsFullScreen from "./screens/AlertsFullScreen";
+import TeamScreen from "./screens/TeamScreen";
 import ResponsesScreen from "./screens/ResponsesScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import NotFoundScreen from "./screens/NotFoundScreen";
@@ -73,12 +73,18 @@ const RootLayout = () => {
                 </button>
               </div>
               <nav className="flex items-center gap-4 text-sm font-medium text-text-muted dark:text-text-dark-muted">
-                <Link className="hover:text-primary" to="/dashboard">דשבורד</Link>
                 {auth.user?.role === "COMMANDER" ? (
-                  <Link className="hover:text-primary" to="/commander">קומנדור</Link>
-                ) : null}
-                <Link className="hover:text-primary" to="/alerts">התראות</Link>
-                <Link className="hover:text-primary" to="/responses">תגובות</Link>
+                  <>
+                    <Link className="hover:text-primary" to="/commander">קומנדור</Link>
+                    <Link className="hover:text-primary" to="/alerts">התראות</Link>
+                    <Link className="hover:text-primary" to="/team">הצוות</Link>
+                  </>
+                ) : (
+                  <>
+                    <Link className="hover:text-primary" to="/alerts">התראות</Link>
+                    <Link className="hover:text-primary" to="/responses">תגובות</Link>
+                  </>
+                )}
                 <Link className="hover:text-primary" to="/profile">פרופיל</Link>
               </nav>
             </div>
@@ -183,27 +189,31 @@ const protectedRoute = createRoute({
 const indexRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/",
-  beforeLoad: () => {
-    throw redirect({ to: "/dashboard" });
+  beforeLoad: ({ context }) => {
+    // Redirect based on role
+    if (context.auth.user?.role === "COMMANDER") {
+      throw redirect({ to: "/commander" });
+    }
+    throw redirect({ to: "/alerts" });
   },
-});
-
-const dashboardRoute = createRoute({
-  getParentRoute: () => protectedRoute,
-  path: "/dashboard",
-  component: DashboardScreen,
 });
 
 const commanderRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/commander",
-  component: CommanderDashboard,
+  component: CommandCenter,
+});
+
+const teamRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/team",
+  component: TeamScreen,
 });
 
 const alertsRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/alerts",
-  component: AlertsScreen,
+  component: AlertsFullScreen,
 });
 
 const responsesRoute = createRoute({
@@ -229,8 +239,8 @@ const routeTree = rootRoute.addChildren([
   registerRoute,
   protectedRoute.addChildren([
     indexRoute,
-    dashboardRoute,
     commanderRoute,
+    teamRoute,
     alertsRoute,
     responsesRoute,
     profileRoute,

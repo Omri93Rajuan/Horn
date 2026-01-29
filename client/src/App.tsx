@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { router } from "./router";
 import type { RootState } from "./store";
 import ErrorBoundary from "./components/ErrorBoundary";
+import GlobalSocketManager from "./components/GlobalSocketManager";
 import { initNetworkMonitoring } from "./utils/networkService";
 
 export const App: React.FC = () => {
@@ -16,6 +17,7 @@ export const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <RouterProvider router={router} context={{ auth }} />
+      {auth.token && <GlobalSocketManager />}
     </ErrorBoundary>
   );
 };

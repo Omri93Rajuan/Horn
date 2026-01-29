@@ -4,7 +4,6 @@ import { Link } from "@tanstack/react-router";
 import { alertService } from "../services/alertService";
 import { responseService } from "../services/responseService";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { useSoldierSocket } from "../hooks/useSocket";
 import {
   addEvent,
   setCurrentEvent,
@@ -31,23 +30,6 @@ const DashboardScreen: React.FC = () => {
         : [];
   const [selectedArea, setSelectedArea] = useState(availableAreas[0] || "");
   const [showConfirm, setShowConfirm] = useState(false);
-  const [hasNewAlert, setHasNewAlert] = useState(false);
-  const [lastSeenEventId, setLastSeenEventId] = useState<string | null>(
-    localStorage.getItem('lastSeenEventId')
-  );
-
-  // WebSocket handler for soldiers
-  const handleNewAlert = useCallback((data: { eventId: string; areaId: string; triggeredAt: string }) => {
-    console.log('🔔 Soldier received new alert:', data);
-    if (data.areaId === user?.areaId && data.eventId !== lastSeenEventId) {
-      // Refetch events
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      // Show alert banner only if it's a new event
-      setHasNewAlert(true);
-      setLastSeenEventId(data.eventId);
-      localStorage.setItem('lastSeenEventId', data.eventId);
-    }
-  }, [user?.areaId, queryClient, lastSeenEventId]);
 
   const eventsQuery = useQuery({
     queryKey: ["events"],
@@ -77,28 +59,6 @@ const DashboardScreen: React.FC = () => {
     }
   }, [availableAreas, selectedArea]);
 
-  // Check for new alerts
-  useEffect(() => {
-    if (currentEvent && currentEvent.id !== lastSeenEventId) {
-      setHasNewAlert(true);
-      // Auto-dismiss after 15 seconds
-      const timer = setTimeout(() => {
-        setHasNewAlert(false);
-        localStorage.setItem('lastSeenEventId', currentEvent.id);
-        setLastSeenEventId(currentEvent.id);
-      }, 15000);
-      return () => clearTimeout(timer);
-    }
-  }, [currentEvent, lastSeenEventId]);
-
-  const dismissAlert = () => {
-    setHasNewAlert(false);
-    if (currentEvent) {
-      localStorage.setItem('lastSeenEventId', currentEvent.id);
-      setLastSeenEventId(currentEvent.id);
-    }
-  };
-
   const triggerMutation = useMutation({
     mutationFn: (areaId: string) => alertService.triggerEvent(areaId),
     onSuccess: (event) => {
@@ -112,14 +72,6 @@ const DashboardScreen: React.FC = () => {
   });
 
   const activeWindowMinutes = 10;
-
-  // Connect soldier to WebSocket ONLY when there are active events
-  const hasActiveEvents = events.some(event => 
-    isEventActive(event.triggeredAt, activeWindowMinutes)
-  );
-  
-  // Only connect to WebSocket when there are active events
-  useSoldierSocket(hasActiveEvents ? user?.areaId : undefined, handleNewAlert);
 
   const stats = useMemo(() => {
     const totalEvents = events.length;
@@ -141,48 +93,6 @@ const DashboardScreen: React.FC = () => {
 
   return (
     <section className="space-y-10">
-      {/* New Alert Banner */}
-      {hasNewAlert && currentEvent && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-slide-down">
-          <div className="bg-surface-1 dark:bg-surface-1-dark rounded-2xl shadow-hud border-2 border-danger overflow-hidden min-w-[400px]">
-            <div className="bg-danger px-4 py-2 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="animate-pulse">
-                  <svg className="h-5 w-5 text-surface-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <span className="text-sm font-semibold text-surface-1">התראה חדשה</span>
-              </div>
-              <button
-                onClick={dismissAlert}
-                className="text-surface-1/80 hover:text-surface-1 transition-colors"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-4">
-              <h3 className="text-lg font-bold text-text dark:text-text-dark mb-1">
-                ירוק בעיניים
-              </h3>
-              <p className="text-sm text-text-muted dark:text-text-dark-muted">
-                גזרה {currentEvent.areaId} • {formatDate(currentEvent.triggeredAt)}
-              </p>
-              <div className="mt-3 pt-3 border-t border-border dark:border-border-dark">
-                <p className="text-xs text-text-muted dark:text-text-dark-muted">
-                  נא לדווח על מצבך בהקדם
-                </p>
-              </div>
-            </div>
-            <div className="h-1 bg-border dark:bg-border-dark">
-              <div className="h-full bg-danger animate-progress-bar" />
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="card relative overflow-hidden">
         <div className="absolute -right-10 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-secondary/10 blur-3xl" />

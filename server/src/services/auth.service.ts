@@ -87,10 +87,12 @@ export async function register(input: RegisterInput) {
       const accessToken = signAccessToken({
         userId: user.id,
         email: input.email,
+        role: user.role,
       });
       const refreshToken = signRefreshToken({
         userId: user.id,
         email: input.email,
+        role: user.role,
       });
       const refreshHash = await hashPassword(refreshToken);
 
@@ -136,10 +138,12 @@ export async function login(input: LoginInput) {
     const accessToken = signAccessToken({
       userId: user.id,
       email: input.email,
+      role: user.role,
     });
     const refreshToken = signRefreshToken({
       userId: user.id,
       email: input.email,
+      role: user.role,
     });
     const refreshHash = await hashPassword(refreshToken);
 
@@ -177,6 +181,7 @@ export async function refresh(input: RefreshInput) {
   try {
     const refreshRow = await prisma.authRefreshToken.findUnique({
       where: { userId: payload.userId },
+      include: { user: true },
     });
     if (!refreshRow) {
       const err: any = new Error("Refresh token revoked");
@@ -197,6 +202,7 @@ export async function refresh(input: RefreshInput) {
     const accessToken = signAccessToken({
       userId: payload.userId,
       email: payload.email,
+      role: refreshRow.user.role,
     });
     return { accessToken };
   } catch (err) {

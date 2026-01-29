@@ -8,6 +8,7 @@ const refreshTtl = (process.env.JWT_REFRESH_TTL ?? "30d") as SignOptions["expire
 type JwtPayload = {
   userId: string;
   email: string;
+  role: string;
 };
 
 export function signAccessToken(payload: JwtPayload): string {

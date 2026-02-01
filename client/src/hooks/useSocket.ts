@@ -1,46 +1,52 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3005';
+
+// Singleton socket instance - initialize immediately
+let globalSocket: Socket | null = null;
+
+function getOrCreateSocket(): Socket {
+  if (!globalSocket) {
+    const token = localStorage.getItem('token');
+    
+    console.log('🔌 Creating new socket connection to:', SOCKET_URL);
+    
+    globalSocket = io(SOCKET_URL, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
+      auth: {
+        token: token
+      }
+    });
+
+    globalSocket.on('connect', () => {
+      console.log('✅ WebSocket connected:', globalSocket?.id);
+    });
+
+    globalSocket.on('disconnect', () => {
+      console.log('❌ WebSocket disconnected');
+    });
+
+    globalSocket.on('connect_error', (error) => {
+      console.error('❌ WebSocket connection error:', error);
+    });
+  }
+  
+  return globalSocket;
+}
 
 export function useSocket() {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    // Create socket connection only if it doesn't exist
-    if (!socketRef.current) {
-      socketRef.current = io(SOCKET_URL, {
-        transports: ['websocket', 'polling'],
-        reconnection: true,
-        reconnectionDelay: 1000,
-        reconnectionAttempts: 5,
-      });
-
-      const socket = socketRef.current;
-
-      socket.on('connect', () => {
-        console.log('✅ WebSocket connected:', socket.id);
-      });
-
-      socket.on('disconnect', () => {
-        console.log('❌ WebSocket disconnected');
-      });
-
-      socket.on('connect_error', (error) => {
-        console.error('❌ WebSocket connection error:', error);
-      });
-    }
-
-    // Cleanup on unmount
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
-    };
+    // Get or create the global socket
+    socketRef.current = getOrCreateSocket();
   }, []);
 
-  return socketRef.current;
+  return getOrCreateSocket(); // Always return the socket immediately
 }
 
 export function useCommanderSocket(

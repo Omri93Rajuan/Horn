@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { alertService } from "../services/alertService";
 import { dashboardService } from "../services/dashboardService";
 import { useAppSelector } from "../store/hooks";
-import { formatDate, formatEventLabel } from "../utils/dateUtils";
+import { formatDate, formatEventLabel, formatAreaName } from "../utils/dateUtils";
 
 const ACTION_LABEL = "ירוק בעיניים לאירוע";
 
@@ -21,6 +21,8 @@ const AlertsHistoryScreen: React.FC = () => {
   const eventsQuery = useQuery({
     queryKey: ["events"],
     queryFn: alertService.getEvents,
+    staleTime: 5000, // Consider data fresh for 5 seconds
+    refetchInterval: 10000, // Refetch every 10 seconds
   });
 
   // Fetch event status for selected event
@@ -28,6 +30,8 @@ const AlertsHistoryScreen: React.FC = () => {
     queryKey: ["event-status", selectedEventId],
     queryFn: () => dashboardService.getEventStatus(selectedEventId!),
     enabled: !!selectedEventId && isCommander,
+    staleTime: 3000, // Consider data fresh for 3 seconds
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
   // Calculate overall statistics
@@ -102,7 +106,11 @@ const AlertsHistoryScreen: React.FC = () => {
     return (
       <section className="space-y-8">
         <div className="card text-center p-12">
-          <div className="text-6xl mb-4">🚫</div>
+          <div className="mb-4">
+            <svg className="w-24 h-24 mx-auto text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
           <h2 className="text-2xl font-bold text-text dark:text-text-dark mb-2">
             גישה מוגבלת
           </h2>
@@ -123,7 +131,7 @@ const AlertsHistoryScreen: React.FC = () => {
             היסטוריית התראות
           </h2>
           <p className="text-sm text-text-muted dark:text-text-dark-muted">
-            כל ההתראות במערכת + חיפוש וסטטיסטיקה
+            כל ההתראות במערכת - חיפוש וניתוח
           </p>
         </div>
         <button
@@ -144,12 +152,12 @@ const AlertsHistoryScreen: React.FC = () => {
             <div className="text-sm text-text-muted dark:text-text-dark-muted">סה"כ התראות</div>
           </div>
           <div className="card text-center">
-            <div className="text-3xl font-bold text-warning mb-1">{stats.totalAreas}</div>
-            <div className="text-sm text-text-muted dark:text-text-dark-muted">גזרות פעילות</div>
-          </div>
-          <div className="card text-center">
             <div className="text-3xl font-bold text-success mb-1">{stats.last7Days}</div>
             <div className="text-sm text-text-muted dark:text-text-dark-muted">7 ימים אחרונים</div>
+          </div>
+          <div className="card text-center">
+            <div className="text-3xl font-bold text-warning mb-1">{stats.totalAreas}</div>
+            <div className="text-sm text-text-muted dark:text-text-dark-muted">גזרות</div>
           </div>
           <div className="card text-center">
             <div className="text-3xl font-bold text-info mb-1">{stats.last30Days}</div>
@@ -160,20 +168,18 @@ const AlertsHistoryScreen: React.FC = () => {
 
       {/* Main Content */}
       <div className="grid gap-6 lg:grid-cols-[1fr_1.5fr]">
-        {/* Left - Events List with Filters */}
+        {/* Left - Search & List */}
         <div className="space-y-4">
-          {/* Search Filters */}
+          {/* Search and Filters */}
           <div className="card space-y-3">
-            <h3 className="font-semibold text-text dark:text-text-dark">חיפוש וסינון</h3>
-            
             <select
               value={searchArea}
               onChange={(e) => setSearchArea(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-border dark:border-border-dark bg-surface-2 dark:bg-surface-2-dark text-sm"
             >
               <option value="">כל הגזרות</option>
-              {user?.commanderAreas.map(area => (
-                <option key={area} value={area}>גזרה {area}</option>
+              {(user?.commanderAreas || []).map(area => (
+                <option key={area} value={area}>{formatAreaName(area)}</option>
               ))}
             </select>
             
@@ -185,18 +191,20 @@ const AlertsHistoryScreen: React.FC = () => {
               placeholder="תאריך"
             />
             
-            <button
-              onClick={() => {
-                setSearchArea("");
-                setSearchDate("");
-              }}
-              className="w-full px-3 py-2 rounded-lg bg-surface-2 dark:bg-surface-2-dark hover:bg-surface-3 dark:hover:bg-surface-3-dark text-sm"
-            >
-              נקה סינון
-            </button>
+            {(searchArea || searchDate) && (
+              <button
+                onClick={() => {
+                  setSearchArea("");
+                  setSearchDate("");
+                }}
+                className="w-full px-3 py-2 rounded-lg bg-surface-2 dark:bg-surface-2-dark hover:bg-surface-3 dark:hover:bg-surface-3-dark text-sm"
+              >
+                נקה סינון
+              </button>
+            )}
             
             <div className="pt-2 text-xs text-text-muted dark:text-text-dark-muted text-center">
-              {filteredEvents.length} תוצאות
+              {filteredEvents.length} אירועים
             </div>
           </div>
 
@@ -206,7 +214,9 @@ const AlertsHistoryScreen: React.FC = () => {
               <p className="text-center text-text-muted dark:text-text-dark-muted p-8">טוען...</p>
             ) : filteredEvents.length === 0 ? (
               <div className="text-center p-8">
-                <div className="text-4xl mb-2">🔍</div>
+                <svg className="w-16 h-16 mx-auto mb-2 text-text-muted dark:text-text-dark-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
                 <p className="text-text-muted dark:text-text-dark-muted">
                   {searchArea || searchDate ? "לא נמצאו תוצאות" : "אין התראות"}
                 </p>
@@ -224,14 +234,14 @@ const AlertsHistoryScreen: React.FC = () => {
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-semibold text-text dark:text-text-dark">
-                      גזרה {event.areaId}
+                      {formatAreaName(event.areaId)}
                     </span>
                     <span className="text-xs text-text-muted dark:text-text-dark-muted">
-                      {formatDate(event.triggeredAt)}
+                      {new Date(event.triggeredAt).toLocaleDateString('he-IL')}
                     </span>
                   </div>
                   <p className="text-xs text-text-muted dark:text-text-dark-muted">
-                    {formatEventLabel(event.triggeredAt, ACTION_LABEL)}
+                    {formatDate(event.triggeredAt)}
                   </p>
                 </div>
               ))
@@ -243,7 +253,11 @@ const AlertsHistoryScreen: React.FC = () => {
         <div className="card">
           {!selectedEventId ? (
             <div className="text-center p-12">
-              <div className="text-6xl mb-4">📋</div>
+              <div className="mb-4">
+                <svg className="w-24 h-24 mx-auto text-text-muted dark:text-text-dark-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
               <h3 className="text-lg font-semibold text-text dark:text-text-dark mb-2">
                 בחר אירוע
               </h3>
@@ -260,25 +274,25 @@ const AlertsHistoryScreen: React.FC = () => {
               {/* Event Header */}
               <div className="pb-4 border-b border-border dark:border-border-dark">
                 <h3 className="text-xl font-bold text-text dark:text-text-dark mb-2">
-                  גזרה {selectedEvent?.areaId}
+                  {formatAreaName(selectedEvent?.areaId || '')}
                 </h3>
                 <p className="text-sm text-text-muted dark:text-text-dark-muted">
-                  {selectedEvent && formatEventLabel(selectedEvent.triggeredAt, ACTION_LABEL)}
+                  {selectedEvent && formatDate(selectedEvent.triggeredAt)}
                 </p>
               </div>
 
               {/* Status Summary */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center p-4 rounded-lg bg-success/10">
-                  <div className="text-2xl font-bold text-success">{statusQuery.data.summary.ok}</div>
-                  <div className="text-xs text-text-muted dark:text-text-dark-muted">OK</div>
+                  <div className="text-2xl font-bold text-success">{statusQuery.data.counts.ok}</div>
+                  <div className="text-xs text-text-muted dark:text-text-dark-muted">בסדר</div>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-danger/10">
-                  <div className="text-2xl font-bold text-danger">{statusQuery.data.summary.help}</div>
+                  <div className="text-2xl font-bold text-danger">{statusQuery.data.counts.help}</div>
                   <div className="text-xs text-text-muted dark:text-text-dark-muted">עזרה</div>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-warning/10">
-                  <div className="text-2xl font-bold text-warning">{statusQuery.data.summary.pending}</div>
+                  <div className="text-2xl font-bold text-warning">{statusQuery.data.counts.pending}</div>
                   <div className="text-xs text-text-muted dark:text-text-dark-muted">ממתינים</div>
                 </div>
               </div>
@@ -304,7 +318,7 @@ const AlertsHistoryScreen: React.FC = () => {
               <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 {filteredStatusList.map((item) => (
                   <div
-                    key={item.userId}
+                    key={item.user.id}
                     className="flex items-center justify-between p-3 rounded-lg bg-surface-2 dark:bg-surface-2-dark"
                   >
                     <div className="flex items-center gap-3">
@@ -317,11 +331,11 @@ const AlertsHistoryScreen: React.FC = () => {
                             : "bg-warning"
                         }`}
                       >
-                        {item.username.charAt(0).toUpperCase()}
+                        {item.user.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <div className="font-semibold text-text dark:text-text-dark">
-                          {item.username}
+                          {item.user.name}
                         </div>
                         {item.respondedAt && (
                           <div className="text-xs text-text-muted dark:text-text-dark-muted">
@@ -345,10 +359,10 @@ const AlertsHistoryScreen: React.FC = () => {
                       }`}
                     >
                       {item.responseStatus === "OK"
-                        ? "✓ בסדר"
+                        ? "בסדר"
                         : item.responseStatus === "HELP"
-                        ? "⚠ עזרה"
-                        : "⏳ ממתין"}
+                        ? "דורש עזרה"
+                        : "ממתין לתגובה"}
                     </div>
                   </div>
                 ))}

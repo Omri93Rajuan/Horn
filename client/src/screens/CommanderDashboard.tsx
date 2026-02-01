@@ -84,14 +84,7 @@ const CommanderDashboard: React.FC = () => {
 
   const activeQuery = useQuery({
     queryKey: ["commander-active"],
-    queryFn: async () => {
-      console.log('🔄 Fetching commander-active data...');
-      const result = await dashboardService.getCommanderActive();
-      console.log('📦 Commander-active data received:', result);
-      console.log('📊 Total areas:', result?.areas?.length);
-      console.log('📊 Areas with events:', result?.areas?.filter(a => a.events?.length > 0).length);
-      return result;
-    },
+    queryFn: dashboardService.getCommanderActive,
     enabled: user?.role === "COMMANDER",
     staleTime: 0, // Always consider data stale - allow refetch anytime
     gcTime: 60000,
@@ -100,13 +93,6 @@ const CommanderDashboard: React.FC = () => {
     refetchOnReconnect: false,
     retry: false,
   });
-
-  // Log when activeQuery data changes
-  useEffect(() => {
-    console.log('🎯 activeQuery.data changed:', activeQuery.data);
-    console.log('🎯 activeQuery.dataUpdatedAt:', activeQuery.dataUpdatedAt);
-    console.log('🎯 activeQuery.status:', activeQuery.status);
-  }, [activeQuery.data, activeQuery.dataUpdatedAt, activeQuery.status]);
 
   const statusQuery = useQuery({
     queryKey: ["event-status", selectedEventId],

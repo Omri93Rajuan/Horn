@@ -284,15 +284,15 @@ const AlertsHistoryScreen: React.FC = () => {
               {/* Status Summary */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center p-4 rounded-lg bg-success/10">
-                  <div className="text-2xl font-bold text-success">{statusQuery.data.counts.ok}</div>
+                  <div className="text-2xl font-bold text-success">{statusQuery.data?.counts?.ok ?? 0}</div>
                   <div className="text-xs text-text-muted dark:text-text-dark-muted">בסדר</div>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-danger/10">
-                  <div className="text-2xl font-bold text-danger">{statusQuery.data.counts.help}</div>
+                  <div className="text-2xl font-bold text-danger">{statusQuery.data?.counts?.help ?? 0}</div>
                   <div className="text-xs text-text-muted dark:text-text-dark-muted">עזרה</div>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-warning/10">
-                  <div className="text-2xl font-bold text-warning">{statusQuery.data.counts.pending}</div>
+                  <div className="text-2xl font-bold text-warning">{statusQuery.data?.counts?.pending ?? 0}</div>
                   <div className="text-xs text-text-muted dark:text-text-dark-muted">ממתינים</div>
                 </div>
               </div>

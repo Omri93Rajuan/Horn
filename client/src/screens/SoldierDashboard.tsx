@@ -11,6 +11,7 @@ const SoldierDashboard: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
   const queryClient = useQueryClient();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [notes, setNotes] = useState<string>("");
 
   // Fetch events for my area only - server already filters to active events
   const eventsQuery = useQuery({
@@ -53,9 +54,10 @@ const SoldierDashboard: React.FC = () => {
 
   const selectedEvent = activeEvents.find(e => e.id === selectedEventId);
 
-  const handleRespond = (status: 'OK' | 'HELP', notes?: string) => {
+  const handleRespond = (status: 'OK' | 'HELP') => {
     if (!selectedEventId) return;
-    respondMutation.mutate({ eventId: selectedEventId, status, notes });
+    respondMutation.mutate({ eventId: selectedEventId, status, notes: notes || undefined });
+    setNotes(""); // Clear notes after submission
   };
 
   return (
@@ -267,6 +269,8 @@ const SoldierDashboard: React.FC = () => {
                       הערות (אופציונלי)
                     </label>
                     <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border border-border dark:border-border-dark bg-white dark:bg-surface-2-dark text-text dark:text-text-dark resize-none"
                       rows={3}
                       placeholder="הוסף הערות או פרטים נוספים..."

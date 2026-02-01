@@ -25,7 +25,8 @@ export async function submitResponse(
         throw err;
       }
 
-      // Check if response already exists (prevent duplicates)
+      // IMPORTANT: Check duplicate first to avoid race condition
+      // This prevents counting responses before the duplicate check
       const existing = await tx.response.findUnique({
         where: {
           userId_eventId: { userId: input.userId, eventId: input.eventId },
@@ -38,22 +39,7 @@ export async function submitResponse(
         throw err;
       }
 
-      // Check if all users have already responded (event is complete)
-      const totalUsersInArea = await tx.user.count({
-        where: { areaId: event.areaId },
-      });
-      
-      const responsesCount = await tx.response.count({
-        where: { eventId: input.eventId },
-      });
-
-      if (responsesCount >= totalUsersInArea) {
-        const err: any = new Error("האירוע הושלם - כל החיילים כבר ענו");
-        err.status = 403;
-        throw err;
-      }
-
-      return tx.response.create({
+      const response = await tx.response.create({
         data: {
           userId: input.userId,
           eventId: input.eventId,
@@ -62,6 +48,22 @@ export async function submitResponse(
           respondedAt: now,
         },
       });
+
+      // Check completion status after creating response (prevents race condition)
+      const totalUsersInArea = await tx.user.count({
+        where: { areaId: event.areaId },
+      });
+      
+      const responsesCount = await tx.response.count({
+        where: { eventId: input.eventId },
+      });
+
+      // Log if event is now complete
+      if (responsesCount >= totalUsersInArea) {
+        console.log(`✅ Event ${input.eventId} is now complete - all users responded`);
+      }
+
+      return response;
     });
 
     console.log(`📡 WebSocket: Emitting response-update to commanders room`);

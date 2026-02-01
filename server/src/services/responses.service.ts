@@ -25,6 +25,19 @@ export async function submitResponse(
         throw err;
       }
 
+      // Check if response already exists (prevent duplicates)
+      const existing = await tx.response.findUnique({
+        where: {
+          userId_eventId: { userId: input.userId, eventId: input.eventId },
+        },
+      });
+
+      if (existing) {
+        const err: any = new Error("כבר דיווחת על אירוע זה");
+        err.status = 400;
+        throw err;
+      }
+
       // Check if all users have already responded (event is complete)
       const totalUsersInArea = await tx.user.count({
         where: { areaId: event.areaId },
@@ -37,19 +50,6 @@ export async function submitResponse(
       if (responsesCount >= totalUsersInArea) {
         const err: any = new Error("האירוע הושלם - כל החיילים כבר ענו");
         err.status = 403;
-        throw err;
-      }
-
-      // Check if response already exists
-      const existing = await tx.response.findUnique({
-        where: {
-          userId_eventId: { userId: input.userId, eventId: input.eventId },
-        },
-      });
-
-      if (existing) {
-        const err: any = new Error("כבר דיווחת על אירוע זה");
-        err.status = 400;
         throw err;
       }
 

@@ -92,34 +92,52 @@ io.on("connection", (socket) => {
         orderBy: {
           triggeredAt: 'desc',
         },
+        take: 100, // Limit to prevent loading too many events
       });
       
-      // Filter to only incomplete events
-      const incompleteEvents = [];
-      for (const event of activeEvents) {
+      if (activeEvents.length > 0) {
+        // Fetch total users once (same for all events in this area)
         const totalUsers = await prisma.user.count({
           where: { areaId },
         });
         
-        const responsesCount = await prisma.response.count({
-          where: { eventId: event.id },
+        // Get response counts for all events in a single grouped query
+        const eventIds = activeEvents.map((event) => event.id);
+        const responseCounts = await prisma.response.groupBy({
+          by: ["eventId"],
+          where: {
+            eventId: { in: eventIds },
+          },
+          _count: {
+            _all: true,
+          },
         });
         
-        // Event is active if not all users responded
-        if (responsesCount < totalUsers) {
-          incompleteEvents.push(event);
+        const responsesByEventId: Record<string, number> = {};
+        for (const item of responseCounts) {
+          responsesByEventId[item.eventId] = item._count._all;
         }
-      }
-      
-      if (incompleteEvents.length > 0) {
-        console.log(`📤 Sending ${incompleteEvents.length} active event(s) to newly connected soldier`);
-        // Send active events to the newly connected soldier
-        for (const event of incompleteEvents) {
-          socket.emit("new-alert", {
-            eventId: event.id,
-            areaId: event.areaId,
-            triggeredAt: event.triggeredAt.toISOString(),
-          });
+        
+        // Filter to only incomplete events
+        const incompleteEvents = [];
+        for (const event of activeEvents) {
+          const responsesCount = responsesByEventId[event.id] ?? 0;
+          // Event is active if not all users responded
+          if (responsesCount < totalUsers) {
+            incompleteEvents.push(event);
+          }
+        }
+        
+        if (incompleteEvents.length > 0) {
+          console.log(`📤 Sending ${incompleteEvents.length} active event(s) to newly connected soldier`);
+          // Send active events to the newly connected soldier
+          for (const event of incompleteEvents) {
+            socket.emit("new-alert", {
+              eventId: event.id,
+              areaId: event.areaId,
+              triggeredAt: event.triggeredAt.toISOString(),
+            });
+          }
         }
       }
     } catch (error) {

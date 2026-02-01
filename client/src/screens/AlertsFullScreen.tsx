@@ -51,8 +51,10 @@ const AlertsFullScreen: React.FC = () => {
   const activeEvents = useMemo(() => {
     if (!activeQuery.data?.areas) return [];
     return activeQuery.data.areas
-      .filter((area: any) => area.event)
-      .map((area: any) => ({ ...area.event, areaId: area.areaId }))
+      .filter((area: any) => Array.isArray(area.events) && area.events.length > 0)
+      .flatMap((area: any) =>
+        area.events.map((event: any) => ({ ...event, areaId: area.areaId }))
+      )
       .sort((a: any, b: any) => new Date(b.triggeredAt).getTime() - new Date(a.triggeredAt).getTime());
   }, [activeQuery.data]);
 

@@ -109,7 +109,7 @@ const GlobalSocketManager: React.FC = () => {
 
   // Handler for commanders - new alert received
   const handleCommanderNewAlert = useCallback(
-    async (data: { eventId: string; areaId: string; triggeredAt: string }) => {
+    async (data: { eventId: string; areaId: string; triggeredAt: string }): Promise<void> => {
       console.log('👑 Global: Commander received new alert:', data);
       
       // Invalidate queries to trigger automatic refetch

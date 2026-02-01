@@ -263,10 +263,15 @@ export async function getCommanderActiveSummary(
       ? user.commanderAreas
       : [user.areaId].filter(Boolean);
 
-    // Get ALL events (no time limit) - we'll filter by completion status
+    // Get recent events (last 90 days or 1000 events max) - we'll filter by completion status
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     const events = await prisma.alertEvent.findMany({
-      where: { areaId: { in: areas } },
+      where: { 
+        areaId: { in: areas },
+        triggeredAt: { gte: ninetyDaysAgo } // Limit to last 90 days for performance
+      },
       orderBy: { triggeredAt: "desc" },
+      take: 1000, // Maximum 1000 events to prevent memory issues
     });
 
     // Group ALL events by area

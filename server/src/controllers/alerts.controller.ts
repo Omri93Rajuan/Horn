@@ -50,10 +50,11 @@ export async function getAlerts(req: Request, res: Response) {
         ? user.commanderAreas
         : [user.areaId].filter(Boolean);
 
-    // Get all events for the allowed areas
+    // Get all events for the allowed areas (with reasonable limit)
     const events = await prisma.alertEvent.findMany({
       where: { areaId: { in: allowedAreas } },
       orderBy: { triggeredAt: "desc" },
+      take: 1000, // Reasonable limit to prevent performance issues
       include: {
         triggeredByUser: {
           select: {
@@ -67,15 +68,21 @@ export async function getAlerts(req: Request, res: Response) {
       },
     });
 
-    // Filter to only active (incomplete) events for soldiers
-    // Commanders can see all events via their dedicated endpoint
+    // Get user counts per area in a single query
+    const userCounts = await prisma.user.groupBy({
+      by: ['areaId'],
+      where: { areaId: { in: allowedAreas } },
+      _count: { _all: true },
+    });
+    const userCountByArea: Record<string, number> = {};
+    for (const item of userCounts) {
+      userCountByArea[item.areaId] = item._count._all;
+    }
+
+    // Filter to only active (incomplete) events
     const activeEvents = [];
     for (const event of events) {
-      // Count total users in the area
-      const totalUsers = await prisma.user.count({
-        where: { areaId: event.areaId },
-      });
-
+      const totalUsers = userCountByArea[event.areaId] ?? 0;
       const responsesCount = event._count.responses;
       const isComplete = responsesCount >= totalUsers;
 

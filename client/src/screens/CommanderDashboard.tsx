@@ -95,7 +95,7 @@ const CommanderDashboard: React.FC = () => {
     enabled: user?.role === "COMMANDER",
     staleTime: 0, // Always consider data stale - allow refetch anytime
     gcTime: 60000,
-    refetchOnMount: false,
+    refetchOnMount: true, // Refetch on mount to ensure fresh data
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,

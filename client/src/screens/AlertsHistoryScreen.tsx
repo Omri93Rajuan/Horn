@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { alertService } from "../services/alertService";
 import { dashboardService } from "../services/dashboardService";
 import { useAppSelector } from "../store/hooks";
-import { formatDate, formatEventLabel, formatAreaName } from "../utils/dateUtils";
+import { formatDate, formatAreaName } from "../utils/dateUtils";
 
 const ACTION_LABEL = "ירוק בעיניים לאירוע";
 

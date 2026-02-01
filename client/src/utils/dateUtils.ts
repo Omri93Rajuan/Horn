@@ -41,3 +41,21 @@ export const isEventActive = (dateString: string, windowMinutes = 10): boolean =
   const now = Date.now();
   return now - triggeredAt <= windowMinutes * 60 * 1000;
 };
+
+export const formatAreaName = (areaId: string): string => {
+  // Convert area-1, area-2, etc. to "גזרה 1", "גזרה 2"
+  const match = areaId.match(/area-(\d+)/);
+  if (match) {
+    return `גזרה ${match[1]}`;
+  }
+  return areaId;
+};
+
+export const formatStatus = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    'OK': 'בסדר',
+    'HELP': 'עזרה',
+    'PENDING': 'ממתין'
+  };
+  return statusMap[status] || status;
+};

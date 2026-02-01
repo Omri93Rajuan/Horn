@@ -1,10 +1,9 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+﻿import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { dashboardService } from "../services/dashboardService";
 import { alertService } from "../services/alertService";
 import { useAppSelector } from "../store/hooks";
 import { formatDate, formatEventLabel } from "../utils/dateUtils";
-import { useCommanderSocket } from "../hooks/useSocket";
 import {
   LineChart,
   Line,
@@ -71,52 +70,51 @@ const CommanderDashboard: React.FC = () => {
   }, []);
 
   // WebSocket handlers
-  const handleNewAlert = useCallback((data: { eventId: string; areaId: string; triggeredAt: string }) => {
-    console.log('🔔 New alert received:', data);
-    showNotification('info', 'התראה חדשה', `אירוע חדש בגזרה ${data.areaId}`);
-    
-    // Invalidate queries to refetch data
-    queryClient.invalidateQueries({ queryKey: ["commander-overview"] });
-    queryClient.invalidateQueries({ queryKey: ["commander-active"] });
-  }, [queryClient, showNotification]);
-
-  const handleResponseUpdate = useCallback((data: { eventId: string; userId: string; status: string; timestamp: string }) => {
-    console.log('📝 Response update received:', data);
-    console.log('🔄 Invalidating queries for event:', data.eventId);
-    
-    // Show notification
-    showNotification('success', 'דיווח חדש', `חייל דיווח ${data.status === 'OK' ? 'בסדר' : 'צריך עזרה'}`);
-    
-    // Invalidate ALL relevant queries to ensure UI updates
-    queryClient.invalidateQueries({ queryKey: ["event-status", data.eventId] });
-    queryClient.invalidateQueries({ queryKey: ["commander-active"] });
-    queryClient.invalidateQueries({ queryKey: ["commander-overview"] });
-    
-    console.log('✅ Queries invalidated successfully');
-  }, [queryClient, showNotification]);
-
-  // Connect to WebSocket
-  useCommanderSocket(handleNewAlert, handleResponseUpdate);
-
   const overviewQuery = useQuery({
     queryKey: ["commander-overview"],
     queryFn: dashboardService.getCommanderOverview,
     enabled: user?.role === "COMMANDER",
+    staleTime: 30000,
+    gcTime: 60000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
   });
 
   const activeQuery = useQuery({
     queryKey: ["commander-active"],
-    queryFn: dashboardService.getCommanderActive,
+    queryFn: async () => {
+      console.log('🔄 Fetching commander-active data...');
+      const result = await dashboardService.getCommanderActive();
+      console.log('📦 Commander-active data received:', result);
+      console.log('📊 Total areas:', result?.areas?.length);
+      console.log('📊 Areas with events:', result?.areas?.filter(a => a.events?.length > 0).length);
+      return result;
+    },
     enabled: user?.role === "COMMANDER",
+    staleTime: 0, // Always consider data stale - allow refetch anytime
+    gcTime: 60000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
   });
+
+  // Log when activeQuery data changes
+  useEffect(() => {
+    console.log('🎯 activeQuery.data changed:', activeQuery.data);
+    console.log('🎯 activeQuery.dataUpdatedAt:', activeQuery.dataUpdatedAt);
+    console.log('🎯 activeQuery.status:', activeQuery.status);
+  }, [activeQuery.data, activeQuery.dataUpdatedAt, activeQuery.status]);
 
   const statusQuery = useQuery({
     queryKey: ["event-status", selectedEventId],
     queryFn: async () => {
-      console.log('🔍 Fetching event status for:', selectedEventId);
+      console.log('� Fetching event status for:', selectedEventId);
       const result = await dashboardService.getEventStatus(selectedEventId!);
-      console.log('📦 Received event status:', result);
-      console.log('📋 List length:', result?.list?.length);
+      console.log('🎁 Received event status:', result);
+      console.log('📜 List length:', result?.list?.length);
       return result;
     },
     enabled: !!selectedEventId && user?.role === "COMMANDER",
@@ -126,9 +124,9 @@ const CommanderDashboard: React.FC = () => {
   const areaSoldiersQuery = useQuery({
     queryKey: ["area-soldiers", selectedAreaId],
     queryFn: async () => {
-      console.log('👥 Fetching soldiers for area:', selectedAreaId);
+      console.log('� Fetching soldiers for area:', selectedAreaId);
       const result = await dashboardService.getAreaSoldiers(selectedAreaId!);
-      console.log('📦 Received soldiers:', result);
+      console.log('🎁 Received soldiers:', result);
       return result;
     },
     enabled: !!selectedAreaId && !selectedEventId && user?.role === "COMMANDER",
@@ -173,7 +171,7 @@ const CommanderDashboard: React.FC = () => {
     // Find first area with events
     const activeWithEvents = activeQuery.data?.areas.find((area) => area.events && area.events.length > 0);
     if (activeWithEvents?.events && activeWithEvents.events.length > 0) {
-      console.log('🎯 Auto-selecting first event:', activeWithEvents.events[0].id);
+      console.log('�️ Auto-selecting first event:', activeWithEvents.events[0].id);
       setSelectedEventId(activeWithEvents.events[0].id);
     }
   }, [activeQuery.data]);
@@ -183,8 +181,8 @@ const CommanderDashboard: React.FC = () => {
       return [];
     }
     
-    console.log('📊 Status Query Data:', statusQuery.data);
-    console.log('📋 Full list:', statusQuery.data.list);
+    console.log('� Status Query Data:', statusQuery.data);
+    console.log('📜 Full list:', statusQuery.data.list);
     console.log('🔢 Counts:', statusQuery.data.counts);
     
     if (filter === "ALL") {
@@ -534,6 +532,18 @@ const CommanderDashboard: React.FC = () => {
           </div>
 
           <div className="space-y-4">
+            {(() => {
+              console.log('🎯 Rendering active areas');
+              console.log('🎯 activeQuery.data:', activeQuery.data);
+              console.log('🎯 areas:', activeQuery.data?.areas);
+              console.log('🎯 areas length:', activeQuery.data?.areas?.length);
+              
+              const areasWithEvents = (activeQuery.data?.areas ?? []).filter(a => a.events && a.events.length > 0);
+              console.log('🎯 Areas with events:', areasWithEvents);
+              
+              return null;
+            })()}
+            
             {(activeQuery.data?.areas ?? []).flatMap((area) => {
               // Show each active event in the area as a separate card
               if (!area.events || area.events.length === 0) {

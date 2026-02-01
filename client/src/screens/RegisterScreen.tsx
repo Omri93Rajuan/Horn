@@ -31,7 +31,8 @@ const RegisterScreen: React.FC = () => {
     onMutate: () => dispatch(setLoading(true)),
     onSuccess: (data) => {
       dispatch(setCredentials(data));
-      navigate({ to: "/dashboard" });
+      const redirectTo = data.user.role === 'COMMANDER' ? '/commander' : '/soldier';
+      navigate({ to: redirectTo });
     },
     onError: (error: any) => {
       alert(error.response?.data?.message || "אירעה שגיאה בהרשמה");
@@ -74,7 +75,7 @@ const RegisterScreen: React.FC = () => {
 
   React.useEffect(() => {
     if (auth.token) {
-      navigate({ to: "/dashboard" });
+      navigate({ to: "/alerts" });
     }
   }, [auth.token, navigate]);
 

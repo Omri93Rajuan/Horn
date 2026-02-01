@@ -19,7 +19,8 @@ const LoginScreen: React.FC = () => {
     onMutate: () => dispatch(setLoading(true)),
     onSuccess: (data) => {
       dispatch(setCredentials(data));
-      navigate({ to: search.redirect ?? "/dashboard" });
+      const redirectTo = data.user.role === 'COMMANDER' ? '/commander' : '/soldier';
+      navigate({ to: search.redirect ?? redirectTo });
     },
     onError: (error: any) => {
       alert(error.response?.data?.message || "אירעה שגיאה בהתחברות");
@@ -51,9 +52,10 @@ const LoginScreen: React.FC = () => {
 
   React.useEffect(() => {
     if (auth.token) {
-      navigate({ to: "/dashboard" });
+      const redirectTo = auth.user?.role === 'COMMANDER' ? '/commander' : '/soldier';
+      navigate({ to: redirectTo });
     }
-  }, [auth.token, navigate]);
+  }, [auth.token, auth.user?.role, navigate]);
 
   return (
     <section className="grid min-h-[75vh] place-items-center">

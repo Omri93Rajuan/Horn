@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "../services/api";
 import { useAppSelector } from "../store/hooks";
+import { formatAreaName } from "../utils/dateUtils";
 
 interface TeamMember {
   id: string;
@@ -89,7 +90,11 @@ const TeamScreen: React.FC = () => {
     return (
       <section className="space-y-8">
         <div className="card text-center p-12">
-          <div className="text-6xl mb-4">🚫</div>
+          <div className="mb-4">
+            <svg className="w-24 h-24 mx-auto text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
           <h2 className="text-2xl font-bold text-text dark:text-text-dark mb-2">
             גישה מוגבלת
           </h2>
@@ -181,8 +186,8 @@ const TeamScreen: React.FC = () => {
               className="w-full px-3 py-2 rounded-lg border border-border dark:border-border-dark bg-surface-2 dark:bg-surface-2-dark text-sm"
             >
               <option value="">כל הגזרות</option>
-              {user?.commanderAreas.map(area => (
-                <option key={area} value={area}>גזרה {area}</option>
+              {(user?.commanderAreas || []).map(area => (
+                <option key={area} value={area}>{formatAreaName(area)}</option>
               ))}
             </select>
             
@@ -209,7 +214,9 @@ const TeamScreen: React.FC = () => {
               <p className="text-center text-text-muted dark:text-text-dark-muted p-8">טוען...</p>
             ) : filteredMembers.length === 0 ? (
               <div className="text-center p-8">
-                <div className="text-4xl mb-2">👥</div>
+                <svg className="w-16 h-16 mx-auto mb-2 text-text-muted dark:text-text-dark-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
                 <p className="text-text-muted dark:text-text-dark-muted">
                   {searchTerm || filterArea ? "לא נמצאו חיילים" : "אין חיילים"}
                 </p>
@@ -234,7 +241,7 @@ const TeamScreen: React.FC = () => {
                         {member.username}
                       </div>
                       <div className="text-xs text-text-muted dark:text-text-dark-muted">
-                        גזרה {member.areaId}
+                        {formatAreaName(member.areaId)}
                       </div>
                     </div>
                     {member.responseStats && member.responseStats.totalResponses > 0 && (
@@ -253,7 +260,11 @@ const TeamScreen: React.FC = () => {
         <div className="card">
           {!selectedMember ? (
             <div className="text-center p-12">
-              <div className="text-6xl mb-4">👤</div>
+              <div className="mb-4">
+                <svg className="w-24 h-24 mx-auto text-text-muted dark:text-text-dark-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
               <h3 className="text-lg font-semibold text-text dark:text-text-dark mb-2">
                 בחר חייל
               </h3>

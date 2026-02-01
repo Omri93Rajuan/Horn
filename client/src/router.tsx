@@ -11,7 +11,8 @@ import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import LoginScreen from "./screens/LoginScreen";
 import RegisterScreen from "./screens/RegisterScreen";
 import CommandCenter from "./screens/CommandCenter";
-import AlertsFullScreen from "./screens/AlertsFullScreen";
+import SoldierDashboard from "./screens/SoldierDashboard";
+import AlertsHistoryScreen from "./screens/AlertsHistoryScreen";
 import TeamScreen from "./screens/TeamScreen";
 import ResponsesScreen from "./screens/ResponsesScreen";
 import ProfileScreen from "./screens/ProfileScreen";
@@ -44,52 +45,32 @@ const RootLayout = () => {
   return (
     <div className="relative min-h-screen overflow-hidden">
       <header className="sticky top-0 z-20 border-b border-border/70 bg-surface-1/95 backdrop-blur-xl dark:border-border-dark dark:bg-surface-1-dark/95">
-        <div className="relative mx-auto flex max-w-6xl items-center justify-center px-6 py-4">
-          <div className="flex flex-col items-center gap-2 text-center">
-            <img src={logoUrl} alt="Horn" className="h-20 w-auto" />
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
+          <div className="flex items-center gap-3">
+            <img src={logoUrl} alt="Horn" className="h-16 w-auto" />
             <div>
-              <p className="text-[11px] tracking-[0.45em] text-text-muted dark:text-text-dark-muted">הורן</p>
-              <h1 className="font-display text-2xl text-text dark:text-text-dark">מרכז שליטה</h1>
+              <h1 className="font-display text-lg text-text dark:text-text-dark">הורן - מרכז שליטה</h1>
             </div>
           </div>
+          
+          {auth.token ? (
+            <nav className="flex items-center gap-4 text-sm font-medium text-text-muted dark:text-text-dark-muted">
+              {auth.user?.role === "COMMANDER" ? (
+                <>
+                  <Link className="hover:text-primary" to="/commander">מרכז פיקוד</Link>
+                  <Link className="hover:text-primary" to="/alerts">היסטוריית התראות</Link>
+                  <Link className="hover:text-primary" to="/team">הצוות</Link>
+                </>
+              ) : (
+                <>
+                  <Link className="hover:text-primary" to="/soldier">הדשבורד שלי</Link>
+                  <Link className="hover:text-primary" to="/responses">התגובות שלי</Link>
+                </>
+              )}
+              <Link className="hover:text-primary" to="/profile">פרופיל</Link>
+            </nav>
+          ) : null}
         </div>
-        {auth.token ? (
-          <div className="border-t border-border/60 dark:border-border-dark/60">
-            <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => window.history.back()}
-                  className="action-btn ghost px-4 py-2 text-xs"
-                >
-                  אחורה
-                </button>
-                <button
-                  type="button"
-                  onClick={() => window.history.forward()}
-                  className="action-btn ghost px-4 py-2 text-xs"
-                >
-                  קדימה
-                </button>
-              </div>
-              <nav className="flex items-center gap-4 text-sm font-medium text-text-muted dark:text-text-dark-muted">
-                {auth.user?.role === "COMMANDER" ? (
-                  <>
-                    <Link className="hover:text-primary" to="/commander">קומנדור</Link>
-                    <Link className="hover:text-primary" to="/alerts">התראות</Link>
-                    <Link className="hover:text-primary" to="/team">הצוות</Link>
-                  </>
-                ) : (
-                  <>
-                    <Link className="hover:text-primary" to="/alerts">התראות</Link>
-                    <Link className="hover:text-primary" to="/responses">תגובות</Link>
-                  </>
-                )}
-                <Link className="hover:text-primary" to="/profile">פרופיל</Link>
-              </nav>
-            </div>
-          </div>
-        ) : null}
       </header>
 
       <button
@@ -152,9 +133,9 @@ const loginRoute = createRoute({
     redirect: typeof search.redirect === "string" ? search.redirect : undefined,
   }),
   beforeLoad: ({ context }) => {
-    // If already logged in, redirect to dashboard
+    // If already logged in, redirect to appropriate page
     if (context.auth.token) {
-      throw redirect({ to: "/dashboard" });
+      throw redirect({ to: "/alerts" });
     }
   },
   component: LoginScreen,
@@ -164,9 +145,9 @@ const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/register",
   beforeLoad: ({ context }) => {
-    // If already logged in, redirect to dashboard
+    // If already logged in, redirect to appropriate page
     if (context.auth.token) {
-      throw redirect({ to: "/dashboard" });
+      throw redirect({ to: "/alerts" });
     }
   },
   component: RegisterScreen,
@@ -194,31 +175,67 @@ const indexRoute = createRoute({
     if (context.auth.user?.role === "COMMANDER") {
       throw redirect({ to: "/commander" });
     }
-    throw redirect({ to: "/alerts" });
+    throw redirect({ to: "/soldier" });
   },
+});
+
+const soldierRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/soldier",
+  beforeLoad: ({ context }) => {
+    // Only soldiers can access this route
+    if (context.auth.user?.role === "COMMANDER") {
+      throw redirect({ to: "/commander" });
+    }
+  },
+  component: SoldierDashboard,
 });
 
 const commanderRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/commander",
+  beforeLoad: ({ context }) => {
+    // Only commanders can access this route
+    if (context.auth.user?.role !== "COMMANDER") {
+      throw redirect({ to: "/soldier" });
+    }
+  },
   component: CommandCenter,
 });
 
 const teamRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/team",
+  beforeLoad: ({ context }) => {
+    // Only commanders can access team management
+    if (context.auth.user?.role !== "COMMANDER") {
+      throw redirect({ to: "/soldier" });
+    }
+  },
   component: TeamScreen,
 });
 
 const alertsRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/alerts",
-  component: AlertsFullScreen,
+  beforeLoad: ({ context }) => {
+    // Only commanders can access alerts history
+    if (context.auth.user?.role !== "COMMANDER") {
+      throw redirect({ to: "/soldier" });
+    }
+  },
+  component: AlertsHistoryScreen,
 });
 
 const responsesRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/responses",
+  beforeLoad: ({ context }) => {
+    // Only soldiers can access their responses
+    if (context.auth.user?.role === "COMMANDER") {
+      throw redirect({ to: "/commander" });
+    }
+  },
   component: ResponsesScreen,
 });
 
@@ -239,6 +256,7 @@ const routeTree = rootRoute.addChildren([
   registerRoute,
   protectedRoute.addChildren([
     indexRoute,
+    soldierRoute,
     commanderRoute,
     teamRoute,
     alertsRoute,

@@ -263,13 +263,13 @@ export async function getCommanderActiveSummary(
       ? user.commanderAreas
       : [user.areaId].filter(Boolean);
 
-    const since = new Date(Date.now() - ACTIVE_EVENT_WINDOW_MINUTES * 60 * 1000);
+    // Get ALL events (no time limit) - we'll filter by completion status
     const events = await prisma.alertEvent.findMany({
-      where: { areaId: { in: areas }, triggeredAt: { gte: since } },
+      where: { areaId: { in: areas } },
       orderBy: { triggeredAt: "desc" },
     });
 
-    // Group ALL active events by area (not just the latest)
+    // Group ALL events by area
     const eventsByArea = new Map<string, AlertEvent[]>();
     for (const event of events) {
       if (!eventsByArea.has(event.areaId)) {
@@ -305,23 +305,11 @@ export async function getCommanderActiveSummary(
       totalUsers += totalUsersInArea;
 
       const areaEvents = eventsByArea.get(areaId) ?? [];
+      
+      // Skip area if no events at all
       if (areaEvents.length === 0) {
-        areaSummaries.push({
-          areaId,
-          events: [],
-          totalUsers: totalUsersInArea,
-          responded: 0,
-          pending: totalUsersInArea,
-          ok: 0,
-          help: 0,
-          isComplete: false,
-          isOverdue: false,
-        });
-        pending += totalUsersInArea;
         continue;
       }
-
-      activeAreas += 1;
       
       // Process each event separately with its own stats
       const eventsWithStats = [];
@@ -337,21 +325,29 @@ export async function getCommanderActiveSummary(
         const eventRespondedCount = eventOkCount + eventHelpCount;
         const eventPendingCount = Math.max(totalUsersInArea - eventRespondedCount, 0);
         const eventIsComplete = eventPendingCount === 0;
-        const eventIsOverdue =
-          !eventIsComplete &&
-          now - new Date(event.triggeredAt).getTime() > ACTIVE_EVENT_WINDOW_MINUTES * 60 * 1000;
+        const eventIsOverdue = !eventIsComplete; // Event is overdue if not complete (no time limit)
 
-        eventsWithStats.push({
-          ...event,
-          totalUsers: totalUsersInArea,
-          responded: eventRespondedCount,
-          pending: eventPendingCount,
-          ok: eventOkCount,
-          help: eventHelpCount,
-          isComplete: eventIsComplete,
-          isOverdue: eventIsOverdue,
-        });
+        // Only include incomplete events (active events)
+        if (!eventIsComplete) {
+          eventsWithStats.push({
+            ...event,
+            totalUsers: totalUsersInArea,
+            responded: eventRespondedCount,
+            pending: eventPendingCount,
+            ok: eventOkCount,
+            help: eventHelpCount,
+            isComplete: eventIsComplete,
+            isOverdue: eventIsOverdue,
+          });
+        }
       }
+      
+      // Skip area if no active events
+      if (eventsWithStats.length === 0) {
+        continue;
+      }
+      
+      activeAreas += 1;
       
       // Calculate area totals (sum of all events, but cap at totalUsers)
       const areaOkCount = eventsWithStats.reduce((sum, e) => sum + e.ok, 0);

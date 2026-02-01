@@ -50,10 +50,10 @@ export async function getAlerts(req: Request, res: Response) {
         ? user.commanderAreas
         : [user.areaId].filter(Boolean);
 
+    // Get all events for the allowed areas
     const events = await prisma.alertEvent.findMany({
       where: { areaId: { in: allowedAreas } },
       orderBy: { triggeredAt: "desc" },
-      take: 50,
       include: {
         triggeredByUser: {
           select: {
@@ -61,19 +61,38 @@ export async function getAlerts(req: Request, res: Response) {
             name: true,
           },
         },
+        _count: {
+          select: { responses: true },
+        },
       },
     });
 
-    const result = events.map((event) => ({
-      id: event.id,
-      areaId: event.areaId,
-      triggeredAt: event.triggeredAt.toISOString(),
-      triggeredBy: event.triggeredByUser
-        ? { id: event.triggeredByUser.id, name: event.triggeredByUser.name }
-        : null,
-    }));
+    // Filter to only active (incomplete) events for soldiers
+    // Commanders can see all events via their dedicated endpoint
+    const activeEvents = [];
+    for (const event of events) {
+      // Count total users in the area
+      const totalUsers = await prisma.user.count({
+        where: { areaId: event.areaId },
+      });
 
-    return res.json({ success: true, events: result });
+      const responsesCount = event._count.responses;
+      const isComplete = responsesCount >= totalUsers;
+
+      // Only include incomplete events (active)
+      if (!isComplete) {
+        activeEvents.push({
+          id: event.id,
+          areaId: event.areaId,
+          triggeredAt: event.triggeredAt.toISOString(),
+          triggeredBy: event.triggeredByUser
+            ? { id: event.triggeredByUser.id, name: event.triggeredByUser.name }
+            : null,
+        });
+      }
+    }
+
+    return res.json({ success: true, events: activeEvents });
   } catch (err: any) {
     return handleError(res, err.status || 500, err.message || "Server error");
   }

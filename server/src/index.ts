@@ -13,7 +13,6 @@ import areasRoutes from "./routes/areas.routes";
 import { handleError } from "./utils/ErrorHandle";
 import { prisma } from "./db/prisma";
 import { seedIfEmpty } from "./db/seed";
-import { ACTIVE_EVENT_WINDOW_MINUTES } from "./config/events";
 
 dotenv.config();
 
@@ -35,8 +34,8 @@ app.use(cors());
 
 // Rate Limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 1000, // 1000 requests per minute (very high for development)
   message: "Too many requests from this IP, please try again later.",
 });
 
@@ -72,38 +71,50 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 
 // WebSocket connection handling
 io.on("connection", (socket) => {
-  console.log("Client connected:", socket.id);
+  console.log("✅ Client connected:", socket.id);
 
   socket.on("join-commander-room", () => {
     socket.join("commanders");
-    console.log("Client joined commanders room:", socket.id);
+    console.log("👑 Client joined commanders room:", socket.id);
   });
 
   socket.on("join-area-room", async (areaId: string) => {
     socket.join(`area-${areaId}`);
-    console.log(`Client joined area room: ${areaId}`, socket.id);
+    console.log(`🎖️ Client joined area room: ${areaId}`, socket.id);
     
     // Check for active events in this area and notify the user immediately
+    // Active = events where not all users have responded yet
     try {
-      const windowMs = ACTIVE_EVENT_WINDOW_MINUTES * 60 * 1000;
-      const cutoffTime = new Date(Date.now() - windowMs);
-      
       const activeEvents = await prisma.alertEvent.findMany({
         where: {
           areaId,
-          triggeredAt: {
-            gte: cutoffTime,
-          },
         },
         orderBy: {
           triggeredAt: 'desc',
         },
       });
       
-      if (activeEvents.length > 0) {
-        console.log(`📤 Sending ${activeEvents.length} active event(s) to newly connected soldier`);
+      // Filter to only incomplete events
+      const incompleteEvents = [];
+      for (const event of activeEvents) {
+        const totalUsers = await prisma.user.count({
+          where: { areaId },
+        });
+        
+        const responsesCount = await prisma.response.count({
+          where: { eventId: event.id },
+        });
+        
+        // Event is active if not all users responded
+        if (responsesCount < totalUsers) {
+          incompleteEvents.push(event);
+        }
+      }
+      
+      if (incompleteEvents.length > 0) {
+        console.log(`📤 Sending ${incompleteEvents.length} active event(s) to newly connected soldier`);
         // Send active events to the newly connected soldier
-        for (const event of activeEvents) {
+        for (const event of incompleteEvents) {
           socket.emit("new-alert", {
             eventId: event.id,
             areaId: event.areaId,
@@ -122,7 +133,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
+    console.log("❌ Client disconnected:", socket.id);
   });
 });
 

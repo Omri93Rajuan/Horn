@@ -1,19 +1,21 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
 import { useMutation } from '@tanstack/react-query';
 import { useCommanderSocket, useSoldierSocket } from '../hooks/useSocket';
-import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { addEvent, setCurrentEvent } from '../store/dataSlice';
+import { useAppSelector } from '../store/hooks';
 import { responseService } from '../services/responseService';
-import { alertService } from '../services/alertService';
+
+// Prevent refetch loop
+const REFETCH_THROTTLE_MS = 2000; // Minimum 2 seconds between refetches
 
 const GlobalSocketManager: React.FC = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
   const isCommander = user?.role === 'COMMANDER';
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  
+  // Track last refetch time
+  const lastRefetchRef = useRef<number>(0);
   
   const [newAlertNotification, setNewAlertNotification] = useState<{
     show: boolean;
@@ -22,14 +24,49 @@ const GlobalSocketManager: React.FC = () => {
     triggeredAt: string;
   } | null>(null);
 
+  // Initialize audio with alarm sound
+  React.useEffect(() => {
+    audioRef.current = new Audio('/alert-sound.mp3');
+    audioRef.current.loop = true;
+    audioRef.current.volume = 1.0;
+    
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Play alarm sound
+  const playAlarmSound = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(err => {
+        console.error('Failed to play alarm sound:', err);
+      });
+    }
+  }, []);
+
+  // Stop alarm sound
+  const stopAlarmSound = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  }, []);
+
   // Mutation for responding to an alert
   const respondMutation = useMutation({
     mutationFn: ({ eventId, status }: { eventId: string; status: 'OK' | 'HELP' }) =>
       responseService.submitResponse({ eventId, status }),
     onSuccess: () => {
+      stopAlarmSound();
       setNewAlertNotification(null);
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['responses'] });
+      queryClient.invalidateQueries({ queryKey: ['soldier-events'] });
+      queryClient.invalidateQueries({ queryKey: ['my-responses'] });
     },
     onError: (error: any) => {
       alert(error.response?.data?.message || 'שגיאה בשליחת התגובה');
@@ -39,7 +76,7 @@ const GlobalSocketManager: React.FC = () => {
   // Handler for soldiers - new alert received
   const handleSoldierNewAlert = useCallback(
     async (data: { eventId: string; areaId: string; triggeredAt: string }) => {
-      console.log('🔔 Global: Soldier received new alert:', data);
+      console.log('� Global: Soldier received new alert:', data);
       
       // IMPORTANT: Only show alert if it's for this soldier's area
       if (data.areaId !== user?.areaId) {
@@ -47,21 +84,10 @@ const GlobalSocketManager: React.FC = () => {
         return;
       }
       
-      console.log('✅ Alert is for my area - showing notification');
-      
-      // Fetch the full event details
-      try {
-        const events = await alertService.getEvents();
-        const newEvent = events.find((e) => e.id === data.eventId);
-        if (newEvent) {
-          dispatch(addEvent(newEvent));
-          dispatch(setCurrentEvent(newEvent));
-        }
-      } catch (error) {
-        console.error('Error fetching event details:', error);
-      }
+      console.log('💎 Alert is for my area - showing notification');
 
-      // Show notification
+      // Show notification with the data we already have from the socket
+      // No need to fetch - the socket already gave us the eventId
       setNewAlertNotification({
         show: true,
         eventId: data.eventId,
@@ -69,34 +95,52 @@ const GlobalSocketManager: React.FC = () => {
         triggeredAt: data.triggeredAt,
       });
 
-      // Invalidate queries
+      // Play alarm sound
+      playAlarmSound();
+
+      // Invalidate queries to refresh the UI
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['responses'] });
+      queryClient.invalidateQueries({ queryKey: ['soldier-events'] });
+      queryClient.invalidateQueries({ queryKey: ['my-responses'] });
     },
-    [dispatch, queryClient, user?.areaId]
+    [queryClient, user?.areaId, playAlarmSound]
   );
 
   // Handler for commanders - new alert received
   const handleCommanderNewAlert = useCallback(
-    (data: { eventId: string; areaId: string; triggeredAt: string }) => {
-      console.log('🔔 Global: Commander received new alert:', data);
+    async (data: { eventId: string; areaId: string; triggeredAt: string }) => {
+      console.log('👑 Global: Commander received new alert:', data);
       
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ['commander-overview'] });
-      queryClient.invalidateQueries({ queryKey: ['commander-active'] });
+      // Invalidate queries to trigger automatic refetch
+      console.log('🔄 Invalidating commander-active query...');
+      await queryClient.invalidateQueries({ 
+        queryKey: ['commander-active'],
+        refetchType: 'active'
+      });
+      console.log('✅ Query invalidated - UI should update');
     },
     [queryClient]
   );
 
   // Handler for commanders - response update
   const handleResponseUpdate = useCallback(
-    (data: { eventId: string; userId: string; status: string; timestamp: string }) => {
-      console.log('📝 Global: Response update received:', data);
+    async (data: { eventId: string; userId: string; status: string; timestamp: string }) => {
+      console.log('📨 Global: Response update received:', data);
       
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ['event-status', data.eventId] });
-      queryClient.invalidateQueries({ queryKey: ['commander-active'] });
-      queryClient.invalidateQueries({ queryKey: ['commander-overview'] });
+      // Throttle refetch to prevent loop
+      const now = Date.now();
+      if (now - lastRefetchRef.current < REFETCH_THROTTLE_MS) {
+        console.log('⏭️ Skipping refetch - too soon');
+        return;
+      }
+      lastRefetchRef.current = now;
+      
+      // Invalidate queries to trigger automatic refetch
+      console.log('🔄 Invalidating response queries...');
+      await queryClient.invalidateQueries({ queryKey: ['event-status', data.eventId] });
+      await queryClient.invalidateQueries({ queryKey: ['commander-active'] });
+      console.log('✅ Response queries invalidated');
     },
     [queryClient]
   );
@@ -121,12 +165,14 @@ const GlobalSocketManager: React.FC = () => {
   };
 
   const handleDismiss = () => {
+    stopAlarmSound();
     setNewAlertNotification(null);
   };
 
   const handleViewAlert = () => {
+    stopAlarmSound();
     setNewAlertNotification(null);
-    navigate({ to: '/alerts' });
+    window.location.href = '/soldier';
   };
 
   if (!newAlertNotification?.show) {
@@ -145,7 +191,7 @@ const GlobalSocketManager: React.FC = () => {
               </svg>
             </div>
             <div>
-              <h3 className="text-xl font-bold text-white">🚨 ירוק בעיניים!</h3>
+              <h3 className="text-xl font-bold text-white">ירוק בעיניים</h3>
               <p className="text-sm text-white/90">אירוע חדש באזור {newAlertNotification.areaId}</p>
             </div>
           </div>

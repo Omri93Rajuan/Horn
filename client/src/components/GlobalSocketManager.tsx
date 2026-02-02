@@ -1,12 +1,12 @@
 import React, { useCallback, useState, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation } from '@tantml:react-query';
 import { useCommanderSocket, useSoldierSocket } from '../hooks/useSocket';
 import { useAppSelector } from '../store/hooks';
 import { responseService } from '../services/responseService';
 
-// Prevent refetch loop
-const REFETCH_THROTTLE_MS = 2000; // Minimum 2 seconds between refetches
+// Debounce mechanism for preventing excessive refetches
+const DEBOUNCE_MS = 1000; // Wait 1 second after last update before refetching
 
 const GlobalSocketManager: React.FC = () => {
   const queryClient = useQueryClient();
@@ -14,8 +14,9 @@ const GlobalSocketManager: React.FC = () => {
   const isCommander = user?.role === 'COMMANDER';
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
-  // Track last refetch time
-  const lastRefetchRef = useRef<number>(0);
+  // Debounce timer for refetches - allows all rapid updates to queue up
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingInvalidationsRef = useRef<Set<string>>(new Set());
   
   const [newAlertNotification, setNewAlertNotification] = useState<{
     show: boolean;
@@ -128,19 +129,33 @@ const GlobalSocketManager: React.FC = () => {
     async (data: { eventId: string; userId: string; status: string; timestamp: string }) => {
       console.log('📨 Global: Response update received:', data);
       
-      // Throttle refetch to prevent loop
-      const now = Date.now();
-      if (now - lastRefetchRef.current < REFETCH_THROTTLE_MS) {
-        console.log('⏭️ Skipping refetch - too soon');
-        return;
-      }
-      lastRefetchRef.current = now;
+      // Add to pending invalidations queue
+      pendingInvalidationsRef.current.add(`event-status-${data.eventId}`);
+      pendingInvalidationsRef.current.add('commander-active');
       
-      // Invalidate queries to trigger automatic refetch
-      console.log('🔄 Invalidating response queries...');
-      await queryClient.invalidateQueries({ queryKey: ['event-status', data.eventId] });
-      await queryClient.invalidateQueries({ queryKey: ['commander-active'] });
-      console.log('✅ Response queries invalidated');
+      // Clear existing debounce timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      
+      // Set new debounce timer - will execute after all rapid updates finish
+      debounceTimerRef.current = setTimeout(async () => {
+        console.log('🔄 Executing debounced refetch for:', Array.from(pendingInvalidationsRef.current));
+        
+        // Process all pending invalidations
+        for (const key of pendingInvalidationsRef.current) {
+          if (key === 'commander-active') {
+            await queryClient.invalidateQueries({ queryKey: ['commander-active'] });
+          } else if (key.startsWith('event-status-')) {
+            const eventId = key.replace('event-status-', '');
+            await queryClient.invalidateQueries({ queryKey: ['event-status', eventId] });
+          }
+        }
+        
+        // Clear the queue
+        pendingInvalidationsRef.current.clear();
+        console.log('✅ All debounced queries invalidated');
+      }, DEBOUNCE_MS);
     },
     [queryClient]
   );

@@ -18,20 +18,20 @@ const AlertsHistoryScreen: React.FC = () => {
   const [filter, setFilter] = useState<"ALL" | "OK" | "HELP" | "PENDING">("ALL");
 
   // Fetch all events (history)
+  // WebSocket updates will trigger query invalidation for real-time updates
   const eventsQuery = useQuery({
     queryKey: ["events"],
     queryFn: alertService.getEvents,
-    staleTime: 5000, // Consider data fresh for 5 seconds
-    refetchInterval: 10000, // Refetch every 10 seconds
+    staleTime: 60000, // Consider data fresh for 60 seconds
   });
 
   // Fetch event status for selected event
+  // WebSocket updates will trigger query invalidation for real-time updates
   const statusQuery = useQuery({
     queryKey: ["event-status", selectedEventId],
     queryFn: () => dashboardService.getEventStatus(selectedEventId!),
     enabled: !!selectedEventId && isCommander,
-    staleTime: 3000, // Consider data fresh for 3 seconds
-    refetchInterval: 5000, // Refetch every 5 seconds
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   // Calculate overall statistics

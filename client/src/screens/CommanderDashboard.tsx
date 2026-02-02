@@ -89,18 +89,22 @@ const CommanderDashboard: React.FC = () => {
     staleTime: 0, // Always consider data stale - allow refetch anytime
     gcTime: 60000,
     refetchOnMount: true, // Refetch on mount to ensure fresh data
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    refetchOnWindowFocus: true, // Also refetch when window regains focus
+    refetchOnReconnect: true, // And when network reconnects
     retry: false,
   });
 
   const statusQuery = useQuery({
     queryKey: ["event-status", selectedEventId],
     queryFn: async () => {
-      console.log('� Fetching event status for:', selectedEventId);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🔍 Fetching event status for:', selectedEventId);
+      }
       const result = await dashboardService.getEventStatus(selectedEventId!);
-      console.log('🎁 Received event status:', result);
-      console.log('📜 List length:', result?.list?.length);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🎁 Received event status:', result);
+        console.log('📜 List length:', result?.list?.length);
+      }
       return result;
     },
     enabled: !!selectedEventId && user?.role === "COMMANDER",
@@ -110,9 +114,13 @@ const CommanderDashboard: React.FC = () => {
   const areaSoldiersQuery = useQuery({
     queryKey: ["area-soldiers", selectedAreaId],
     queryFn: async () => {
-      console.log('� Fetching soldiers for area:', selectedAreaId);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('👥 Fetching soldiers for area:', selectedAreaId);
+      }
       const result = await dashboardService.getAreaSoldiers(selectedAreaId!);
-      console.log('🎁 Received soldiers:', result);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🎁 Received soldiers:', result);
+      }
       return result;
     },
     enabled: !!selectedAreaId && !selectedEventId && user?.role === "COMMANDER",
@@ -157,7 +165,9 @@ const CommanderDashboard: React.FC = () => {
     // Find first area with events
     const activeWithEvents = activeQuery.data?.areas.find((area) => area.events && area.events.length > 0);
     if (activeWithEvents?.events && activeWithEvents.events.length > 0) {
-      console.log('�️ Auto-selecting first event:', activeWithEvents.events[0].id);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🎯 Auto-selecting first event:', activeWithEvents.events[0].id);
+      }
       setSelectedEventId(activeWithEvents.events[0].id);
     }
   }, [activeQuery.data]);
@@ -167,9 +177,11 @@ const CommanderDashboard: React.FC = () => {
       return [];
     }
     
-    console.log('� Status Query Data:', statusQuery.data);
-    console.log('📜 Full list:', statusQuery.data.list);
-    console.log('🔢 Counts:', statusQuery.data.counts);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('📊 Status Query Data:', statusQuery.data);
+      console.log('📜 Full list:', statusQuery.data.list);
+      console.log('🔢 Counts:', statusQuery.data.counts);
+    }
     
     if (filter === "ALL") {
       return statusQuery.data.list;
@@ -518,17 +530,6 @@ const CommanderDashboard: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            {(() => {
-              console.log('🎯 Rendering active areas');
-              console.log('🎯 activeQuery.data:', activeQuery.data);
-              console.log('🎯 areas:', activeQuery.data?.areas);
-              console.log('🎯 areas length:', activeQuery.data?.areas?.length);
-              
-              const areasWithEvents = (activeQuery.data?.areas ?? []).filter(a => a.events && a.events.length > 0);
-              console.log('🎯 Areas with events:', areasWithEvents);
-              
-              return null;
-            })()}
             
             {(activeQuery.data?.areas ?? []).flatMap((area) => {
               // Show each active event in the area as a separate card

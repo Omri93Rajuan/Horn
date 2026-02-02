@@ -10,6 +10,7 @@ import {
   validateName,
   validatePassword,
 } from "../utils/validators";
+import { reconnectSocket } from "../hooks/useSocket";
 
 const RegisterScreen: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -31,6 +32,8 @@ const RegisterScreen: React.FC = () => {
     onMutate: () => dispatch(setLoading(true)),
     onSuccess: (data) => {
       dispatch(setCredentials(data));
+      // Reconnect socket with new token
+      reconnectSocket();
       const redirectTo = data.user.role === 'COMMANDER' ? '/commander' : '/soldier';
       navigate({ to: redirectTo });
     },

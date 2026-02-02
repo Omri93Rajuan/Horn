@@ -5,6 +5,7 @@ import { authService } from "../services/authService";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setCredentials, setLoading } from "../store/authSlice";
 import { validateEmail, validatePassword } from "../utils/validators";
+import { reconnectSocket } from "../hooks/useSocket";
 
 const LoginScreen: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -19,6 +20,8 @@ const LoginScreen: React.FC = () => {
     onMutate: () => dispatch(setLoading(true)),
     onSuccess: (data) => {
       dispatch(setCredentials(data));
+      // Reconnect socket with new token
+      reconnectSocket();
       const redirectTo = data.user.role === 'COMMANDER' ? '/commander' : '/soldier';
       navigate({ to: search.redirect ?? redirectTo });
     },

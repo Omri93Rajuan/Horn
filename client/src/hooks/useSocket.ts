@@ -49,6 +49,21 @@ export function useSocket() {
   return getOrCreateSocket(); // Always return the socket immediately
 }
 
+// Disconnect and cleanup the socket
+export function disconnectSocket() {
+  if (globalSocket) {
+    console.log('🔌 Disconnecting socket...');
+    globalSocket.disconnect();
+    globalSocket = null;
+  }
+}
+
+// Reconnect socket with updated token (useful after login or token refresh)
+export function reconnectSocket() {
+  disconnectSocket();
+  return getOrCreateSocket();
+}
+
 export function useCommanderSocket(
   onNewAlert?: (data: { eventId: string; areaId: string; triggeredAt: string }) => void,
   onResponseUpdate?: (data: { eventId: string; userId: string; status: string; timestamp: string }) => void

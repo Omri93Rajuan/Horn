@@ -14,12 +14,12 @@ const SoldierDashboard: React.FC = () => {
   const [notes, setNotes] = useState<string>("");
 
   // Fetch events for my area only - server already filters to active events
+  // WebSocket updates via GlobalSocketManager will trigger query invalidation
   const eventsQuery = useQuery({
     queryKey: ["soldier-events", user?.areaId],
     queryFn: alertService.getEvents, // Server returns only active events
     enabled: !!user?.areaId,
-    staleTime: 5000, // Consider data fresh for 5 seconds
-    refetchInterval: 10000, // Refetch every 10 seconds
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   // Fetch my responses

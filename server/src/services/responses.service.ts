@@ -1,7 +1,6 @@
 import { prisma } from "../db/prisma";
 import { Response, ResponseStatus } from "../types/domain";
 import { mapPrismaError } from "../utils/prismaErrors";
-import { ACTIVE_EVENT_WINDOW_MINUTES } from "../config/events";
 import { io } from "../index";
 
 type SubmitResponseInput = {
@@ -25,14 +24,9 @@ export async function submitResponse(
         err.status = 404;
         throw err;
       }
-      const windowMs = ACTIVE_EVENT_WINDOW_MINUTES * 60 * 1000;
-      if (now.getTime() - event.triggeredAt.getTime() > windowMs) {
-        const err: any = new Error("חלון הזמן לאישור האירוע נסגר");
-        err.status = 403;
-        throw err;
-      }
 
-      // Check if response already exists
+      // IMPORTANT: Check duplicate first to avoid race condition
+      // This prevents counting responses before the duplicate check
       const existing = await tx.response.findUnique({
         where: {
           userId_eventId: { userId: input.userId, eventId: input.eventId },
@@ -45,7 +39,7 @@ export async function submitResponse(
         throw err;
       }
 
-      return tx.response.create({
+      const response = await tx.response.create({
         data: {
           userId: input.userId,
           eventId: input.eventId,
@@ -54,6 +48,22 @@ export async function submitResponse(
           respondedAt: now,
         },
       });
+
+      // Check completion status after creating response (prevents race condition)
+      const totalUsersInArea = await tx.user.count({
+        where: { areaId: event.areaId },
+      });
+      
+      const responsesCount = await tx.response.count({
+        where: { eventId: input.eventId },
+      });
+
+      // Log if event is now complete
+      if (responsesCount >= totalUsersInArea) {
+        console.log(`✅ Event ${input.eventId} is now complete - all users responded`);
+      }
+
+      return response;
     });
 
     console.log(`📡 WebSocket: Emitting response-update to commanders room`);

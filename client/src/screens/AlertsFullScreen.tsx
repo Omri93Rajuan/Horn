@@ -32,8 +32,12 @@ const AlertsFullScreen: React.FC = () => {
   // Fetch active events
   const activeQuery = useQuery({
     queryKey: ["commander-active"],
-    queryFn: dashboardService.getCommanderActiveData,
+    queryFn: dashboardService.getCommanderActive,
     enabled: isCommander,
+    staleTime: 30000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 
   // Fetch event status for selected event
@@ -45,10 +49,13 @@ const AlertsFullScreen: React.FC = () => {
 
   // Get active events
   const activeEvents = useMemo(() => {
-    if (!activeQuery.data) return [];
+    if (!activeQuery.data?.areas) return [];
     return activeQuery.data.areas
-      .flatMap(area => area.events.map(event => ({ ...event, areaId: area.areaId })))
-      .sort((a, b) => new Date(b.triggeredAt).getTime() - new Date(a.triggeredAt).getTime());
+      .filter((area: any) => Array.isArray(area.events) && area.events.length > 0)
+      .flatMap((area: any) =>
+        area.events.map((event: any) => ({ ...event, areaId: area.areaId }))
+      )
+      .sort((a: any, b: any) => new Date(b.triggeredAt).getTime() - new Date(a.triggeredAt).getTime());
   }, [activeQuery.data]);
 
   // Calculate overall statistics
@@ -121,7 +128,11 @@ const AlertsFullScreen: React.FC = () => {
     return (
       <section className="space-y-8">
         <div className="card text-center p-12">
-          <div className="text-6xl mb-4">🔄</div>
+          <div className="mb-4">
+            <svg className="w-24 h-24 mx-auto text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </div>
           <h2 className="text-2xl font-bold text-text dark:text-text-dark mb-2">
             נדרש התחברות מחדש
           </h2>
@@ -147,7 +158,11 @@ const AlertsFullScreen: React.FC = () => {
     return (
       <section className="space-y-8">
         <div className="card text-center p-12">
-          <div className="text-6xl mb-4">🚫</div>
+          <div className="mb-4">
+            <svg className="w-24 h-24 mx-auto text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
           <h2 className="text-2xl font-bold text-text dark:text-text-dark mb-2">
             גישה מוגבלת
           </h2>
@@ -256,7 +271,7 @@ const AlertsFullScreen: React.FC = () => {
               className="w-full px-3 py-2 rounded-lg border border-border dark:border-border-dark bg-surface-2 dark:bg-surface-2-dark text-sm"
             >
               <option value="">כל הגזרות</option>
-              {user?.commanderAreas.map(area => (
+              {(user?.commanderAreas || []).map(area => (
                 <option key={area} value={area}>גזרה {area}</option>
               ))}
             </select>
@@ -292,9 +307,9 @@ const AlertsFullScreen: React.FC = () => {
               <p className="text-center text-text-muted dark:text-text-dark-muted p-8">טוען...</p>
             ) : filteredEvents.length === 0 ? (
               <div className="text-center p-8">
-                <div className="text-4xl mb-2">
-                  {activeTab === "active" ? "✅" : "🔍"}
-                </div>
+                <svg className="w-16 h-16 mx-auto mb-2 text-text-muted dark:text-text-dark-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
                 <p className="text-text-muted dark:text-text-dark-muted">
                   {activeTab === "active" 
                     ? "אין אירועים פעילים" 
@@ -334,7 +349,11 @@ const AlertsFullScreen: React.FC = () => {
         <div className="card">
           {!selectedEventId ? (
             <div className="text-center p-12">
-              <div className="text-6xl mb-4">📋</div>
+              <div className="mb-4">
+                <svg className="w-24 h-24 mx-auto text-text-muted dark:text-text-dark-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
               <h3 className="text-lg font-semibold text-text dark:text-text-dark mb-2">
                 בחר אירוע
               </h3>
@@ -361,15 +380,15 @@ const AlertsFullScreen: React.FC = () => {
               {/* Status Summary */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center p-4 rounded-lg bg-success/10">
-                  <div className="text-2xl font-bold text-success">{statusQuery.data.summary.ok}</div>
+                  <div className="text-2xl font-bold text-success">{statusQuery.data?.counts?.ok ?? 0}</div>
                   <div className="text-xs text-text-muted dark:text-text-dark-muted">OK</div>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-danger/10">
-                  <div className="text-2xl font-bold text-danger">{statusQuery.data.summary.help}</div>
+                  <div className="text-2xl font-bold text-danger">{statusQuery.data?.counts?.help ?? 0}</div>
                   <div className="text-xs text-text-muted dark:text-text-dark-muted">עזרה</div>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-warning/10">
-                  <div className="text-2xl font-bold text-warning">{statusQuery.data.summary.pending}</div>
+                  <div className="text-2xl font-bold text-warning">{statusQuery.data?.counts?.pending ?? 0}</div>
                   <div className="text-xs text-text-muted dark:text-text-dark-muted">ממתינים</div>
                 </div>
               </div>
@@ -395,7 +414,7 @@ const AlertsFullScreen: React.FC = () => {
               <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 {filteredStatusList.map((item) => (
                   <div
-                    key={item.userId}
+                    key={item.user.id}
                     className="flex items-center justify-between p-3 rounded-lg bg-surface-2 dark:bg-surface-2-dark"
                   >
                     <div className="flex items-center gap-3">
@@ -408,11 +427,11 @@ const AlertsFullScreen: React.FC = () => {
                             : "bg-warning"
                         }`}
                       >
-                        {item.username.charAt(0).toUpperCase()}
+                        {item.user.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <div className="font-semibold text-text dark:text-text-dark">
-                          {item.username}
+                          {item.user.name}
                         </div>
                         {item.respondedAt && (
                           <div className="text-xs text-text-muted dark:text-text-dark-muted">
@@ -436,10 +455,10 @@ const AlertsFullScreen: React.FC = () => {
                       }`}
                     >
                       {item.responseStatus === "OK"
-                        ? "✓ בסדר"
+                        ? "בסדר"
                         : item.responseStatus === "HELP"
-                        ? "⚠ עזרה"
-                        : "⏳ ממתין"}
+                        ? "דורש עזרה"
+                        : "ממתין לתגובה"}
                     </div>
                   </div>
                 ))}

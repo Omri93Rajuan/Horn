@@ -72,9 +72,19 @@ export interface CommanderOverview {
   totalLast30Days: number;
 }
 
+export interface CommanderActiveEvent extends AlertEvent {
+  totalUsers: number;
+  responded: number;
+  pending: number;
+  ok: number;
+  help: number;
+  isComplete: boolean;
+  isOverdue: boolean;
+}
+
 export interface CommanderActiveArea {
   areaId: string;
-  event: AlertEvent | null;
+  events: CommanderActiveEvent[];
   totalUsers: number;
   responded: number;
   pending: number;

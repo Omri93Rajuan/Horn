@@ -5,6 +5,7 @@ import { authService } from "../services/authService";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setCredentials, setLoading } from "../store/authSlice";
 import { validateEmail, validatePassword } from "../utils/validators";
+import { reconnectSocket } from "../hooks/useSocket";
 
 const LoginScreen: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -19,7 +20,10 @@ const LoginScreen: React.FC = () => {
     onMutate: () => dispatch(setLoading(true)),
     onSuccess: (data) => {
       dispatch(setCredentials(data));
-      navigate({ to: search.redirect ?? "/dashboard" });
+      // Reconnect socket with new token
+      reconnectSocket();
+      const redirectTo = data.user.role === 'COMMANDER' ? '/commander' : '/soldier';
+      navigate({ to: search.redirect ?? redirectTo });
     },
     onError: (error: any) => {
       alert(error.response?.data?.message || "אירעה שגיאה בהתחברות");
@@ -51,9 +55,10 @@ const LoginScreen: React.FC = () => {
 
   React.useEffect(() => {
     if (auth.token) {
-      navigate({ to: "/dashboard" });
+      const redirectTo = auth.user?.role === 'COMMANDER' ? '/commander' : '/soldier';
+      navigate({ to: redirectTo });
     }
-  }, [auth.token, navigate]);
+  }, [auth.token, auth.user?.role, navigate]);
 
   return (
     <section className="grid min-h-[75vh] place-items-center">

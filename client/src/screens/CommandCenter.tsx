@@ -1,10 +1,9 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { dashboardService } from "../services/dashboardService";
 import { alertService } from "../services/alertService";
 import { useAppSelector } from "../store/hooks";
-import { formatDate, formatEventLabel } from "../utils/dateUtils";
-import { useCommanderSocket } from "../hooks/useSocket";
+import { formatDate, formatEventLabel, formatAreaName } from "../utils/dateUtils";
 
 const ACTION_LABEL = "ירוק בעיניים לאירוע";
 
@@ -15,34 +14,27 @@ const CommandCenter: React.FC = () => {
   const [showCreateAlert, setShowCreateAlert] = useState(false);
   const [selectedArea, setSelectedArea] = useState<string>("");
   const [filter, setFilter] = useState<"ALL" | "OK" | "HELP" | "PENDING">("ALL");
-  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
-  // WebSocket handlers
-  const handleNewAlert = useCallback((data: { eventId: string; areaId: string; triggeredAt: string }) => {
-    console.log('🔔 New alert:', data);
-    queryClient.invalidateQueries({ queryKey: ["commander-active"] });
-  }, [queryClient]);
-
-  const handleResponseUpdate = useCallback((data: { eventId: string; userId: string; status: string }) => {
-    console.log('📝 Response update:', data);
-    queryClient.invalidateQueries({ queryKey: ["event-status", data.eventId] });
-    queryClient.invalidateQueries({ queryKey: ["commander-active"] });
-  }, [queryClient]);
-
-  useCommanderSocket(handleNewAlert, handleResponseUpdate);
 
   // Queries
   const activeQuery = useQuery({
     queryKey: ["commander-active"],
     queryFn: dashboardService.getCommanderActive,
     enabled: user?.role === "COMMANDER",
-    refetchInterval: 10000, // Refresh every 10s
+    staleTime: 0, // Always fetch fresh data - socket will trigger updates
+    refetchOnMount: true, // Refetch when component mounts
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 
   const statusQuery = useQuery({
     queryKey: ["event-status", selectedEventId],
     queryFn: () => dashboardService.getEventStatus(selectedEventId!),
     enabled: !!selectedEventId && user?.role === "COMMANDER",
+    staleTime: 30000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 
   // Create alert mutation
@@ -60,7 +52,7 @@ const CommandCenter: React.FC = () => {
     if (!selectedEventId && activeQuery.data?.areas) {
       const firstEvent = activeQuery.data.areas
         .flatMap(area => area.events)
-        .filter(e => e)[0];
+        .sort((a, b) => new Date(b.triggeredAt).getTime() - new Date(a.triggeredAt).getTime())[0];
       if (firstEvent) {
         setSelectedEventId(firstEvent.id);
       }
@@ -92,7 +84,10 @@ const CommandCenter: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-text dark:text-text-dark flex items-center gap-3">
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white">
-                ⚡
+                <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                  <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                </svg>
               </span>
               מרכז פיקוד
             </h1>
@@ -107,36 +102,36 @@ const CommandCenter: React.FC = () => {
           </div>
           <button
             onClick={() => setShowCreateAlert(true)}
-            className="px-6 py-3 bg-danger hover:bg-danger/90 text-white rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg hover:shadow-xl"
+            className="px-8 py-4 bg-gradient-to-r from-success to-success/80 hover:from-success/90 hover:to-success/70 text-white rounded-2xl font-bold transition-all flex items-center gap-3 shadow-xl hover:shadow-2xl hover:scale-105 border-2 border-success/20"
           >
-            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
               <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
             </svg>
-            הקפצת אירוע חדש
+            <span className="text-lg">ירוק בעיניים</span>
           </button>
         </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-4 gap-4 mt-6">
-          <div className="bg-white/50 dark:bg-surface-1-dark/50 rounded-xl p-4 backdrop-blur">
-            <div className="text-3xl font-bold text-success">{activeQuery.data?.totals.ok ?? 0}</div>
-            <div className="text-sm text-text-muted dark:text-text-dark-muted">מאושרים</div>
+          <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
+            <div className="text-4xl font-bold text-success mb-1">{activeQuery.data?.totals.ok ?? 0}</div>
+            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">מאושרים</div>
           </div>
-          <div className="bg-white/50 dark:bg-surface-1-dark/50 rounded-xl p-4 backdrop-blur">
-            <div className="text-3xl font-bold text-danger">{activeQuery.data?.totals.help ?? 0}</div>
-            <div className="text-sm text-text-muted dark:text-text-dark-muted">זקוקים לעזרה</div>
+          <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
+            <div className="text-4xl font-bold text-danger mb-1">{activeQuery.data?.totals.help ?? 0}</div>
+            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">זקוקים לעזרה</div>
           </div>
-          <div className="bg-white/50 dark:bg-surface-1-dark/50 rounded-xl p-4 backdrop-blur">
-            <div className="text-3xl font-bold text-warning">{activeQuery.data?.totals.pending ?? 0}</div>
-            <div className="text-sm text-text-muted dark:text-text-dark-muted">ממתינים</div>
+          <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
+            <div className="text-4xl font-bold text-warning mb-1">{activeQuery.data?.totals.pending ?? 0}</div>
+            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">ממתינים</div>
           </div>
-          <div className="bg-white/50 dark:bg-surface-1-dark/50 rounded-xl p-4 backdrop-blur">
-            <div className="text-3xl font-bold text-primary">
+          <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
+            <div className="text-4xl font-bold text-primary mb-1">
               {activeQuery.data?.totals.totalUsers 
                 ? Math.round((activeQuery.data.totals.responded / activeQuery.data.totals.totalUsers) * 100)
                 : 0}%
             </div>
-            <div className="text-sm text-text-muted dark:text-text-dark-muted">שיעור תגובה</div>
+            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">שיעור תגובה</div>
           </div>
         </div>
       </div>
@@ -144,74 +139,76 @@ const CommandCenter: React.FC = () => {
       {/* Main Content - Side by Side */}
       <div className="grid grid-cols-3 gap-6">
         {/* Left - Active Events List */}
-        <div className="col-span-1 space-y-3">
-          <h3 className="font-semibold text-text dark:text-text-dark px-2">אירועים פעילים</h3>
+        <div className="col-span-1 space-y-2">
+          <h3 className="font-semibold text-text dark:text-text-dark px-2 mb-3">אירועים פעילים</h3>
           
           {/* Events List */}
-          <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">{allActiveEvents.map((event) => {
+          <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto pr-1">{allActiveEvents.map((event) => {
             const isSelected = event.id === selectedEventId;
-            const isExpanded = event.id === expandedEventId;
             
             return (
               <div
                 key={event.id}
-                className={`rounded-xl border-2 overflow-hidden transition-all cursor-pointer ${
+                className={`rounded-2xl border overflow-hidden transition-all cursor-pointer hover:shadow-lg ${
                   isSelected
-                    ? "border-primary shadow-lg scale-105"
+                    ? "border-primary shadow-xl ring-2 ring-primary/20"
                     : event.isOverdue && !event.isComplete
-                    ? "border-danger"
+                    ? "border-danger/50 hover:border-danger"
                     : event.isComplete
-                    ? "border-success/30"
-                    : "border-border dark:border-border-dark hover:border-primary/50"
+                    ? "border-success/30 opacity-60"
+                    : "border-border dark:border-border-dark hover:border-primary/30"
                 }`}
                 onClick={() => setSelectedEventId(event.id)}
               >
                 {/* Header */}
-                <div className={`px-4 py-3 ${
+                <div className={`px-5 py-4 ${
                   event.isComplete
-                    ? "bg-success/10"
+                    ? "bg-success/5"
                     : event.isOverdue
-                    ? "bg-danger/10 animate-pulse"
-                    : "bg-warning/10"
+                    ? "bg-danger/5"
+                    : "bg-surface-2 dark:bg-surface-2-dark"
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold shadow-md ${
                         event.isComplete
                           ? "bg-success text-white"
                           : event.isOverdue
-                          ? "bg-danger text-white"
-                          : "bg-warning text-white"
+                          ? "bg-danger text-white animate-pulse"
+                          : "bg-primary text-white"
                       }`}>
                         {event.areaId.replace('area-', '')}
                       </div>
                       <div>
-                        <div className="font-bold text-text dark:text-text-dark">גזרה {event.areaId}</div>
-                        <div className="text-xs text-text-muted dark:text-text-dark-muted">
+                        <div className="font-bold text-lg text-text dark:text-text-dark">{formatAreaName(event.areaId)}</div>
+                        <div className="text-xs text-text-muted dark:text-text-dark-muted mt-0.5">
                           {formatEventLabel(event.triggeredAt, ACTION_LABEL)}
                         </div>
                       </div>
                     </div>
-                    <div className="text-xl font-bold text-text dark:text-text-dark">
-                      {Math.round((event.responded / event.totalUsers) * 100)}%
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-primary">
+                        {Math.round((event.responded / event.totalUsers) * 100)}%
+                      </div>
+                      <div className="text-xs text-text-muted dark:text-text-dark-muted">תגובה</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Quick Stats */}
-                <div className="px-4 py-3 bg-surface-1 dark:bg-surface-1-dark">
-                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="px-5 py-3 bg-white dark:bg-surface-1-dark">
+                  <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
-                      <div className="font-bold text-success">{event.ok}</div>
-                      <div className="text-text-muted dark:text-text-dark-muted">OK</div>
+                      <div className="text-xl font-bold text-success">{event.ok}</div>
+                      <div className="text-xs text-text-muted dark:text-text-dark-muted font-medium">בסדר</div>
                     </div>
                     <div>
-                      <div className="font-bold text-danger">{event.help}</div>
-                      <div className="text-text-muted dark:text-text-dark-muted">עזרה</div>
+                      <div className="text-xl font-bold text-danger">{event.help}</div>
+                      <div className="text-xs text-text-muted dark:text-text-dark-muted font-medium">עזרה</div>
                     </div>
                     <div>
-                      <div className="font-bold text-warning">{event.pending}</div>
-                      <div className="text-text-muted dark:text-text-dark-muted">ממתינים</div>
+                      <div className="text-xl font-bold text-warning">{event.pending}</div>
+                      <div className="text-xs text-text-muted dark:text-text-dark-muted font-medium">ממתינים</div>
                     </div>
                   </div>
                 </div>
@@ -221,7 +218,11 @@ const CommandCenter: React.FC = () => {
 
           {allActiveEvents.length === 0 && (
             <div className="text-center p-12 rounded-xl bg-surface-1 dark:bg-surface-1-dark">
-              <div className="text-6xl mb-4">✅</div>
+              <div className="mb-4">
+                <svg className="w-24 h-24 mx-auto text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
               <div className="text-lg font-semibold text-text dark:text-text-dark">
                 הכל רגוע
               </div>
@@ -240,7 +241,7 @@ const CommandCenter: React.FC = () => {
               {/* Event Header */}
               <div className="pb-6 border-b border-border dark:border-border-dark">
                 <h2 className="text-2xl font-bold text-text dark:text-text-dark mb-2">
-                  גזרה {selectedEvent.areaId} - {formatDate(selectedEvent.triggeredAt)}
+                  {formatAreaName(selectedEvent.areaId)} - {formatDate(selectedEvent.triggeredAt)}
                 </h2>
                 <div className="flex items-center gap-4 text-sm">
                   <span className="px-3 py-1 rounded-full bg-success/10 text-success font-semibold">
@@ -261,10 +262,10 @@ const CommandCenter: React.FC = () => {
                   <button
                     key={f}
                     onClick={() => setFilter(f as typeof filter)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                    className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${
                       filter === f
-                        ? "bg-primary text-white"
-                        : "bg-surface-2 dark:bg-surface-2-dark text-text dark:text-text-dark hover:bg-primary/10"
+                        ? "bg-primary text-white shadow-lg scale-105"
+                        : "bg-surface-2 dark:bg-surface-2-dark text-text dark:text-text-dark hover:bg-primary/10 border border-border dark:border-border-dark"
                     }`}
                   >
                     {f === "ALL" ? "הכל" : f === "OK" ? "בסדר" : f === "HELP" ? "עזרה" : "ממתינים"}
@@ -273,39 +274,39 @@ const CommandCenter: React.FC = () => {
               </div>
 
               {/* Soldiers List */}
-              <div className="space-y-2 max-h-[calc(100vh-500px)] overflow-y-auto">
+              <div className="space-y-3 max-h-[calc(100vh-500px)] overflow-y-auto pr-2">
                 {filteredSoldiers.map((soldier) => (
                   <div
                     key={soldier.user.id}
-                    className={`p-4 rounded-lg border-2 ${
+                    className={`p-5 rounded-xl transition-all ${
                       soldier.responseStatus === "OK"
-                        ? "border-success/20 bg-success/5"
+                        ? "bg-success/5 border-l-4 border-success hover:bg-success/10"
                         : soldier.responseStatus === "HELP"
-                        ? "border-danger/20 bg-danger/5"
-                        : "border-warning/20 bg-warning/5"
+                        ? "bg-danger/5 border-l-4 border-danger hover:bg-danger/10"
+                        : "bg-warning/5 border-l-4 border-warning hover:bg-warning/10"
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold ${
+                      <div className="flex items-center gap-4">
+                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-bold text-xl shadow-md ${
                           soldier.responseStatus === "OK"
-                            ? "bg-success text-white"
+                            ? "bg-gradient-to-br from-success to-success/80 text-white"
                             : soldier.responseStatus === "HELP"
-                            ? "bg-danger text-white"
-                            : "bg-warning text-white"
+                            ? "bg-gradient-to-br from-danger to-danger/80 text-white"
+                            : "bg-gradient-to-br from-warning to-warning/80 text-white"
                         }`}>
                           {soldier.responseStatus === "OK" ? "✓" : soldier.responseStatus === "HELP" ? "!" : "?"}
                         </div>
                         <div>
-                          <div className="font-semibold text-text dark:text-text-dark">{soldier.user.name}</div>
+                          <div className="font-bold text-lg text-text dark:text-text-dark">{soldier.user.name}</div>
                           {soldier.respondedAt && (
-                            <div className="text-xs text-text-muted dark:text-text-dark-muted">
+                            <div className="text-xs text-text-muted dark:text-text-dark-muted mt-0.5">
                               {formatDate(soldier.respondedAt)}
                             </div>
                           )}
                         </div>
                       </div>
-                      <div className={`px-3 py-1 rounded-full font-semibold ${
+                      <div className={`px-4 py-2 rounded-lg font-bold text-sm ${
                         soldier.responseStatus === "OK"
                           ? "bg-success/20 text-success"
                           : soldier.responseStatus === "HELP"
@@ -316,8 +317,8 @@ const CommandCenter: React.FC = () => {
                       </div>
                     </div>
                     {soldier.notes && (
-                      <div className="mt-2 text-sm text-text-muted dark:text-text-dark-muted pt-2 border-t border-border/50">
-                        {soldier.notes}
+                      <div className="mt-3 text-sm text-text-muted dark:text-text-dark-muted pt-3 border-t border-border/30">
+                        💬 {soldier.notes}
                       </div>
                     )}
                   </div>
@@ -343,8 +344,8 @@ const CommandCenter: React.FC = () => {
               className="w-full px-4 py-3 rounded-lg border-2 border-border dark:border-border-dark bg-surface-2 dark:bg-surface-2-dark mb-4"
             >
               <option value="">בחר גזרה</option>
-              {user?.commanderAreas.map(area => (
-                <option key={area} value={area}>גזרה {area}</option>
+              {(user?.commanderAreas || []).map(area => (
+                <option key={area} value={area}>{formatAreaName(area)}</option>
               ))}
             </select>
             <div className="flex gap-3">

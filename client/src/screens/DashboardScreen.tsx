@@ -130,7 +130,7 @@ const DashboardScreen: React.FC = () => {
                 disabled={triggerMutation.isPending || !selectedArea}
                 className="action-btn danger"
               >
-                {triggerMutation.isPending ? "מפעיל..." : "🔔 " + ACTION_LABEL}
+                {triggerMutation.isPending ? "מפעיל..." : ACTION_LABEL}
               </button>
             )}
           </div>

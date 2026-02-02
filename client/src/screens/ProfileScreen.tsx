@@ -5,6 +5,7 @@ import { authService } from "../services/authService";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { logout } from "../store/authSlice";
 import notificationService from "../utils/notificationService";
+import { disconnectSocket } from "../hooks/useSocket";
 
 const ProfileScreen: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -17,6 +18,8 @@ const ProfileScreen: React.FC = () => {
   const logoutMutation = useMutation({
     mutationFn: authService.logout,
     onSettled: () => {
+      // Disconnect socket before logout
+      disconnectSocket();
       dispatch(logout());
       navigate({ to: "/login", search: { redirect: undefined } });
     },

@@ -8,12 +8,17 @@ export const alertService = {
   },
 
   getEvents: async (): Promise<AlertEvent[]> => {
-    const response = await api.get("/alerts");
+    const response = await api.get("/alerts/all");
     return response.data.events || [];
   },
 
   getEventStatus: async (eventId: string): Promise<EventStatusResult> => {
     const response = await api.get(`/dashboard/events/${eventId}`);
     return response.data.result || response.data;
+  },
+
+  closeEvent: async (eventId: string, reason?: string): Promise<{ success: boolean }> => {
+    const response = await api.post("/alerts/close", { eventId, reason });
+    return response.data;
   },
 };

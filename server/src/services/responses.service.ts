@@ -58,9 +58,17 @@ export async function submitResponse(
         where: { eventId: input.eventId },
       });
 
-      // Log if event is now complete
-      if (responsesCount >= totalUsersInArea) {
-        console.log(`✅ Event ${input.eventId} is now complete - all users responded`);
+      // Auto-close event if all users responded and event is not already closed
+      if (responsesCount >= totalUsersInArea && !event.completedAt) {
+        await tx.alertEvent.update({
+          where: { id: input.eventId },
+          data: {
+            completedAt: now,
+            completedByUserId: null, // null = auto-closed
+            completionReason: "כל החיילים דיווחו - נסגר אוטומטית",
+          },
+        });
+        console.log(`✅ Event ${input.eventId} auto-closed - all users responded (${responsesCount}/${totalUsersInArea})`);
       }
 
       return response;

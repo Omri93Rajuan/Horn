@@ -83,6 +83,7 @@ export async function getAlerts(req: Request, res: Response) {
       LEFT JOIN "User" u ON ae.triggeredByUserId = u.id
       LEFT JOIN "Response" r ON ae.id = r.eventId
       WHERE ae.areaId IN (${Prisma.join(allowedAreas)})
+        AND ae.completedAt IS NULL
       GROUP BY ae.id, ae.areaId, ae.triggeredAt, ae.triggeredByUserId, u.name
       ORDER BY ae.triggeredAt DESC
       LIMIT 100
@@ -109,3 +110,120 @@ export async function getAlerts(req: Request, res: Response) {
     return handleError(res, err.status || 500, err.message || "Server error");
   }
 }
+
+export async function getAllAlerts(req: Request, res: Response) {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return handleError(res, 401, "Unauthorized");
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return handleError(res, 404, "User not found");
+    }
+
+    const allowedAreas =
+      user.role === "COMMANDER" && user.commanderAreas.length
+        ? user.commanderAreas
+        : [user.areaId].filter(Boolean);
+
+    // Get ALL events (including completed) for history
+    const allEvents = await prisma.alertEvent.findMany({
+      where: { areaId: { in: allowedAreas } },
+      orderBy: { triggeredAt: "desc" },
+      take: 500, // Limit to prevent too much data
+      include: {
+        triggeredByUser: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    const result = allEvents.map(event => ({
+      id: event.id,
+      areaId: event.areaId,
+      triggeredAt: event.triggeredAt.toISOString(),
+      triggeredByUserId: event.triggeredByUserId,
+      completedAt: event.completedAt?.toISOString() || null,
+      completedByUserId: event.completedByUserId || null,
+      completionReason: event.completionReason || null,
+      triggeredBy: event.triggeredByUserId && event.triggeredByUser
+        ? { id: event.triggeredByUser.id, name: event.triggeredByUser.name }
+        : null,
+    }));
+
+    return res.json({ success: true, events: result });
+  } catch (err: any) {
+    return handleError(res, err.status || 500, err.message || "Server error");
+  }
+}
+
+export async function closeAlert(req: Request, res: Response) {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return handleError(res, 401, "Unauthorized");
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return handleError(res, 404, "User not found");
+    }
+
+    if (user.role !== "COMMANDER") {
+      return handleError(res, 403, "Commander role required");
+    }
+
+    const { eventId, reason } = req.body;
+    if (!eventId) {
+      return handleError(res, 400, "Event ID required");
+    }
+
+    // Verify the event exists and belongs to an allowed area
+    const event = await prisma.alertEvent.findUnique({
+      where: { id: eventId },
+    });
+
+    if (!event) {
+      return handleError(res, 404, "Event not found");
+    }
+
+    const allowedAreas = user.commanderAreas.length
+      ? user.commanderAreas
+      : [user.areaId].filter(Boolean);
+
+    if (!allowedAreas.includes(event.areaId)) {
+      return handleError(res, 403, "Area not allowed");
+    }
+
+    if (event.completedAt) {
+      return handleError(res, 400, "Event already closed");
+    }
+
+    // Close the event
+    const updatedEvent = await prisma.alertEvent.update({
+      where: { id: eventId },
+      data: {
+        completedAt: new Date(),
+        completedByUserId: userId,
+        completionReason: reason || null,
+      },
+    });
+
+    return res.json({ 
+      success: true, 
+      event: {
+        id: updatedEvent.id,
+        completedAt: updatedEvent.completedAt,
+        completionReason: updatedEvent.completionReason,
+      }
+    });
+  } catch (err: any) {
+    return handleError(res, err.status || 500, err.message || "Server error");
+  }
+}
+

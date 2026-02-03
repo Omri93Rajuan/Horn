@@ -65,8 +65,8 @@ export function reconnectSocket() {
 }
 
 export function useCommanderSocket(
-  onNewAlert?: (data: { eventId: string; areaId: string; triggeredAt: string }) => void,
-  onResponseUpdate?: (data: { eventId: string; userId: string; status: string; timestamp: string }) => void
+  onNewAlert?: ((data: { eventId: string; areaId: string; triggeredAt: string }) => void) | null,
+  onResponseUpdate?: ((data: { eventId: string; userId: string; status: string; timestamp: string }) => void) | null
 ) {
   const socket = useSocket();
   const onNewAlertRef = useRef(onNewAlert);
@@ -79,8 +79,8 @@ export function useCommanderSocket(
   }, [onNewAlert, onResponseUpdate]);
 
   useEffect(() => {
-    if (!socket) {
-      console.log('❌ Commander socket not available');
+    if (!socket || (onNewAlert === null && onResponseUpdate === null)) {
+      console.log('❌ Commander socket not available or not needed');
       return;
     }
 
@@ -141,8 +141,8 @@ export function useCommanderSocket(
 }
 
 export function useSoldierSocket(
-  areaId: string | undefined,
-  onNewAlert?: (data: { eventId: string; areaId: string; triggeredAt: string }) => void
+  areaId: string | undefined | null,
+  onNewAlert?: ((data: { eventId: string; areaId: string; triggeredAt: string }) => void) | null
 ) {
   const socket = useSocket();
   const onNewAlertRef = useRef(onNewAlert);
@@ -153,8 +153,8 @@ export function useSoldierSocket(
   }, [onNewAlert]);
 
   useEffect(() => {
-    if (!socket || !areaId) {
-      console.log('🎖️ Soldier socket - no socket or areaId:', { socket: !!socket, areaId });
+    if (!socket || !areaId || onNewAlert === null) {
+      console.log('🎖️ Soldier socket - not needed:', { socket: !!socket, areaId, callbackProvided: onNewAlert !== null });
       return;
     }
 

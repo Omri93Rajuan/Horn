@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { handleError } from "../utils/ErrorHandle";
 import * as alertService from "../services/alert.service";
 import { prisma } from "../db/prisma";
+import { Prisma } from "@prisma/client";
 
 export async function triggerAlert(req: Request, res: Response) {
   try {
@@ -81,7 +82,7 @@ export async function getAlerts(req: Request, res: Response) {
       FROM "AlertEvent" ae
       LEFT JOIN "User" u ON ae.triggeredByUserId = u.id
       LEFT JOIN "Response" r ON ae.id = r.eventId
-      WHERE ae.areaId IN (${prisma.Prisma.join(allowedAreas)})
+      WHERE ae.areaId IN (${Prisma.join(allowedAreas)})
       GROUP BY ae.id, ae.areaId, ae.triggeredAt, ae.triggeredByUserId, u.name
       ORDER BY ae.triggeredAt DESC
       LIMIT 100

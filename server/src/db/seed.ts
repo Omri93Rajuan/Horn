@@ -14,11 +14,22 @@ type SeedResult = {
 const USERS_PER_AREA = 5;
 
 export async function seedIfEmpty(): Promise<SeedResult> {
-  const userCount = await prisma.user.count();
   const commanderEmail = "commander@horn.local";
   const existingCommander = await prisma.user.findUnique({
     where: { email: commanderEmail },
   });
+  
+  // Check if demo users exist
+  const soldier1Exists = await prisma.user.findUnique({
+    where: { email: "soldier1@horn.local" },
+  });
+  
+  // If commander and demo users exist, skip seeding
+  if (existingCommander && soldier1Exists) {
+    const userCount = await prisma.user.count();
+    return { seeded: false, users: userCount, events: 0, responses: 0, refreshTokens: 0 };
+  }
+
   let commanderCreated = false;
   if (!existingCommander) {
     await prisma.user.create({
@@ -36,23 +47,26 @@ export async function seedIfEmpty(): Promise<SeedResult> {
     commanderCreated = true;
   }
 
-  if (userCount > 0) {
-    return { seeded: false, users: 0, events: 0, responses: 0, refreshTokens: 0 };
-  }
-
   const passwordHash = await hashPassword("Passw0rd!");
   const users = [];
 
-  if (!commanderCreated) {
+  // Add known demo users for easy testing (only if they don't exist)
+  const demoUsers = [
+    { email: "soldier1@horn.local", name: "חייל אחד", areaId: "area-1" },
+    { email: "soldier2@horn.local", name: "חייל שניים", areaId: "area-2" },
+    { email: "soldier3@horn.local", name: "חייל שלוש", areaId: "area-3" },
+  ];
+
+  for (const demo of demoUsers) {
     users.push({
-      email: commanderEmail,
-      passwordHash: await hashPassword("Commander!1"),
-      name: "מפקד קומנדור",
-      areaId: "area-1",
-      role: "COMMANDER" as const,
-      commanderAreas: AREAS,
+      email: demo.email,
+      passwordHash,
+      name: demo.name,
+      areaId: demo.areaId,
+      role: "USER" as const,
+      commanderAreas: [],
       deviceToken: faker.string.uuid(),
-      createdAt: faker.date.recent({ days: 10 }),
+      createdAt: faker.date.recent({ days: 30 }),
     });
   }
 
@@ -89,19 +103,43 @@ export async function seedIfEmpty(): Promise<SeedResult> {
   }
 
   const events = [];
+  const commanders = createdUsers.filter(u => u.role === "COMMANDER");
   for (const areaId of AREAS) {
-    const eventCount = faker.number.int({ min: 1, max: 2 });
+    const eventCount = faker.number.int({ min: 2, max: 4 });
     for (let i = 0; i < eventCount; i += 1) {
       const usersInArea = createdUsers.filter((user) => user.areaId === areaId);
       const triggeredByUserId = usersInArea.length
         ? faker.helpers.arrayElement(usersInArea).id
         : null;
+      
+      // Decide if event should be completed
+      // Older events are more likely to be completed
+      const isOlderEvent = i < eventCount - 1;
+      const shouldComplete = isOlderEvent && faker.number.int({ min: 1, max: 10 }) <= 6;
+      const completedByCommander = commanders.length > 0 ? commanders[0] : null;
+      
+      // Some completed events are auto-closed (null completedByUserId)
+      const isAutoClose = shouldComplete && faker.datatype.boolean({ probability: 0.4 });
+      
       events.push(
         await prisma.alertEvent.create({
           data: {
             areaId,
             triggeredAt: faker.date.recent({ days: 14 }),
             triggeredByUserId,
+            completedAt: shouldComplete ? faker.date.recent({ days: 7 }) : null,
+            completedByUserId: shouldComplete && !isAutoClose && completedByCommander ? completedByCommander.id : null,
+            completionReason: shouldComplete ? (
+              isAutoClose 
+                ? "כל החיילים דיווחו - נסגר אוטומטית"
+                : faker.helpers.arrayElement([
+                    "האירוע טופל בהצלחה",
+                    "תרגיל - לא התראה אמיתית",
+                    "טעות בהפעלה - התראה שגויה",
+                    "כל הכוחות דיווחו ומוכנים",
+                    "האירוע בוטל",
+                  ])
+            ) : null,
           },
         })
       );
@@ -112,12 +150,25 @@ export async function seedIfEmpty(): Promise<SeedResult> {
   for (const event of events) {
     const usersInArea = createdUsers.filter((user) => user.areaId === event.areaId);
     for (const user of usersInArea) {
-      if (faker.number.int({ min: 1, max: 10 }) <= 7) {
+      // Only create responses for non-completed events, or all users for completed ones
+      const shouldRespond = !event.completedAt 
+        ? faker.number.int({ min: 1, max: 10 }) <= 7 
+        : faker.number.int({ min: 1, max: 10 }) <= 9;
+        
+      if (shouldRespond) {
+        const hasNotes = faker.datatype.boolean({ probability: 0.3 });
         await prisma.response.create({
           data: {
             userId: user.id,
             eventId: event.id,
             status: faker.helpers.arrayElement(["OK", "HELP"]),
+            notes: hasNotes ? faker.helpers.arrayElement([
+              "הכל בסדר, מוכן לפעולה",
+              "צריך עזרה דחופה",
+              "בדרך לנקודת המפגש",
+              "מוכן ומזומן",
+              "יש לי בעיה בציוד",
+            ]) : undefined,
             respondedAt: faker.date.recent({ days: 7 }),
           },
         });

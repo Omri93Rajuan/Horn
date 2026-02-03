@@ -18,20 +18,24 @@ const AlertsHistoryScreen: React.FC = () => {
   const [filter, setFilter] = useState<"ALL" | "OK" | "HELP" | "PENDING">("ALL");
 
   // Fetch all events (history)
-  // WebSocket updates will trigger query invalidation for real-time updates
+  // Always fetch fresh data when screen mounts
   const eventsQuery = useQuery({
     queryKey: ["events"],
     queryFn: alertService.getEvents,
-    staleTime: 60000, // Consider data fresh for 60 seconds
+    staleTime: 0, // Always consider data stale
+    refetchOnMount: true, // Always refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   // Fetch event status for selected event
-  // WebSocket updates will trigger query invalidation for real-time updates
+  // Always fetch fresh data when event is selected
   const statusQuery = useQuery({
     queryKey: ["event-status", selectedEventId],
     queryFn: () => dashboardService.getEventStatus(selectedEventId!),
     enabled: !!selectedEventId && isCommander,
-    staleTime: 30000, // Consider data fresh for 30 seconds
+    staleTime: 0, // Always consider data stale
+    refetchOnMount: true, // Always refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   // Calculate overall statistics
@@ -229,13 +233,22 @@ const AlertsHistoryScreen: React.FC = () => {
                   className={`p-3 rounded-lg cursor-pointer transition-all border-2 ${
                     selectedEventId === event.id
                       ? "border-primary bg-primary/5"
+                      : event.completedAt
+                      ? "border-success/30 bg-success/5 hover:bg-success/10"
                       : "border-transparent hover:bg-surface-2 dark:hover:bg-surface-2-dark"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-text dark:text-text-dark">
-                      {formatAreaName(event.areaId)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-text dark:text-text-dark">
+                        {formatAreaName(event.areaId)}
+                      </span>
+                      {event.completedAt && (
+                        <span className="px-2 py-0.5 text-xs rounded-full bg-success/20 text-success font-semibold">
+                          נסגר
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs text-text-muted dark:text-text-dark-muted">
                       {new Date(event.triggeredAt).toLocaleDateString('he-IL')}
                     </span>
@@ -243,6 +256,11 @@ const AlertsHistoryScreen: React.FC = () => {
                   <p className="text-xs text-text-muted dark:text-text-dark-muted">
                     {formatDate(event.triggeredAt)}
                   </p>
+                  {event.completionReason && (
+                    <p className="text-xs text-success mt-1 truncate">
+                      📝 {event.completionReason}
+                    </p>
+                  )}
                 </div>
               ))
             )}
@@ -273,12 +291,31 @@ const AlertsHistoryScreen: React.FC = () => {
             <div className="space-y-6">
               {/* Event Header */}
               <div className="pb-4 border-b border-border dark:border-border-dark">
-                <h3 className="text-xl font-bold text-text dark:text-text-dark mb-2">
-                  {formatAreaName(selectedEvent?.areaId || '')}
-                </h3>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-bold text-text dark:text-text-dark">
+                    {formatAreaName(selectedEvent?.areaId || '')}
+                  </h3>
+                  {selectedEvent?.completedAt && (
+                    <span className="px-3 py-1 rounded-full bg-success/20 text-success font-semibold text-sm">
+                      ✓ נסגר
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-text-muted dark:text-text-dark-muted">
                   {selectedEvent && formatDate(selectedEvent.triggeredAt)}
                 </p>
+                {selectedEvent?.completedAt && (
+                  <div className="mt-3 p-3 rounded-lg bg-success/10 border border-success/20">
+                    <p className="text-sm text-success font-semibold mb-1">
+                      נסגר בתאריך: {formatDate(selectedEvent.completedAt)}
+                    </p>
+                    {selectedEvent.completionReason && (
+                      <p className="text-sm text-text-muted dark:text-text-dark-muted">
+                        סיבה: {selectedEvent.completionReason}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Status Summary */}

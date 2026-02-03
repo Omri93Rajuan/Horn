@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useMutation } from '@tantml:react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useCommanderSocket, useSoldierSocket } from '../hooks/useSocket';
 import { useAppSelector } from '../store/hooks';
 import { responseService } from '../services/responseService';
@@ -160,14 +160,14 @@ const GlobalSocketManager: React.FC = () => {
     [queryClient]
   );
 
-  // Connect to WebSocket - must call hooks unconditionally
+  // Connect to WebSocket - pass null callbacks when not needed
   useCommanderSocket(
-    isCommander ? handleCommanderNewAlert : undefined,
-    isCommander ? handleResponseUpdate : undefined
+    isCommander ? handleCommanderNewAlert : null,
+    isCommander ? handleResponseUpdate : null
   );
   useSoldierSocket(
-    !isCommander ? user?.areaId : undefined,
-    !isCommander ? handleSoldierNewAlert : undefined
+    !isCommander && user?.areaId ? user.areaId : null,
+    !isCommander ? handleSoldierNewAlert : null
   );
 
   const handleQuickResponse = (status: 'OK' | 'HELP') => {

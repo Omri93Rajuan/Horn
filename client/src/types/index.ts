@@ -20,6 +20,9 @@ export interface AlertEvent {
   areaId: string;
   triggeredAt: string;
   triggeredByUserId?: string;
+  completedAt?: string;
+  completedByUserId?: string;
+  completionReason?: string;
 }
 
 export type ResponseStatus = "OK" | "HELP" | "PENDING";

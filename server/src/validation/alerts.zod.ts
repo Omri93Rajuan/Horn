@@ -5,3 +5,10 @@ export const triggerAlertSchema = {
     areaId: z.string().min(1),
   }),
 };
+
+export const closeAlertSchema = {
+  body: z.object({
+    eventId: z.string().min(1),
+    reason: z.string().optional(),
+  }),
+};

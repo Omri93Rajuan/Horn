@@ -41,7 +41,7 @@ const limiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 login attempts per 15 minutes
+  max: 100, // limit each IP to 100 login attempts per 15 minutes (relaxed for development)
   message: "Too many login attempts, please try again later.",
 });
 
@@ -82,66 +82,46 @@ io.on("connection", (socket) => {
     socket.join(`area-${areaId}`);
     console.log(`🎖️ Client joined area room: ${areaId}`, socket.id);
     
-    // Check for active events in this area and notify the user immediately
-    // Active = events where not all users have responded yet
+    // Get user ID from socket auth
+    const token = socket.handshake.auth.token;
+    if (!token) {
+      console.log('⚠️ No token in socket auth, skipping active events check');
+      return;
+    }
+    
     try {
-      const activeEvents = await prisma.alertEvent.findMany({
+      // Decode token to get userId (simple check, assume token is valid since socket connected)
+      const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET!);
+      const userId = decoded.userId;
+      
+      // Find the most recent event that this user hasn't responded to yet
+      const unrepondedEvent = await prisma.alertEvent.findFirst({
         where: {
           areaId,
+          completedAt: null, // Only active (not closed) events
+          responses: {
+            none: {
+              userId: userId, // User hasn't responded
+            },
+          },
         },
         orderBy: {
           triggeredAt: 'desc',
         },
-        take: 100, // Limit to prevent loading too many events
       });
       
-      if (activeEvents.length > 0) {
-        // Fetch total users once (same for all events in this area)
-        const totalUsers = await prisma.user.count({
-          where: { areaId },
+      if (unrepondedEvent) {
+        console.log(`📤 Sending most recent unresponded event to soldier: ${unrepondedEvent.id}`);
+        socket.emit("new-alert", {
+          eventId: unrepondedEvent.id,
+          areaId: unrepondedEvent.areaId,
+          triggeredAt: unrepondedEvent.triggeredAt.toISOString(),
         });
-        
-        // Get response counts for all events in a single grouped query
-        const eventIds = activeEvents.map((event) => event.id);
-        const responseCounts = await prisma.response.groupBy({
-          by: ["eventId"],
-          where: {
-            eventId: { in: eventIds },
-          },
-          _count: {
-            _all: true,
-          },
-        });
-        
-        const responsesByEventId: Record<string, number> = {};
-        for (const item of responseCounts) {
-          responsesByEventId[item.eventId] = item._count._all;
-        }
-        
-        // Filter to only incomplete events
-        const incompleteEvents = [];
-        for (const event of activeEvents) {
-          const responsesCount = responsesByEventId[event.id] ?? 0;
-          // Event is active if not all users responded
-          if (responsesCount < totalUsers) {
-            incompleteEvents.push(event);
-          }
-        }
-        
-        if (incompleteEvents.length > 0) {
-          console.log(`📤 Sending ${incompleteEvents.length} active event(s) to newly connected soldier`);
-          // Send active events to the newly connected soldier
-          for (const event of incompleteEvents) {
-            socket.emit("new-alert", {
-              eventId: event.id,
-              areaId: event.areaId,
-              triggeredAt: event.triggeredAt.toISOString(),
-            });
-          }
-        }
+      } else {
+        console.log('✅ No unresponded events for this soldier');
       }
     } catch (error) {
-      console.error("Error fetching active events:", error);
+      console.error('❌ Error checking for active events:', error);
     }
   });
 

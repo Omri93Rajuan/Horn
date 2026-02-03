@@ -38,9 +38,13 @@ model AlertEvent {
   triggeredAt       DateTime   @default(now())
   triggeredByUserId String?
   triggeredByUser   User?      @relation("TriggeredBy", fields: [triggeredByUserId], references: [id])
+  completedAt       DateTime?
+  completedByUserId String?
+  completionReason  String?
   responses         Response[]
 
   @@index([areaId])
+  @@index([completedAt])
 }
 
 enum ResponseStatus {

@@ -14,7 +14,8 @@ const CommandCenter: React.FC = () => {
   const [showCreateAlert, setShowCreateAlert] = useState(false);
   const [selectedArea, setSelectedArea] = useState<string>("");
   const [filter, setFilter] = useState<"ALL" | "OK" | "HELP" | "PENDING">("ALL");
-
+  const [showCloseModal, setShowCloseModal] = useState(false);
+  const [closeReason, setCloseReason] = useState("");
 
   // Queries
   const activeQuery = useQuery({
@@ -43,6 +44,18 @@ const CommandCenter: React.FC = () => {
     onSuccess: () => {
       setShowCreateAlert(false);
       setSelectedArea("");
+      queryClient.invalidateQueries({ queryKey: ["commander-active"] });
+    },
+  });
+
+  // Close alert mutation
+  const closeAlertMutation = useMutation({
+    mutationFn: ({ eventId, reason }: { eventId: string; reason?: string }) =>
+      alertService.closeEvent(eventId, reason),
+    onSuccess: () => {
+      setShowCloseModal(false);
+      setCloseReason("");
+      setSelectedEventId(null);
       queryClient.invalidateQueries({ queryKey: ["commander-active"] });
     },
   });
@@ -240,9 +253,17 @@ const CommandCenter: React.FC = () => {
             <div className="space-y-6">
               {/* Event Header */}
               <div className="pb-6 border-b border-border dark:border-border-dark">
-                <h2 className="text-2xl font-bold text-text dark:text-text-dark mb-2">
-                  {formatAreaName(selectedEvent.areaId)} - {formatDate(selectedEvent.triggeredAt)}
-                </h2>
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-2xl font-bold text-text dark:text-text-dark">
+                    {formatAreaName(selectedEvent.areaId)} - {formatDate(selectedEvent.triggeredAt)}
+                  </h2>
+                  <button
+                    onClick={() => setShowCloseModal(true)}
+                    className="px-4 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-all"
+                  >
+                    סגור אירוע
+                  </button>
+                </div>
                 <div className="flex items-center gap-4 text-sm">
                   <span className="px-3 py-1 rounded-full bg-success/10 text-success font-semibold">
                     ✓ {statusQuery.data.counts.ok} אישרו
@@ -361,6 +382,42 @@ const CommandCenter: React.FC = () => {
                 className="flex-1 px-4 py-3 rounded-lg bg-danger text-white font-bold hover:bg-danger/90 disabled:opacity-50"
               >
                 {createAlertMutation.isPending ? "שולח..." : "הקפץ אירוע"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Close Alert Modal */}
+      {showCloseModal && selectedEventId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-surface-1 dark:bg-surface-1-dark rounded-2xl p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold text-text dark:text-text-dark mb-4">סגירת אירוע</h3>
+            <p className="text-text-muted dark:text-text-dark-muted mb-4">
+              האם אתה בטוח שברצונך לסגור את האירוע? ניתן להוסיף סיבה לסגירה.
+            </p>
+            <textarea
+              value={closeReason}
+              onChange={(e) => setCloseReason(e.target.value)}
+              placeholder="סיבה לסגירה (אופציונלי)"
+              className="w-full px-4 py-3 rounded-lg border-2 border-border dark:border-border-dark bg-surface-2 dark:bg-surface-2-dark mb-4 min-h-[100px]"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowCloseModal(false);
+                  setCloseReason("");
+                }}
+                className="flex-1 px-4 py-3 rounded-lg bg-surface-2 dark:bg-surface-2-dark hover:bg-surface-3 dark:hover:bg-surface-3-dark"
+              >
+                ביטול
+              </button>
+              <button
+                onClick={() => closeAlertMutation.mutate({ eventId: selectedEventId, reason: closeReason })}
+                disabled={closeAlertMutation.isPending}
+                className="flex-1 px-4 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 disabled:opacity-50"
+              >
+                {closeAlertMutation.isPending ? "סוגר..." : "סגור אירוע"}
               </button>
             </div>
           </div>

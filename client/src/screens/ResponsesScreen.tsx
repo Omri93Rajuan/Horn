@@ -58,14 +58,17 @@ const ResponsesScreen: React.FC = () => {
             <button
               key={status}
               type="button"
-              className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition ${
+              className={`group relative px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wide transition-all duration-200 overflow-hidden ${
                 filter === status
-                  ? "bg-primary/10 text-primary"
-                  : "border border-border dark:border-border-dark text-text-muted dark:text-text-dark-muted hover:border-primary/40"
+                  ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-lg scale-105"
+                  : "bg-surface-2 dark:bg-surface-2-dark text-text dark:text-text-dark hover:bg-primary/10 border-2 border-border dark:border-border-dark hover:border-primary/30"
               }`}
               onClick={() => setFilter(status)}
             >
-              {formatStatus(status)}
+              {filter === status && (
+                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+              )}
+              <span className="relative z-10">{formatStatus(status)}</span>
             </button>
           ))}
         </div>

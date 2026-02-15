@@ -43,3 +43,7 @@ export const logoutSchema = {
 export const meSchema = {
   query: z.object({}).strict(),
 };
+
+export const demoLoginSchema = {
+  body: z.object({}).strict(),
+};

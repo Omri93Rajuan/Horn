@@ -21,3 +21,11 @@ export const closeAlertSchema = {
     })
     .strict(),
 };
+
+export const runDemoScenarioSchema = {
+  body: z
+    .object({
+      areaId: normalizedAreaSchema.optional(),
+    })
+    .strict(),
+};

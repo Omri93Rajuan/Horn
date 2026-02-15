@@ -3,7 +3,6 @@ import React from "react";
 export type Locale = "he" | "en";
 
 const LOCALE_STORAGE_KEY = "horn-locale";
-
 type Dict = Record<string, string>;
 
 const he: Dict = {
@@ -25,7 +24,7 @@ const he: Dict = {
   "toast.error": "שגיאה",
   "toast.success": "הצלחה",
   "toast.info": "עדכון",
-  "toast.warning": "שים לב",
+  "toast.warning": "אזהרה",
   "auth.login.title": "כניסה למערכת",
   "auth.login.subtitle": "התחבר כדי להמשיך למרכז השליטה.",
   "auth.login.email": "אימייל",
@@ -64,14 +63,102 @@ const he: Dict = {
   "profile.logout": "התנתק",
   "profile.logging_out": "מתנתק...",
   "error.enable_notifications": "לא ניתן לאפשר התראות בדפדפן זה.",
-  "error.login": "אירעה שגיאה בהתחברות",
-  "error.register": "אירעה שגיאה בהרשמה",
+  "error.login": "שגיאה בהתחברות",
+  "error.register": "שגיאה בהרשמה",
   "error.required_fields": "נא למלא את כל השדות",
-  "error.required_fields_register": "נא למלא את כל השדות החובה",
+  "error.required_fields_register": "נא למלא את כל שדות החובה",
   "error.invalid_email": "נא להזין אימייל תקין",
   "error.invalid_name": "נא להזין שם מלא",
   "error.invalid_password": "הסיסמה אינה תקינה",
   "auth.expired": "תוקף ההתחברות פג. התחבר מחדש.",
+  "demo.nav": "דמו משקיעים",
+  "demo.live_split_title": "דמו מפוצל חי",
+  "demo.live_split_subtitle": "הדמיה בזמן אמת למפקד ולחייל בלי רענון ידני.",
+  "demo.socket_live": "סוקט פעיל",
+  "demo.socket_reconnecting": "מתחבר לסוקט",
+  "demo.layout_stacked": "מעל/מתחת",
+  "demo.layout_side_by_side": "ליד/ליד",
+  "demo.commander_panel": "מפקד",
+  "demo.soldier_panel": "חייל",
+  "demo.investor_preview": "תצוגת משקיעים",
+  "demo.investor_title": "דמו חי - Horn",
+  "demo.investor_subtitle": "כניסה מיידית למערכת הדגמה ללא הרשמה או התחברות ידנית.",
+  "demo.investor_subtitle_2": "המסך יטען תצוגת מפקד וחייל באותו עמוד.",
+  "demo.enter": "כניסה לדמו",
+  "demo.preparing": "מכין דמו...",
+  "demo.session_ready": "סשן הדגמה מוכן",
+  "demo.unable_start": "לא ניתן להתחיל סשן הדגמה",
+  "cc.title": "מרכז פיקוד",
+  "cc.run_test_scenario": "הפעל תרחיש בדיקה",
+  "cc.running_demo": "מריץ דמו...",
+  "cc.starting_test": "מתחיל תרחיש בדיקה...",
+  "cc.failed_test": "הפעלת תרחיש נכשלה",
+  "cc.demo_started_for": "תרחיש דמו הופעל עבור",
+  "cc.demo_queued": "תגובות מדומות הוכנסו לתור",
+  "cc.alert_action": "ירוק בעיניים",
+  "cc.active_events_count": "אירועים פעילים",
+  "cc.critical_count": "דורשים תשומת לב מיידית",
+  "cc.ok": "מאושרים",
+  "cc.help": "זקוקים לעזרה",
+  "cc.pending": "ממתינים",
+  "cc.response_rate": "שיעור תגובה",
+  "cc.active_events": "אירועים פעילים",
+  "cc.response": "תגובה",
+  "cc.calm_title": "הכל רגוע",
+  "cc.calm_subtitle": "אין אירועים פעילים כרגע",
+  "cc.close_event": "סגור אירוע",
+  "cc.approved": "אישרו",
+  "cc.need_help": "זקוקים לעזרה",
+  "cc.waiting": "ממתינים",
+  "cc.select_event": "בחר אירוע מהרשימה",
+  "cc.new_event_title": "הקפצת אירוע חדש",
+  "cc.select_area": "בחר גזרה",
+  "cc.cancel": "ביטול",
+  "cc.sending": "שולח...",
+  "cc.trigger_event": "הקפץ אירוע",
+  "cc.close_event_title": "סגירת אירוע",
+  "cc.close_event_confirm": "האם אתה בטוח שברצונך לסגור את האירוע? ניתן להוסיף סיבה לסגירה.",
+  "cc.close_reason_placeholder": "סיבה לסגירה (אופציונלי)",
+  "cc.closing": "סוגר...",
+  "sd.title": "הדשבורד שלי",
+  "sd.events_in_area": "אירועים בגזרה",
+  "sd.ok_reports": "דיווחי בסדר",
+  "sd.help_requests": "בקשות עזרה",
+  "sd.my_area_events": "אירועים בגזרה שלי",
+  "sd.loading": "טוען...",
+  "sd.no_events_title": "הכל רגוע",
+  "sd.no_events_subtitle": "אין אירועים בגזרה שלך",
+  "sd.reported_ok": "דיווחתי בסדר",
+  "sd.reported_help": "דיווחתי צורך בעזרה",
+  "sd.report_status_ok": "דיווחת שהכל בסדר",
+  "sd.report_status_help": "דיווחת שאתה צריך עזרה",
+  "sd.your_note": "ההערה שלך:",
+  "sd.update_response_q": "רוצה לעדכן את התגובה שלך?",
+  "sd.update_response_action": "לחץ כאן לשינוי תגובה",
+  "sd.how_feel": "איך אתה מרגיש?",
+  "sd.how_feel_sub": "דווח על מצבך כדי שהמפקדים ידעו שאתה בטוח",
+  "sd.i_am_ok": "הכל בסדר",
+  "sd.i_am_ok_sub": "אני בטוח ולא צריך עזרה",
+  "sd.need_help": "צריך עזרה",
+  "sd.need_help_sub": "אני זקוק לסיוע מיידי",
+  "sd.notes_optional": "הערות (אופציונלי)",
+  "sd.notes_placeholder": "הוסף הערות או פרטים נוספים...",
+  "sd.select_event": "בחר אירוע מהרשימה",
+  "area.generic": "גזרה",
+  "area.jerusalem": "ירושלים והסביבה",
+  "area.gush-dan": "גוש דן",
+  "area.hashfela": "השפלה",
+  "area.hasharon": "השרון",
+  "area.shomron": "השומרון",
+  "area.lakhish": "לכיש",
+  "area.otef-aza": "עוטף עזה",
+  "area.negev": "הנגב",
+  "area.galil-elyon": "גליל עליון",
+  "area.galil-tahton": "גליל תחתון",
+  "area.haifa-krayot": "חיפה והקריות",
+  "area.emek-yizrael": "עמק יזרעאל",
+  "area.arava": "הערבה",
+  "area.eilat": "אילת",
 };
 
 const en: Dict = {
@@ -140,54 +227,97 @@ const en: Dict = {
   "error.invalid_name": "Please enter full name",
   "error.invalid_password": "Password is invalid",
   "auth.expired": "Session expired. Please login again.",
+  "demo.nav": "Investor Demo",
+  "demo.live_split_title": "Live Split Demo",
+  "demo.live_split_subtitle": "Real-time simulation for commander and soldier without manual refresh.",
+  "demo.socket_live": "Socket Live",
+  "demo.socket_reconnecting": "Socket Reconnecting",
+  "demo.layout_stacked": "Top/Bottom",
+  "demo.layout_side_by_side": "Side by side",
+  "demo.commander_panel": "Commander",
+  "demo.soldier_panel": "Soldier",
+  "demo.investor_preview": "Investor Preview",
+  "demo.investor_title": "Horn Live Demo",
+  "demo.investor_subtitle": "Instant access to demo mode without manual registration or login.",
+  "demo.investor_subtitle_2": "The screen loads commander and soldier views on the same page.",
+  "demo.enter": "Enter Demo",
+  "demo.preparing": "Preparing demo...",
+  "demo.session_ready": "Demo session is ready",
+  "demo.unable_start": "Unable to start demo session",
+  "cc.title": "Command Center",
+  "cc.run_test_scenario": "Run Test Scenario",
+  "cc.running_demo": "Running demo...",
+  "cc.starting_test": "Starting test scenario...",
+  "cc.failed_test": "Failed to start test scenario",
+  "cc.demo_started_for": "Demo scenario started for",
+  "cc.demo_queued": "simulated responses queued",
+  "cc.alert_action": "Green alert",
+  "cc.active_events_count": "active events",
+  "cc.critical_count": "need immediate attention",
+  "cc.ok": "Approved",
+  "cc.help": "Need help",
+  "cc.pending": "Pending",
+  "cc.response_rate": "Response rate",
+  "cc.active_events": "Active events",
+  "cc.response": "Response",
+  "cc.calm_title": "All clear",
+  "cc.calm_subtitle": "No active events right now",
+  "cc.close_event": "Close Event",
+  "cc.approved": "Approved",
+  "cc.need_help": "Need help",
+  "cc.waiting": "Waiting",
+  "cc.select_event": "Choose an event from the list",
+  "cc.new_event_title": "Trigger New Event",
+  "cc.select_area": "Select Area",
+  "cc.cancel": "Cancel",
+  "cc.sending": "Sending...",
+  "cc.trigger_event": "Trigger Event",
+  "cc.close_event_title": "Close Event",
+  "cc.close_event_confirm": "Are you sure you want to close this event? You can add a reason.",
+  "cc.close_reason_placeholder": "Reason for closing (optional)",
+  "cc.closing": "Closing...",
+  "sd.title": "My Dashboard",
+  "sd.events_in_area": "Events in area",
+  "sd.ok_reports": "OK reports",
+  "sd.help_requests": "Help requests",
+  "sd.my_area_events": "Events in my area",
+  "sd.loading": "Loading...",
+  "sd.no_events_title": "All clear",
+  "sd.no_events_subtitle": "No events in your area",
+  "sd.reported_ok": "Reported OK",
+  "sd.reported_help": "Reported need help",
+  "sd.report_status_ok": "You reported all good",
+  "sd.report_status_help": "You reported need help",
+  "sd.your_note": "Your note:",
+  "sd.update_response_q": "Want to update your response?",
+  "sd.update_response_action": "Click here to update response",
+  "sd.how_feel": "How do you feel?",
+  "sd.how_feel_sub": "Report your status so commanders know you are safe",
+  "sd.i_am_ok": "I'm OK",
+  "sd.i_am_ok_sub": "I am safe and need no help",
+  "sd.need_help": "Need Help",
+  "sd.need_help_sub": "I need immediate assistance",
+  "sd.notes_optional": "Notes (optional)",
+  "sd.notes_placeholder": "Add notes or extra details...",
+  "sd.select_event": "Select an event from the list",
+  "area.generic": "Area",
+  "area.jerusalem": "Jerusalem and surroundings",
+  "area.gush-dan": "Gush Dan",
+  "area.hashfela": "Shfela",
+  "area.hasharon": "Sharon",
+  "area.shomron": "Shomron",
+  "area.lakhish": "Lakhish",
+  "area.otef-aza": "Gaza Envelope",
+  "area.negev": "Negev",
+  "area.galil-elyon": "Upper Galilee",
+  "area.galil-tahton": "Lower Galilee",
+  "area.haifa-krayot": "Haifa and Krayot",
+  "area.emek-yizrael": "Jezreel Valley",
+  "area.arava": "Arava",
+  "area.eilat": "Eilat",
 };
 
 const resources: Record<Locale, Dict> = { he, en };
-
-const sourceEn: Dict = {
-  "הורן - מרכז שליטה": "Horn - Control Center",
-  "מרכז פיקוד": "Command Center",
-  "היסטוריית התראות": "Alerts History",
-  "הצוות": "Team",
-  "הדשבורד שלי": "My Dashboard",
-  "התגובות שלי": "My Responses",
-  "פרופיל": "Profile",
-  "מצב בהיר": "Light mode",
-  "מצב כהה": "Dark mode",
-  "כניסה למערכת": "Sign In",
-  "התחבר כדי להמשיך למרכז השליטה.": "Sign in to continue to the control center.",
-  "יצירת חשבון חדש": "Create New Account",
-  "מלא את הפרטים ונחבר אותך מיד למרכז השליטה.": "Fill details to connect immediately.",
-  "אימייל": "Email",
-  "סיסמה": "Password",
-  "שם מלא": "Full name",
-  "טלפון (אופציונלי)": "Phone (optional)",
-  "אזור שירות": "Service area",
-  "בחר אזור": "Select area",
-  "כניסה": "Sign In",
-  "מתחבר...": "Signing in...",
-  "הירשם": "Register",
-  "יוצר חשבון...": "Creating account...",
-  "כבר יש לך חשבון?": "Already have an account?",
-  "התחבר": "Login",
-  "אין לך חשבון?": "Don't have an account?",
-  "הירשם עכשיו": "Register now",
-  "התראות": "Notifications",
-  "פעולות": "Actions",
-  "התנתק": "Logout",
-  "מתנתק...": "Logging out...",
-  "פרטי משתמש": "User Details",
-  "שם": "Name",
-  "טלפון": "Phone",
-  "אזור": "Area",
-  "לא זמין": "Not available",
-  "לא הוגדר": "Not set",
-  "שלח התראת בדיקה": "Send test notification",
-  "תקין": "OK",
-  "סיוע": "Help",
-  "ממתין": "Pending",
-  "הכול": "All",
-};
 
 function getStoredLocale(): Locale {
   const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
@@ -196,41 +326,6 @@ function getStoredLocale(): Locale {
 
 function rawTranslate(locale: Locale, key: string) {
   return resources[locale][key] ?? resources.he[key] ?? key;
-}
-
-function translateSource(locale: Locale, value: string) {
-  if (locale === "he") return value;
-  return sourceEn[value] ?? value;
-}
-
-function translateNode(node: React.ReactNode, locale: Locale): React.ReactNode {
-  if (typeof node === "string") {
-    return translateSource(locale, node);
-  }
-
-  if (Array.isArray(node)) {
-    return node.map((child) => translateNode(child, locale));
-  }
-
-  if (!React.isValidElement(node)) {
-    return node;
-  }
-
-  const nodeProps = (node.props ?? {}) as Record<string, unknown>;
-  const props: Record<string, unknown> = {};
-  const translatableProps = ["placeholder", "title", "aria-label", "alt"] as const;
-  for (const prop of translatableProps) {
-    const value = nodeProps[prop];
-    if (typeof value === "string") {
-      props[prop] = translateSource(locale, value);
-    }
-  }
-
-  if (nodeProps.children !== undefined) {
-    props.children = translateNode(nodeProps.children as React.ReactNode, locale);
-  }
-
-  return React.cloneElement(node, props);
 }
 
 type I18nCtx = {
@@ -269,9 +364,7 @@ export const I18nProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     [locale, setLocale],
   );
 
-  const translatedTree = React.useMemo(() => translateNode(children, locale), [children, locale]);
-
-  return <I18nContext.Provider value={value}>{translatedTree}</I18nContext.Provider>;
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 };
 
 export function useI18n() {

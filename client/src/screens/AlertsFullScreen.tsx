@@ -193,9 +193,14 @@ const AlertsFullScreen: React.FC = () => {
             activeQuery.refetch();
           }}
           disabled={eventsQuery.isFetching || activeQuery.isFetching}
-          className="action-btn ghost"
+          className="group relative px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 overflow-hidden bg-surface-2 dark:bg-surface-2-dark hover:bg-primary/10 border-2 border-border dark:border-border-dark hover:border-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          רענן
+          <span className="relative z-10 flex items-center gap-2">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            רענן
+          </span>
         </button>
       </div>
 
@@ -227,32 +232,26 @@ const AlertsFullScreen: React.FC = () => {
 
       {/* Tabs */}
       {isCommander && (
-        <div className="flex gap-2 border-b border-border dark:border-border-dark">
+        <div className="flex gap-3 p-1.5 bg-surface-2 dark:bg-surface-2-dark rounded-2xl border-2 border-border dark:border-border-dark">
           <button
             onClick={() => setActiveTab("active")}
-            className={`px-6 py-3 font-medium transition-all relative ${
+            className={`flex-1 px-6 py-3 font-bold rounded-xl transition-all duration-200 ${
               activeTab === "active"
-                ? "text-primary"
-                : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
+                ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-lg"
+                : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark hover:bg-surface-1 dark:hover:bg-surface-1-dark"
             }`}
           >
             אירועים פעילים
-            {activeTab === "active" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
           </button>
           <button
             onClick={() => setActiveTab("history")}
-            className={`px-6 py-3 font-medium transition-all relative ${
+            className={`flex-1 px-6 py-3 font-bold rounded-xl transition-all duration-200 ${
               activeTab === "history"
-                ? "text-primary"
-                : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
+                ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-lg"
+                : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark hover:bg-surface-1 dark:hover:bg-surface-1-dark"
             }`}
           >
             היסטוריה מלאה
-            {activeTab === "history" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
           </button>
         </div>
       )}
@@ -394,18 +393,21 @@ const AlertsFullScreen: React.FC = () => {
               </div>
 
               {/* Filter Buttons */}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-3">
                 {(["ALL", "OK", "HELP", "PENDING"] as const).map((f) => (
                   <button
                     key={f}
                     onClick={() => setFilter(f)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`group relative px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 overflow-hidden ${
                       filter === f
-                        ? "bg-primary text-white"
-                        : "bg-surface-2 dark:bg-surface-2-dark hover:bg-primary/10"
+                        ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-lg scale-105"
+                        : "bg-surface-2 dark:bg-surface-2-dark hover:bg-primary/10 text-text dark:text-text-dark border-2 border-border dark:border-border-dark hover:border-primary/30"
                     }`}
                   >
-                    {formatStatus(f)}
+                    {filter === f && (
+                      <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    )}
+                    <span className="relative z-10">{formatStatus(f)}</span>
                   </button>
                 ))}
               </div>

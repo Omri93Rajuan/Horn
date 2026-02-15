@@ -2,13 +2,15 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { dashboardService } from "../services/dashboardService";
 import { alertService } from "../services/alertService";
+import { clientEnv } from "../config/env";
+import { toastError, toastInfo, toastSuccess } from "../utils/toast";
 import { useAppSelector } from "../store/hooks";
 import { formatDate, formatEventLabel, formatAreaName, formatStatus } from "../utils/dateUtils";
-
-const ACTION_LABEL = "×™×¨×•×§ ×‘×¢×™× ×™×™× ×œ××™×¨×•×¢";
+import { useI18n } from "../i18n";
 
 const CommandCenter: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [showCreateAlert, setShowCreateAlert] = useState(false);
@@ -60,6 +62,22 @@ const CommandCenter: React.FC = () => {
     },
   });
 
+  const runDemoMutation = useMutation({
+    mutationFn: () => alertService.runDemoScenario(selectedArea || user?.areaId || undefined),
+    onMutate: () => {
+      toastInfo(t("cc.starting_test"));
+    },
+    onSuccess: (data) => {
+      toastSuccess(
+        `${t("cc.demo_started_for")} ${formatAreaName(data.result.areaId)} • ${data.result.queuedResponses} ${t("cc.demo_queued")}`,
+      );
+      queryClient.invalidateQueries({ queryKey: ["commander-active"] });
+    },
+    onError: (error: any) => {
+      toastError(error?.response?.data?.message || t("cc.failed_test"));
+    },
+  });
+
   // Auto-select first event
   useEffect(() => {
     if (!selectedEventId && activeQuery.data?.areas) {
@@ -102,41 +120,52 @@ const CommandCenter: React.FC = () => {
                   <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
                 </svg>
               </span>
-              ×ž×¨×›×– ×¤×™×§×•×“
+              {t("cc.title")}
             </h1>
             <p className="mt-2 text-text-muted dark:text-text-dark-muted">
-              {user?.name} â€¢ {activeEventsCount} ××™×¨×•×¢×™× ×¤×¢×™×œ×™×
+              {user?.name} • {activeEventsCount} {t("cc.active_events_count")}
               {criticalEvents.length > 0 && (
                 <span className="mr-2 text-danger font-semibold animate-pulse">
-                  â€¢ {criticalEvents.length} ×“×•×¨×©×™× ×ª×©×•×ž×ª ×œ×‘ ×ž×™×™×“×™×ª
+                  • {criticalEvents.length} {t("cc.critical_count")}
                 </span>
               )}
             </p>
           </div>
-          <button
-            onClick={() => setShowCreateAlert(true)}
-            className="px-8 py-4 bg-gradient-to-r from-success to-success/80 hover:from-success/90 hover:to-success/70 text-white rounded-2xl font-bold transition-all flex items-center gap-3 shadow-xl hover:shadow-2xl hover:scale-105 border-2 border-success/20"
-          >
-            <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-            </svg>
-            <span className="text-lg">×™×¨×•×§ ×‘×¢×™× ×™×™×</span>
-          </button>
+          <div className="flex items-center gap-3">
+            {clientEnv.isTestMode ? (
+              <button
+                onClick={() => runDemoMutation.mutate()}
+                disabled={runDemoMutation.isPending}
+                className="px-5 py-3 bg-gradient-to-r from-warning to-warning/80 hover:from-warning/90 hover:to-warning/70 text-white rounded-2xl font-bold transition-all shadow-lg border-2 border-warning/20 disabled:opacity-70"
+              >
+                {runDemoMutation.isPending ? t("cc.running_demo") : t("cc.run_test_scenario")}
+              </button>
+            ) : null}
+            <button
+              onClick={() => setShowCreateAlert(true)}
+              className="px-8 py-4 bg-gradient-to-r from-success to-success/80 hover:from-success/90 hover:to-success/70 text-white rounded-2xl font-bold transition-all flex items-center gap-3 shadow-xl hover:shadow-2xl hover:scale-105 border-2 border-success/20"
+            >
+              <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+              </svg>
+              <span className="text-lg">{t("cc.alert_action")}</span>
+            </button>
+          </div>
         </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-4 gap-4 mt-6">
           <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
             <div className="text-4xl font-bold text-success mb-1">{activeQuery.data?.totals.ok ?? 0}</div>
-            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">×ž××•×©×¨×™×</div>
+            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">{t("cc.ok")}</div>
           </div>
           <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
             <div className="text-4xl font-bold text-danger mb-1">{activeQuery.data?.totals.help ?? 0}</div>
-            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">×–×§×•×§×™× ×œ×¢×–×¨×”</div>
+            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">{t("cc.help")}</div>
           </div>
           <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
             <div className="text-4xl font-bold text-warning mb-1">{activeQuery.data?.totals.pending ?? 0}</div>
-            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">×ž×ž×ª×™× ×™×</div>
+            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">{t("cc.pending")}</div>
           </div>
           <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
             <div className="text-4xl font-bold text-primary mb-1">
@@ -144,7 +173,7 @@ const CommandCenter: React.FC = () => {
                 ? Math.round((activeQuery.data.totals.responded / activeQuery.data.totals.totalUsers) * 100)
                 : 0}%
             </div>
-            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">×©×™×¢×•×¨ ×ª×’×•×‘×”</div>
+            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">{t("cc.response_rate")}</div>
           </div>
         </div>
       </div>
@@ -153,7 +182,7 @@ const CommandCenter: React.FC = () => {
       <div className="grid grid-cols-3 gap-6">
         {/* Left - Active Events List */}
         <div className="col-span-1 space-y-2">
-          <h3 className="font-semibold text-text dark:text-text-dark px-2 mb-3">××™×¨×•×¢×™× ×¤×¢×™×œ×™×</h3>
+          <h3 className="font-semibold text-text dark:text-text-dark px-2 mb-3">{t("cc.active_events")}</h3>
           
           {/* Events List */}
           <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto pr-1">{allActiveEvents.map((event) => {
@@ -195,7 +224,7 @@ const CommandCenter: React.FC = () => {
                       <div>
                         <div className="font-bold text-lg text-text dark:text-text-dark">{formatAreaName(event.areaId)}</div>
                         <div className="text-xs text-text-muted dark:text-text-dark-muted mt-0.5">
-                          {formatEventLabel(event.triggeredAt, ACTION_LABEL)}
+                          {formatEventLabel(event.triggeredAt, t("cc.alert_action"))}
                         </div>
                       </div>
                     </div>
@@ -203,7 +232,7 @@ const CommandCenter: React.FC = () => {
                       <div className="text-2xl font-bold text-primary">
                         {Math.round((event.responded / event.totalUsers) * 100)}%
                       </div>
-                      <div className="text-xs text-text-muted dark:text-text-dark-muted">×ª×’×•×‘×”</div>
+                      <div className="text-xs text-text-muted dark:text-text-dark-muted">{t("cc.response")}</div>
                     </div>
                   </div>
                 </div>
@@ -213,15 +242,15 @@ const CommandCenter: React.FC = () => {
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
                       <div className="text-xl font-bold text-success">{event.ok}</div>
-                      <div className="text-xs text-text-muted dark:text-text-dark-muted font-medium">×‘×¡×“×¨</div>
+                      <div className="text-xs text-text-muted dark:text-text-dark-muted font-medium">{t("status.OK")}</div>
                     </div>
                     <div>
                       <div className="text-xl font-bold text-danger">{event.help}</div>
-                      <div className="text-xs text-text-muted dark:text-text-dark-muted font-medium">×¢×–×¨×”</div>
+                      <div className="text-xs text-text-muted dark:text-text-dark-muted font-medium">{t("status.HELP")}</div>
                     </div>
                     <div>
                       <div className="text-xl font-bold text-warning">{event.pending}</div>
-                      <div className="text-xs text-text-muted dark:text-text-dark-muted font-medium">×ž×ž×ª×™× ×™×</div>
+                      <div className="text-xs text-text-muted dark:text-text-dark-muted font-medium">{t("status.PENDING")}</div>
                     </div>
                   </div>
                 </div>
@@ -237,10 +266,10 @@ const CommandCenter: React.FC = () => {
                 </svg>
               </div>
               <div className="text-lg font-semibold text-text dark:text-text-dark">
-                ×”×›×œ ×¨×’×•×¢
+                {t("cc.calm_title")}
               </div>
               <div className="text-sm text-text-muted dark:text-text-dark-muted">
-                ××™×Ÿ ××™×¨×•×¢×™× ×¤×¢×™×œ×™× ×›×¨×’×¢
+                {t("cc.calm_subtitle")}
               </div>
             </div>
           )}
@@ -261,35 +290,38 @@ const CommandCenter: React.FC = () => {
                     onClick={() => setShowCloseModal(true)}
                     className="px-4 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-all"
                   >
-                    ×¡×’×•×¨ ××™×¨×•×¢
+                    {t("cc.close_event")}
                   </button>
                 </div>
                 <div className="flex items-center gap-4 text-sm">
                   <span className="px-3 py-1 rounded-full bg-success/10 text-success font-semibold">
-                    âœ“ {statusQuery.data.counts.ok} ××™×©×¨×•
+                    ✓ {statusQuery.data.counts.ok} {t("cc.approved")}
                   </span>
                   <span className="px-3 py-1 rounded-full bg-danger/10 text-danger font-semibold">
-                    ! {statusQuery.data.counts.help} ×–×§×•×§×™× ×œ×¢×–×¨×”
+                    ! {statusQuery.data.counts.help} {t("cc.need_help")}
                   </span>
                   <span className="px-3 py-1 rounded-full bg-warning/10 text-warning font-semibold">
-                    â³ {statusQuery.data.counts.pending} ×ž×ž×ª×™× ×™×
+                    ⏳ {statusQuery.data.counts.pending} {t("cc.waiting")}
                   </span>
                 </div>
               </div>
 
               {/* Filter Buttons */}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-3">
                 {["ALL", "OK", "HELP", "PENDING"].map((f) => (
                   <button
                     key={f}
                     onClick={() => setFilter(f as typeof filter)}
-                    className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                    className={`group relative px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 overflow-hidden ${
                       filter === f
-                        ? "bg-primary text-white shadow-lg scale-105"
-                        : "bg-surface-2 dark:bg-surface-2-dark text-text dark:text-text-dark hover:bg-primary/10 border border-border dark:border-border-dark"
+                        ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-lg scale-105"
+                        : "bg-surface-2 dark:bg-surface-2-dark text-text dark:text-text-dark hover:bg-primary/10 border-2 border-border dark:border-border-dark hover:border-primary/30"
                     }`}
                   >
-                    {formatStatus(f)}
+                    {filter === f && (
+                      <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    )}
+                    <span className="relative z-10">{formatStatus(f)}</span>
                   </button>
                 ))}
               </div>
@@ -339,7 +371,7 @@ const CommandCenter: React.FC = () => {
                     </div>
                     {soldier.notes && (
                       <div className="mt-3 text-sm text-text-muted dark:text-text-dark-muted pt-3 border-t border-border/30">
-                        ðŸ’¬ {soldier.notes}
+                        💬 {soldier.notes}
                       </div>
                     )}
                   </div>
@@ -348,7 +380,7 @@ const CommandCenter: React.FC = () => {
             </div>
           ) : (
             <div className="flex items-center justify-center h-full text-text-muted dark:text-text-dark-muted">
-              ×‘×—×¨ ××™×¨×•×¢ ×ž×”×¨×©×™×ž×”
+              {t("cc.select_event")}
             </div>
           )}
         </div>
@@ -358,13 +390,13 @@ const CommandCenter: React.FC = () => {
       {showCreateAlert && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-surface-1 dark:bg-surface-1-dark rounded-2xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-text dark:text-text-dark mb-4">×”×§×¤×¦×ª ××™×¨×•×¢ ×—×“×©</h3>
+            <h3 className="text-xl font-bold text-text dark:text-text-dark mb-4">{t("cc.new_event_title")}</h3>
             <select
               value={selectedArea}
               onChange={(e) => setSelectedArea(e.target.value)}
               className="w-full px-4 py-3 rounded-lg border-2 border-border dark:border-border-dark bg-surface-2 dark:bg-surface-2-dark mb-4"
             >
-              <option value="">×‘×—×¨ ×’×–×¨×”</option>
+              <option value="">{t("cc.select_area")}</option>
               {(user?.commanderAreas || []).map(area => (
                 <option key={area} value={area}>{formatAreaName(area)}</option>
               ))}
@@ -374,14 +406,14 @@ const CommandCenter: React.FC = () => {
                 onClick={() => setShowCreateAlert(false)}
                 className="flex-1 px-4 py-3 rounded-lg bg-surface-2 dark:bg-surface-2-dark hover:bg-surface-3 dark:hover:bg-surface-3-dark"
               >
-                ×‘×™×˜×•×œ
+                {t("cc.cancel")}
               </button>
               <button
                 onClick={() => selectedArea && createAlertMutation.mutate(selectedArea)}
                 disabled={!selectedArea || createAlertMutation.isPending}
                 className="flex-1 px-4 py-3 rounded-lg bg-danger text-white font-bold hover:bg-danger/90 disabled:opacity-50"
               >
-                {createAlertMutation.isPending ? "×©×•×œ×—..." : "×”×§×¤×¥ ××™×¨×•×¢"}
+                {createAlertMutation.isPending ? t("cc.sending") : t("cc.trigger_event")}
               </button>
             </div>
           </div>
@@ -392,14 +424,14 @@ const CommandCenter: React.FC = () => {
       {showCloseModal && selectedEventId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-surface-1 dark:bg-surface-1-dark rounded-2xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-text dark:text-text-dark mb-4">×¡×’×™×¨×ª ××™×¨×•×¢</h3>
+            <h3 className="text-xl font-bold text-text dark:text-text-dark mb-4">{t("cc.close_event_title")}</h3>
             <p className="text-text-muted dark:text-text-dark-muted mb-4">
-              ×”×× ××ª×” ×‘×˜×•×— ×©×‘×¨×¦×•× ×š ×œ×¡×’×•×¨ ××ª ×”××™×¨×•×¢? × ×™×ª×Ÿ ×œ×”×•×¡×™×£ ×¡×™×‘×” ×œ×¡×’×™×¨×”.
+              {t("cc.close_event_confirm")}
             </p>
             <textarea
               value={closeReason}
               onChange={(e) => setCloseReason(e.target.value)}
-              placeholder="×¡×™×‘×” ×œ×¡×’×™×¨×” (××•×¤×¦×™×•× ×œ×™)"
+              placeholder={t("cc.close_reason_placeholder")}
               className="w-full px-4 py-3 rounded-lg border-2 border-border dark:border-border-dark bg-surface-2 dark:bg-surface-2-dark mb-4 min-h-[100px]"
             />
             <div className="flex gap-3">
@@ -410,14 +442,14 @@ const CommandCenter: React.FC = () => {
                 }}
                 className="flex-1 px-4 py-3 rounded-lg bg-surface-2 dark:bg-surface-2-dark hover:bg-surface-3 dark:hover:bg-surface-3-dark"
               >
-                ×‘×™×˜×•×œ
+                {t("cc.cancel")}
               </button>
               <button
                 onClick={() => closeAlertMutation.mutate({ eventId: selectedEventId, reason: closeReason })}
                 disabled={closeAlertMutation.isPending}
                 className="flex-1 px-4 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 disabled:opacity-50"
               >
-                {closeAlertMutation.isPending ? "×¡×•×’×¨..." : "×¡×’×•×¨ ××™×¨×•×¢"}
+                {closeAlertMutation.isPending ? t("cc.closing") : t("cc.close_event")}
               </button>
             </div>
           </div>

@@ -48,3 +48,12 @@ export async function getMe(req: Request, res: Response) {
     return handleError(res, err.status || 500, err.message || "Server error");
   }
 }
+
+export async function demoLoginUser(_req: Request, res: Response) {
+  try {
+    const result = await authService.demoLogin();
+    return res.json({ success: true, ...result });
+  } catch (err: any) {
+    return handleError(res, err.status || 500, err.message || "Server error");
+  }
+}

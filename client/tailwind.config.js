@@ -48,7 +48,27 @@ export default {
         glow: "0 0 20px rgba(183, 155, 74, 0.35)",
         hud: "0 0 0 1px rgba(42, 47, 51, 0.15), 0 18px 30px rgba(10, 12, 14, 0.18)",
       },
+      keyframes: {
+        'slide-in-from-top': {
+          '0%': { transform: 'translateX(-50%) translateY(-100%)', opacity: '0' },
+          '100%': { transform: 'translateX(-50%) translateY(0)', opacity: '1' },
+        },
+        'zoom-in-95': {
+          '0%': { transform: 'scale(0.95)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        'progress': {
+          '0%': { width: '100%' },
+          '100%': { width: '0%' },
+        },
+      },
+      animation: {
+        'slide-in-from-top': 'slide-in-from-top 0.3s ease-out',
+        'zoom-in-95': 'zoom-in-95 0.2s ease-out',
+        'progress': 'progress 5s linear',
+      },
     },
   },
   plugins: [],
 };
+

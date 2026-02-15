@@ -21,6 +21,9 @@ import type { RootState } from "./store";
 import { useAppSelector } from "./store/hooks";
 import logoUrl from "./assets/mainlogo.webp";
 import { useI18n } from "./i18n";
+import { clientEnv } from "./config/env";
+import InvestorDemoScreen from "./screens/InvestorDemoScreen";
+import SplitDemoScreen from "./screens/SplitDemoScreen";
 
 type RouterContext = {
   auth: RootState["auth"];
@@ -62,6 +65,9 @@ const RootLayout = () => {
                   <Link className="hover:text-primary" to="/commander">{t("nav.command_center")}</Link>
                   <Link className="hover:text-primary" to="/alerts">{t("nav.alerts_history")}</Link>
                   <Link className="hover:text-primary" to="/team">{t("nav.team")}</Link>
+                  {clientEnv.isTestMode ? (
+                    <Link className="hover:text-primary" to="/demo-split">{t("demo.nav")}</Link>
+                  ) : null}
                 </>
               ) : (
                 <>
@@ -78,11 +84,13 @@ const RootLayout = () => {
               type="button"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               aria-label={theme === "dark" ? t("theme.light") : t("theme.dark")}
-              className="relative flex h-9 w-[74px] items-center rounded-full border border-border/80 bg-surface-2 px-1 transition-colors dark:border-border-dark/80 dark:bg-surface-2-dark"
+              className="group relative flex h-8 w-[62px] items-center rounded-full border border-border/80 bg-surface-2 px-1 transition-all duration-300 ease-out hover:shadow-[0_6px_16px_-10px_rgba(0,0,0,0.45)] active:scale-[0.98] dark:border-border-dark/80 dark:bg-surface-2-dark"
             >
+              <span className="pointer-events-none absolute left-2 text-[10px] opacity-70">☀</span>
+              <span className="pointer-events-none absolute right-2 text-[10px] opacity-70">🌙</span>
               <span
-                className={`absolute top-1 h-7 w-7 rounded-full bg-primary shadow-[0_2px_10px_rgba(0,0,0,0.22)] transition-all ${
-                  theme === "dark" ? "right-1" : "left-1"
+                className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-primary shadow-[0_4px_14px_rgba(0,0,0,0.28)] ring-1 ring-white/35 transition-all duration-300 ease-out group-hover:shadow-[0_6px_18px_rgba(0,0,0,0.32)] ${
+                  theme === "dark" ? "translate-x-[30px]" : "translate-x-0"
                 }`}
               />
             </button>
@@ -124,9 +132,26 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
   beforeLoad: ({ context, location }) => {
     if (location.pathname === "/" && !context.auth.token) {
+      if (clientEnv.isTestMode) {
+        throw redirect({ to: "/investor-demo" });
+      }
       throw redirect({ to: "/login", search: { redirect: undefined } });
     }
   },
+});
+
+const investorDemoRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/investor-demo",
+  beforeLoad: ({ context }) => {
+    if (context.auth.token) {
+      if (context.auth.user?.role === "COMMANDER") {
+        throw redirect({ to: "/demo-split" });
+      }
+      throw redirect({ to: "/soldier" });
+    }
+  },
+  component: InvestorDemoScreen,
 });
 
 const loginRoute = createRoute({
@@ -212,6 +237,17 @@ const teamRoute = createRoute({
   component: TeamScreen,
 });
 
+const demoSplitRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/demo-split",
+  beforeLoad: ({ context }) => {
+    if (context.auth.user?.role !== "COMMANDER") {
+      throw redirect({ to: "/soldier" });
+    }
+  },
+  component: SplitDemoScreen,
+});
+
 const alertsRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/alerts",
@@ -247,6 +283,7 @@ const notFoundRoute = createRoute({
 });
 
 const routeTree = rootRoute.addChildren([
+  investorDemoRoute,
   loginRoute,
   registerRoute,
   protectedRoute.addChildren([
@@ -254,6 +291,7 @@ const routeTree = rootRoute.addChildren([
     soldierRoute,
     commanderRoute,
     teamRoute,
+    demoSplitRoute,
     alertsRoute,
     responsesRoute,
     profileRoute,

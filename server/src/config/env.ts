@@ -38,6 +38,14 @@ function parseNumber(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+function parseBoolean(value: string | undefined, fallback: boolean): boolean {
+  if (value == null) return fallback;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "true" || normalized === "1" || normalized === "yes") return true;
+  if (normalized === "false" || normalized === "0" || normalized === "no") return false;
+  return fallback;
+}
+
 function parseList(value: string | undefined): string[] {
   return String(value ?? "")
     .split(",")
@@ -57,6 +65,7 @@ const defaultCorsOrigins = isProduction
 export const env = {
   appEnv,
   isProduction,
+  isDevelopment: appEnv === "development",
   port: parseNumber(process.env.PORT, 3005),
   corsOrigins: parseList(process.env.CORS_ORIGINS).length
     ? parseList(process.env.CORS_ORIGINS)
@@ -78,6 +87,8 @@ export const env = {
     isProduction ? 15 : 100,
   ),
   seedOnStartup:
-    (process.env.SEED_ON_STARTUP ?? (isProduction ? "false" : "true"))
-      .toLowerCase() === "true",
+    parseBoolean(process.env.SEED_ON_STARTUP, !isProduction),
+  testModeEnabled: parseBoolean(process.env.TEST_MODE_ENABLED, appEnv !== "production"),
+  testModeResponseDelayMs: parseNumber(process.env.TEST_MODE_RESPONSE_DELAY_MS, 1200),
+  demoLoginEmail: process.env.DEMO_LOGIN_EMAIL?.trim() || "commander.north@horn.local",
 };

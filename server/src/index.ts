@@ -51,11 +51,13 @@ const authLimiter = rateLimit({
 });
 
 app.use(express.json());
-app.use(requestLogger);
 
+// Health check endpoint BEFORE requestLogger to avoid logging spam
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
+
+app.use(requestLogger);
 
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/register", authLimiter);
@@ -146,6 +148,15 @@ io.on("connection", (socket) => {
 });
 
 async function start() {
+  // Fix PostgreSQL collation version warning
+  try {
+    await prisma.$executeRawUnsafe('ALTER DATABASE horn REFRESH COLLATION VERSION');
+    logger.info("db.collation.refreshed");
+  } catch (error) {
+    // Ignore error if it fails (e.g., insufficient permissions)
+    logger.debug("db.collation.refresh.skipped", { reason: String(error) });
+  }
+
   const commandersResult = await ensureDefaultCommanders();
   logger.info("db.commanders.ensured", commandersResult);
 

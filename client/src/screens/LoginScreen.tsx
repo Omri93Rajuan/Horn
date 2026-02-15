@@ -104,7 +104,7 @@ const LoginScreen: React.FC = () => {
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="••••••••"
+                placeholder="********"
                 autoComplete="current-password"
               />
             </label>

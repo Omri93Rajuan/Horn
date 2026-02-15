@@ -40,7 +40,8 @@ class ApiService {
         const requestUrl = String(error.config?.url ?? "");
         const isAuthRoute =
           requestUrl.includes("/auth/login") ||
-          requestUrl.includes("/auth/register");
+          requestUrl.includes("/auth/register") ||
+          requestUrl.includes("/auth/demo-login");
 
         if (status === 401 && !isAuthRoute && !isHandlingUnauthorized) {
           isHandlingUnauthorized = true;

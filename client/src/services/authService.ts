@@ -42,6 +42,14 @@ export const authService = {
     };
   },
 
+  demoLogin: async (): Promise<{ user: AuthUser; token: string }> => {
+    const response = await api.post("/auth/demo-login", {});
+    return {
+      user: response.data.user,
+      token: response.data.accessToken,
+    };
+  },
+
   logout: async (): Promise<void> => {
     await api.post("/auth/logout");
   },

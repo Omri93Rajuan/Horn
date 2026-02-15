@@ -79,7 +79,7 @@ const GlobalSocketManager: React.FC = () => {
   // Handler for soldiers - new alert received
   const handleSoldierNewAlert = useCallback(
     async (data: { eventId: string; areaId: string; triggeredAt: string }) => {
-      console.log('� Global: Soldier received new alert:', data);
+      console.log('Global: Soldier received new alert:', data);
       
       // IMPORTANT: Only show alert if it's for this soldier's area
       if (data.areaId !== user?.areaId) {

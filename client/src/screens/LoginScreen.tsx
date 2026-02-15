@@ -113,12 +113,23 @@ const LoginScreen: React.FC = () => {
             </button>
           </form>
           <div className="divider-line" />
-          <p className="text-sm text-text-muted dark:text-text-dark-muted">
-            {t("auth.login.no_account")}{" "}
-            <Link className="text-primary hover:text-primary-hover" to="/register">
-              {t("auth.login.register_now")}
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm text-text-muted dark:text-text-dark-muted">
+              {t("auth.login.no_account")}{" "}
+              <Link className="text-primary hover:text-primary-hover" to="/register">
+                {t("auth.login.register_now")}
+              </Link>
+            </p>
+            <Link 
+              to="/investor-demo"
+              className="group flex items-center gap-1.5 text-xs font-medium text-text-muted dark:text-text-dark-muted hover:text-primary dark:hover:text-primary transition-colors"
+            >
+              <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+              <span>לדמו</span>
             </Link>
-          </p>
+          </div>
         </div>
       </div>
     </section>

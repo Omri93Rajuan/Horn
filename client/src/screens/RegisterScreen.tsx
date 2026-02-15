@@ -139,7 +139,7 @@ const RegisterScreen: React.FC = () => {
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="••••••••"
+                placeholder="********"
               />
             </label>
             <label className="space-y-2 text-sm text-text-muted dark:text-text-dark-muted">

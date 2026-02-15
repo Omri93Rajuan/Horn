@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { handleError } from "../utils/ErrorHandle";
 import * as alertService from "../services/alert.service";
+import * as demoService from "../services/demo.service";
 import { prisma } from "../db/prisma";
 import { Prisma } from "@prisma/client";
 
@@ -221,6 +222,42 @@ export async function closeAlert(req: Request, res: Response) {
         completedAt: updatedEvent.completedAt,
         completionReason: updatedEvent.completionReason,
       }
+    });
+  } catch (err: any) {
+    return handleError(res, err.status || 500, err.message || "Server error");
+  }
+}
+
+export async function runDemoScenario(req: Request, res: Response) {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return handleError(res, 401, "Unauthorized");
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return handleError(res, 404, "User not found");
+    }
+
+    if (user.role !== "COMMANDER") {
+      return handleError(res, 403, "Commander role required");
+    }
+
+    const allowedAreas = user.commanderAreas.length
+      ? user.commanderAreas
+      : [user.areaId].filter(Boolean);
+
+    const result = await demoService.startDemoScenario({
+      commanderId: userId,
+      allowedAreas,
+      areaId: req.body?.areaId,
+    });
+
+    return res.status(202).json({
+      success: true,
+      message: "Demo scenario started",
+      result,
     });
   } catch (err: any) {
     return handleError(res, err.status || 500, err.message || "Server error");

@@ -7,6 +7,7 @@ import {
 } from "../helpers/jwt";
 import { User } from "../types/domain";
 import { mapPrismaError } from "../utils/prismaErrors";
+import { env } from "../config/env";
 
 type RegisterInput = {
   email: string;
@@ -243,6 +244,66 @@ export async function getMe(input: MeInput) {
         role: user.role as "USER" | "COMMANDER",
         commanderAreas: user.commanderAreas,
       }),
+    };
+  } catch (err) {
+    throw mapPrismaError(err, "Server error");
+  }
+}
+
+export async function demoLogin() {
+  try {
+    if (!env.testModeEnabled) {
+      const err: any = new Error("Demo login is disabled");
+      err.status = 403;
+      throw err;
+    }
+
+    const user =
+      (await prisma.user.findUnique({
+        where: { email: env.demoLoginEmail },
+      })) ??
+      (await prisma.user.findFirst({
+        where: { role: "COMMANDER" },
+        orderBy: { createdAt: "asc" },
+      }));
+
+    if (!user) {
+      const err: any = new Error("No commander user available for demo");
+      err.status = 404;
+      throw err;
+    }
+
+    const accessToken = signAccessToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+    const refreshToken = signRefreshToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+    const refreshHash = await hashPassword(refreshToken);
+
+    await prisma.authRefreshToken.upsert({
+      where: { userId: user.id },
+      update: { refreshTokenHash: refreshHash },
+      create: { userId: user.id, refreshTokenHash: refreshHash },
+    });
+
+    return {
+      user: {
+        ...toPublicUser(user.id, {
+          ...user,
+          phone: user.phone ?? undefined,
+          areaId: resolveAreaId(user as { areaId?: string | null; areaName?: string | null }),
+          role: user.role as "USER" | "COMMANDER",
+          commanderAreas: user.commanderAreas,
+        }),
+        email: user.email,
+      },
+      accessToken,
+      refreshToken,
     };
   } catch (err) {
     throw mapPrismaError(err, "Server error");

@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { triggerAlert, getAlerts, getAllAlerts, closeAlert } from "../controllers/alerts.controller";
+import { triggerAlert, getAlerts, getAllAlerts, closeAlert, runDemoScenario } from "../controllers/alerts.controller";
 import { requireAuth } from "../middlewares/requireAuth";
 import { validate } from "../middlewares/validate";
-import { triggerAlertSchema, closeAlertSchema } from "../validation/alerts.zod";
+import { triggerAlertSchema, closeAlertSchema, runDemoScenarioSchema } from "../validation/alerts.zod";
 
 const router = Router();
 
@@ -19,6 +19,12 @@ router.post(
   requireAuth,
   validate(closeAlertSchema),
   closeAlert,
+);
+router.post(
+  "/demo/run",
+  requireAuth,
+  validate(runDemoScenarioSchema),
+  runDemoScenario,
 );
 
 export default router;

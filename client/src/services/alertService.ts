@@ -21,4 +21,13 @@ export const alertService = {
     const response = await api.post("/alerts/close", { eventId, reason });
     return response.data;
   },
+
+  runDemoScenario: async (areaId?: string): Promise<{
+    success: boolean;
+    message: string;
+    result: { runId: string; eventId: string; areaId: string; queuedResponses: number };
+  }> => {
+    const response = await api.post("/alerts/demo/run", { areaId });
+    return response.data;
+  },
 };

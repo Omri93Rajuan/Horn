@@ -1,6 +1,23 @@
-﻿export const formatDate = (dateString: string): string => {
+﻿import { tStatic } from "../i18n";
+
+const LOCALE_STORAGE_KEY = "horn-locale";
+
+function getLocaleTag() {
+  try {
+    const locale = localStorage.getItem(LOCALE_STORAGE_KEY) === "en" ? "en" : "he";
+    return locale === "en" ? "en-US" : "he-IL";
+  } catch {
+    return "he-IL";
+  }
+}
+
+function isEnglishLocale() {
+  return getLocaleTag().startsWith("en");
+}
+
+export const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
-  return date.toLocaleDateString("he-IL", {
+  return date.toLocaleString(getLocaleTag(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -13,23 +30,24 @@ export const getTimeAgo = (dateString: string): string => {
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  const en = isEnglishLocale();
 
   if (diffInSeconds < 60) {
-    return "עכשיו";
+    return en ? "just now" : "עכשיו";
   }
 
   if (diffInSeconds < 3600) {
     const minutes = Math.floor(diffInSeconds / 60);
-    return `לפני ${minutes} דקות`;
+    return en ? `${minutes} minutes ago` : `לפני ${minutes} דקות`;
   }
 
   if (diffInSeconds < 86400) {
     const hours = Math.floor(diffInSeconds / 3600);
-    return `לפני ${hours} שעות`;
+    return en ? `${hours} hours ago` : `לפני ${hours} שעות`;
   }
 
   const days = Math.floor(diffInSeconds / 86400);
-  return `לפני ${days} ימים`;
+  return en ? `${days} days ago` : `לפני ${days} ימים`;
 };
 
 export const formatEventLabel = (dateString: string, action: string): string => {
@@ -43,31 +61,16 @@ export const isEventActive = (dateString: string, windowMinutes = 10): boolean =
 };
 
 export const formatAreaName = (areaId: string): string => {
-  const areaLabels: Record<string, string> = {
-    "jerusalem": "ירושלים והסביבה",
-    "gush-dan": "גוש דן",
-    "hashfela": "השפלה",
-    "hasharon": "השרון",
-    "shomron": "השומרון",
-    "lakhish": "לכיש",
-    "otef-aza": "עוטף עזה",
-    "negev": "הנגב",
-    "galil-elyon": "גליל עליון",
-    "galil-tahton": "גליל תחתון",
-    "haifa-krayot": "חיפה והקריות",
-    "emek-yizrael": "עמק יזרעאל",
-    "arava": "הערבה",
-    "eilat": "אילת",
-  };
-
-  if (areaLabels[areaId]) {
-    return areaLabels[areaId];
+  const translated = tStatic(`area.${areaId}`);
+  if (translated !== `area.${areaId}`) {
+    return translated;
   }
 
   const match = areaId.match(/area-(\d+)/);
   if (match) {
-    return `גזרה ${match[1]}`;
+    return `${tStatic("area.generic")} ${match[1]}`;
   }
+
   return areaId;
 };
 
@@ -78,4 +81,3 @@ export const formatStatus = (status: string): string => {
   if (status === "PENDING") return tStatic("status.PENDING");
   return status;
 };
-import { tStatic } from "../i18n";

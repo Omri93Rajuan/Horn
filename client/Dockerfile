@@ -2,6 +2,12 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+ARG VITE_APP_ENV=production
+ARG VITE_TEST_MODE=false
+
+ENV VITE_APP_ENV=$VITE_APP_ENV
+ENV VITE_TEST_MODE=$VITE_TEST_MODE
+
 COPY package*.json ./
 RUN npm ci
 

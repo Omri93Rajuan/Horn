@@ -7,15 +7,24 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: horn
+      # Reduce warning logs
+      POSTGRES_INITDB_ARGS: "--locale=C"
     ports:
       - "5432:5432"
     volumes:
       - horn_pgdata:/var/lib/postgresql/data
+    command: >
+      postgres
+      -c log_min_messages=WARNING
+      -c log_min_error_statement=ERROR
+      -c log_error_verbosity=terse
+      -c shared_preload_libraries=''
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d horn"]
-      interval: 5s
+      interval: 30s
       timeout: 5s
-      retries: 12
+      retries: 5
+      start_period: 10s
 
   server:
     build:
@@ -37,18 +46,25 @@ services:
       JWT_REFRESH_TTL: 30d
       CORS_ORIGINS: http://localhost:8080
       SEED_ON_STARTUP: "true"
+      TEST_MODE_ENABLED: "true"
+      TEST_MODE_RESPONSE_DELAY_MS: "900"
+      DEMO_LOGIN_EMAIL: commander.north@horn.local
     ports:
       - "3005:3005"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3005/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
-      retries: 10
+      retries: 5
+      start_period: 10s
 
   client:
     build:
       context: ./client
       dockerfile: Dockerfile
+      args:
+        VITE_APP_ENV: production
+        VITE_TEST_MODE: "true"
     container_name: horn-client
     restart: unless-stopped
     depends_on:

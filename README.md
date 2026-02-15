@@ -1,6 +1,40 @@
 # 🎯 Horn System
 
-Team Presence Reporting System - Server + Mobile App
+Team Presence Reporting System - Emergency Response Platform
+
+---
+
+## 🆕 **Updating from Previous Version?**
+- ⚡ **Quick Update Guide:** [QUICK_UPDATE.md](QUICK_UPDATE.md) - 5 minutes
+- 📘 **Full Deployment Guide:** [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) - Complete instructions
+
+---
+
+## 🚀 Quick Start
+
+### Automated Setup (Easiest)
+
+**Windows:**
+```cmd
+setup.bat
+```
+
+**Linux/Mac:**
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+The script will:
+- ✅ Detect Docker (if available)
+- ✅ Set up environment files
+- ✅ Install dependencies
+- ✅ Run database migrations
+- ✅ Start the system
+
+**Demo Login:**
+- Email: `commander.north@horn.local`
+- Password: `Horn12345!`
 
 ---
 
@@ -12,42 +46,72 @@ Horn/
 │   ├── src/
 │   ├── prisma/
 │   ├── tests/
+│   ├── .env.example    ⚙️ Environment template
 │   └── README.md       📄 Full documentation
 │
-├── mobile/              ← Mobile App (React Native)
+├── client/              ← Web App (React + TypeScript)
 │   ├── src/
-│   ├── android/
-│   ├── ios/
+│   ├── public/
+│   ├── .env.example    ⚙️ Environment template
 │   └── README.md       📄 Full documentation
 │
-└── README.md           📘 (this file)
+├── docker-compose.yml  🐳 Docker setup
+├── setup.sh / .bat     ⚡ Quick setup scripts
+├── DEPLOYMENT_GUIDE.md 📘 Deployment instructions
+└── QUICK_UPDATE.md     🔄 Quick update guide
 ```
 
 ---
 
-## 🚀 Quick Setup
+## 🛠️ Manual Setup
 
-### 1️⃣ Server (Backend)
+### Option A: Docker (Recommended)
+
+```bash
+# Build and start everything
+docker compose up --build
+
+# Access the app:
+# - Web: http://localhost:8080
+# - API: http://localhost:3005
+# - DB: localhost:5432
+```
+
+---
+
+### Option B: Manual Installation
+
+**1️⃣ Server (Backend)**
 
 ```bash
 cd server
+cp .env.example .env
+# Edit .env with your settings
 npm install
-npx prisma migrate dev --name init
+npx prisma migrate deploy
 npx prisma generate
 npm run dev
 ```
 
-**Server runs on:** `http://localhost:3000`
+**Server runs on:** `http://localhost:3005`
 
 📖 **Full Documentation:** [server/README.md](server/README.md)
 
 ---
 
-### 2️⃣ Mobile (Client)
+**2️⃣ Client (Web App)**
 
 ```bash
-cd mobile
+cd client
+cp .env.example .env
+# Edit .env with your API URL
 npm install
+npm run dev
+```
+
+**Client runs on:** `http://localhost:5173`
+
+📖 **Full Documentation:** [client/README.md](client/README.md)
 
 # iOS only (Mac)
 cd ios && pod install && cd ..

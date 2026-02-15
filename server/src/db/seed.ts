@@ -13,12 +13,96 @@ type SeedResult = {
 
 const USERS_PER_AREA = 5;
 
+type CommanderSeedPlan = {
+  email: string;
+  name: string;
+  phone: string;
+  primaryArea: string;
+  commanderAreas: string[];
+};
+
+function splitAreasIntoGroups(areas: string[], groupsCount: number): string[][] {
+  const groups = Array.from({ length: groupsCount }, () => [] as string[]);
+  for (let index = 0; index < areas.length; index += 1) {
+    groups[index % groupsCount].push(areas[index]);
+  }
+  return groups;
+}
+
+function getCommanderPlan(): CommanderSeedPlan[] {
+  const safeAreas = AREAS.length > 0 ? AREAS : ["jerusalem", "gush-dan", "haifa-krayot"];
+  const groups = splitAreasIntoGroups(safeAreas, 3);
+
+  return [
+    {
+      email: "commander.north@horn.local",
+      name: "מפקד צפון",
+      phone: "0501000001",
+      primaryArea: groups[0][0] ?? safeAreas[0],
+      commanderAreas: groups[0].length > 0 ? groups[0] : [safeAreas[0]],
+    },
+    {
+      email: "commander.center@horn.local",
+      name: "מפקד מרכז",
+      phone: "0501000002",
+      primaryArea: groups[1][0] ?? safeAreas[0],
+      commanderAreas: groups[1].length > 0 ? groups[1] : [safeAreas[0]],
+    },
+    {
+      email: "commander.south@horn.local",
+      name: "מפקד דרום",
+      phone: "0501000003",
+      primaryArea: groups[2][0] ?? safeAreas[0],
+      commanderAreas: groups[2].length > 0 ? groups[2] : [safeAreas[0]],
+    },
+  ];
+}
+
+export async function ensureDefaultCommanders() {
+  const commanderPlan = getCommanderPlan();
+  const commanderPasswordHash = await hashPassword("Commander!1");
+
+  let created = 0;
+  let updated = 0;
+
+  for (const commander of commanderPlan) {
+    const existing = await prisma.user.findUnique({ where: { email: commander.email } });
+    await prisma.user.upsert({
+      where: { email: commander.email },
+      update: {
+        name: commander.name,
+        phone: commander.phone,
+        role: "COMMANDER",
+        areaId: commander.primaryArea,
+        commanderAreas: commander.commanderAreas,
+      },
+      create: {
+        email: commander.email,
+        passwordHash: commanderPasswordHash,
+        name: commander.name,
+        phone: commander.phone,
+        areaId: commander.primaryArea,
+        role: "COMMANDER",
+        commanderAreas: commander.commanderAreas,
+        deviceToken: faker.string.uuid(),
+      },
+    });
+    if (existing) {
+      updated += 1;
+    } else {
+      created += 1;
+    }
+  }
+
+  return { created, updated, total: commanderPlan.length };
+}
+
 export async function seedIfEmpty(): Promise<SeedResult> {
   const primaryArea = AREAS[0] ?? "jerusalem";
   const secondArea = AREAS[1] ?? primaryArea;
   const thirdArea = AREAS[2] ?? secondArea;
 
-  const commanderEmail = "commander@horn.local";
+  const commanderEmail = "commander.north@horn.local";
   const existingCommander = await prisma.user.findUnique({
     where: { email: commanderEmail },
   });

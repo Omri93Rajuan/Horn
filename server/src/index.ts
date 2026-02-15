@@ -11,7 +11,7 @@ import dashboardRoutes from "./routes/dashboard.routes";
 import areasRoutes from "./routes/areas.routes";
 import { handleError } from "./utils/ErrorHandle";
 import { prisma } from "./db/prisma";
-import { seedIfEmpty } from "./db/seed";
+import { ensureDefaultCommanders, seedIfEmpty } from "./db/seed";
 import { env, loadEnv } from "./config/env";
 import { verifyAccessToken } from "./helpers/jwt";
 import { requestLogger } from "./middlewares/requestLogger";
@@ -146,6 +146,9 @@ io.on("connection", (socket) => {
 });
 
 async function start() {
+  const commandersResult = await ensureDefaultCommanders();
+  logger.info("db.commanders.ensured", commandersResult);
+
   if (env.seedOnStartup) {
     const seedResult = await seedIfEmpty();
     if (seedResult.seeded) {

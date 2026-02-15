@@ -1,1 +1,16 @@
-export const AREAS = ["area-1", "area-2", "area-3"];
+export const AREAS = [
+  "jerusalem",
+  "gush-dan",
+  "hashfela",
+  "hasharon",
+  "shomron",
+  "lakhish",
+  "otef-aza",
+  "negev",
+  "galil-elyon",
+  "galil-tahton",
+  "haifa-krayot",
+  "emek-yizrael",
+  "arava",
+  "eilat",
+];

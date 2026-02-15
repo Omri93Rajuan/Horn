@@ -45,6 +45,10 @@ type UserDoc = {
   createdAt: Date;
 };
 
+function resolveAreaId(doc: { areaId?: string | null; areaName?: string | null }) {
+  return doc.areaId ?? doc.areaName ?? "";
+}
+
 function toPublicUser(id: string, doc: UserDoc): User {
   return {
     id,
@@ -157,6 +161,7 @@ export async function login(input: LoginInput) {
       user: toPublicUser(user.id, {
         ...user,
         phone: user.phone ?? undefined,
+        areaId: resolveAreaId(user as { areaId?: string | null; areaName?: string | null }),
         role: user.role as "USER" | "COMMANDER",
         commanderAreas: user.commanderAreas,
       }),
@@ -234,6 +239,7 @@ export async function getMe(input: MeInput) {
       user: toPublicUser(user.id, {
         ...user,
         phone: user.phone ?? undefined,
+        areaId: resolveAreaId(user as { areaId?: string | null; areaName?: string | null }),
         role: user.role as "USER" | "COMMANDER",
         commanderAreas: user.commanderAreas,
       }),

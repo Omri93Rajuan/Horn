@@ -14,6 +14,10 @@ type SeedResult = {
 const USERS_PER_AREA = 5;
 
 export async function seedIfEmpty(): Promise<SeedResult> {
+  const primaryArea = AREAS[0] ?? "jerusalem";
+  const secondArea = AREAS[1] ?? primaryArea;
+  const thirdArea = AREAS[2] ?? secondArea;
+
   const commanderEmail = "commander@horn.local";
   const existingCommander = await prisma.user.findUnique({
     where: { email: commanderEmail },
@@ -37,7 +41,7 @@ export async function seedIfEmpty(): Promise<SeedResult> {
         email: commanderEmail,
         passwordHash: await hashPassword("Commander!1"),
         name: "מפקד קומנדור",
-        areaId: "area-1",
+        areaId: primaryArea,
         role: "COMMANDER",
         commanderAreas: AREAS,
         deviceToken: faker.string.uuid(),
@@ -52,9 +56,9 @@ export async function seedIfEmpty(): Promise<SeedResult> {
 
   // Add known demo users for easy testing (only if they don't exist)
   const demoUsers = [
-    { email: "soldier1@horn.local", name: "חייל אחד", areaId: "area-1" },
-    { email: "soldier2@horn.local", name: "חייל שניים", areaId: "area-2" },
-    { email: "soldier3@horn.local", name: "חייל שלוש", areaId: "area-3" },
+    { email: "soldier1@horn.local", name: "חייל אחד", areaId: primaryArea },
+    { email: "soldier2@horn.local", name: "חייל שניים", areaId: secondArea },
+    { email: "soldier3@horn.local", name: "חייל שלוש", areaId: thirdArea },
   ];
 
   for (const demo of demoUsers) {

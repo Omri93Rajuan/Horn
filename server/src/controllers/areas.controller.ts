@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
-import { AREAS } from "../config/areas";
+import { getAvailableAreas } from "../services/areas.service";
 
-export function getAreas(req: Request, res: Response) {
-  return res.json({ areas: AREAS });
+export async function getAreas(req: Request, res: Response) {
+  const areas = await getAvailableAreas();
+  return res.json({ areas });
 }

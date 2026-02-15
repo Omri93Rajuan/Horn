@@ -1,3 +1,4 @@
+﻿import { toastWarning } from "./toast";
 let isOnline = navigator.onLine;
 let hasShownOfflineAlert = false;
 
@@ -6,7 +7,7 @@ export const initNetworkMonitoring = () => {
     isOnline = false;
     if (!hasShownOfflineAlert) {
       hasShownOfflineAlert = true;
-      alert(
+      toastWarning(
         "אין חיבור לאינטרנט. חלק מהפונקציות עלולות לא לעבוד.",
       );
     }
@@ -28,3 +29,5 @@ export const checkConnection = async (): Promise<boolean> => {
 export const getConnectionInfo = async () => {
   return Promise.resolve({ isOnline, userAgent: navigator.userAgent });
 };
+
+

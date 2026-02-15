@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { alertService } from "../services/alertService";
 import { dashboardService } from "../services/dashboardService";
@@ -10,7 +10,8 @@ import {
   setEventStatus,
   setEvents,
 } from "../store/dataSlice";
-import { formatEventLabel, isEventActive } from "../utils/dateUtils";
+import { formatAreaName, formatEventLabel, formatStatus, isEventActive } from "../utils/dateUtils";
+import { toastError } from "../utils/toast";
 
 const ACTION_LABEL = "ירוק בעיניים לאירוע";
 
@@ -58,7 +59,7 @@ const AlertsScreen: React.FC = () => {
       setNotes("");
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || "שגיאה בשליחת תגובה");
+      toastError(error.response?.data?.message || "שגיאה בשליחת תגובה");
     },
   });
 
@@ -109,12 +110,12 @@ const AlertsScreen: React.FC = () => {
 
   const handleSubmitResponse = (status: "OK" | "HELP") => {
     if (!selectedEventId) {
-      alert("בחר אירוע כדי לשלוח תגובה");
+      toastError("בחר אירוע כדי לשלוח תגובה");
       return;
     }
     const selectedEvent = events.find((event) => event.id === selectedEventId);
     if (selectedEvent && !isEventActive(selectedEvent.triggeredAt, activeWindowMinutes)) {
-      alert("חלון הזמן לאישור האירוע נסגר");
+      toastError("חלון הזמן לאישור האירוע נסגר");
       return;
     }
 
@@ -167,7 +168,7 @@ const AlertsScreen: React.FC = () => {
                       {formatEventLabel(event.triggeredAt, ACTION_LABEL)}
                     </span>
                     <span className="text-xs text-text-muted dark:text-text-dark-muted">
-                      גזרה {event.areaId}
+                      גזרה {formatAreaName(event.areaId)}
                     </span>
                   </div>
                   <span className="text-xs text-text-muted dark:text-text-dark-muted">
@@ -195,7 +196,7 @@ const AlertsScreen: React.FC = () => {
                     {formatEventLabel(eventStatus.event.triggeredAt, ACTION_LABEL)}
                   </p>
                   <p className="mt-1 text-xs text-text-muted dark:text-text-dark-muted">
-                    גזרה {eventStatus.event.areaId} • #{eventStatus.event.id}
+                    גזרה {formatAreaName(eventStatus.event.areaId)} • #{eventStatus.event.id}
                   </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">
@@ -206,7 +207,7 @@ const AlertsScreen: React.FC = () => {
                   ] as const).map((item) => (
                     <div key={item.label} className="glass rounded-2xl p-4 text-center">
                       <p className="text-xs uppercase tracking-[0.2em] text-text-muted dark:text-text-dark-muted">
-                        {item.label}
+                        {formatStatus(item.label)}
                       </p>
                       <p className="mt-2 text-2xl font-semibold text-text dark:text-text-dark">
                         {item.value}
@@ -227,7 +228,7 @@ const AlertsScreen: React.FC = () => {
                       }`}
                       onClick={() => setFilter(status)}
                     >
-                      {status}
+                      {formatStatus(status)}
                     </button>
                   ))}
                 </div>
@@ -242,7 +243,7 @@ const AlertsScreen: React.FC = () => {
                             <p className="text-xs text-text-muted dark:text-text-dark-muted">{item.user.phone}</p>
                           ) : null}
                         </div>
-                        <span className="badge text-primary">{item.responseStatus}</span>
+                        <span className="badge text-primary">{formatStatus(item.responseStatus)}</span>
                       </div>
                       {item.notes ? (
                         <p className="mt-3 text-xs text-text-muted dark:text-text-dark-muted">{item.notes}</p>
@@ -277,7 +278,7 @@ const AlertsScreen: React.FC = () => {
                             : "text-text"
                       }`}
                     >
-                      {myResponseForEvent.status}
+                      {formatStatus(myResponseForEvent.status)}
                     </span>
                   </div>
                   {myResponseForEvent.notes ? (
@@ -345,3 +346,9 @@ const AlertsScreen: React.FC = () => {
 };
 
 export default AlertsScreen;
+
+
+
+
+
+

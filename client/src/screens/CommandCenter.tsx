@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { dashboardService } from "../services/dashboardService";
 import { alertService } from "../services/alertService";
 import { useAppSelector } from "../store/hooks";
-import { formatDate, formatEventLabel, formatAreaName } from "../utils/dateUtils";
+import { formatDate, formatEventLabel, formatAreaName, formatStatus } from "../utils/dateUtils";
 
-const ACTION_LABEL = "ירוק בעיניים לאירוע";
+const ACTION_LABEL = "×™×¨×•×§ ×‘×¢×™× ×™×™× ×œ××™×¨×•×¢";
 
 const CommandCenter: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
@@ -102,13 +102,13 @@ const CommandCenter: React.FC = () => {
                   <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
                 </svg>
               </span>
-              מרכז פיקוד
+              ×ž×¨×›×– ×¤×™×§×•×“
             </h1>
             <p className="mt-2 text-text-muted dark:text-text-dark-muted">
-              {user?.name} • {activeEventsCount} אירועים פעילים
+              {user?.name} â€¢ {activeEventsCount} ××™×¨×•×¢×™× ×¤×¢×™×œ×™×
               {criticalEvents.length > 0 && (
                 <span className="mr-2 text-danger font-semibold animate-pulse">
-                  • {criticalEvents.length} דורשים תשומת לב מיידית
+                  â€¢ {criticalEvents.length} ×“×•×¨×©×™× ×ª×©×•×ž×ª ×œ×‘ ×ž×™×™×“×™×ª
                 </span>
               )}
             </p>
@@ -120,7 +120,7 @@ const CommandCenter: React.FC = () => {
             <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
               <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
             </svg>
-            <span className="text-lg">ירוק בעיניים</span>
+            <span className="text-lg">×™×¨×•×§ ×‘×¢×™× ×™×™×</span>
           </button>
         </div>
 
@@ -128,15 +128,15 @@ const CommandCenter: React.FC = () => {
         <div className="grid grid-cols-4 gap-4 mt-6">
           <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
             <div className="text-4xl font-bold text-success mb-1">{activeQuery.data?.totals.ok ?? 0}</div>
-            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">מאושרים</div>
+            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">×ž××•×©×¨×™×</div>
           </div>
           <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
             <div className="text-4xl font-bold text-danger mb-1">{activeQuery.data?.totals.help ?? 0}</div>
-            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">זקוקים לעזרה</div>
+            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">×–×§×•×§×™× ×œ×¢×–×¨×”</div>
           </div>
           <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
             <div className="text-4xl font-bold text-warning mb-1">{activeQuery.data?.totals.pending ?? 0}</div>
-            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">ממתינים</div>
+            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">×ž×ž×ª×™× ×™×</div>
           </div>
           <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
             <div className="text-4xl font-bold text-primary mb-1">
@@ -144,7 +144,7 @@ const CommandCenter: React.FC = () => {
                 ? Math.round((activeQuery.data.totals.responded / activeQuery.data.totals.totalUsers) * 100)
                 : 0}%
             </div>
-            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">שיעור תגובה</div>
+            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">×©×™×¢×•×¨ ×ª×’×•×‘×”</div>
           </div>
         </div>
       </div>
@@ -153,7 +153,7 @@ const CommandCenter: React.FC = () => {
       <div className="grid grid-cols-3 gap-6">
         {/* Left - Active Events List */}
         <div className="col-span-1 space-y-2">
-          <h3 className="font-semibold text-text dark:text-text-dark px-2 mb-3">אירועים פעילים</h3>
+          <h3 className="font-semibold text-text dark:text-text-dark px-2 mb-3">××™×¨×•×¢×™× ×¤×¢×™×œ×™×</h3>
           
           {/* Events List */}
           <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto pr-1">{allActiveEvents.map((event) => {
@@ -190,7 +190,7 @@ const CommandCenter: React.FC = () => {
                           ? "bg-danger text-white animate-pulse"
                           : "bg-primary text-white"
                       }`}>
-                        {event.areaId.replace('area-', '')}
+                        {formatAreaName(event.areaId)}
                       </div>
                       <div>
                         <div className="font-bold text-lg text-text dark:text-text-dark">{formatAreaName(event.areaId)}</div>
@@ -203,7 +203,7 @@ const CommandCenter: React.FC = () => {
                       <div className="text-2xl font-bold text-primary">
                         {Math.round((event.responded / event.totalUsers) * 100)}%
                       </div>
-                      <div className="text-xs text-text-muted dark:text-text-dark-muted">תגובה</div>
+                      <div className="text-xs text-text-muted dark:text-text-dark-muted">×ª×’×•×‘×”</div>
                     </div>
                   </div>
                 </div>
@@ -213,15 +213,15 @@ const CommandCenter: React.FC = () => {
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
                       <div className="text-xl font-bold text-success">{event.ok}</div>
-                      <div className="text-xs text-text-muted dark:text-text-dark-muted font-medium">בסדר</div>
+                      <div className="text-xs text-text-muted dark:text-text-dark-muted font-medium">×‘×¡×“×¨</div>
                     </div>
                     <div>
                       <div className="text-xl font-bold text-danger">{event.help}</div>
-                      <div className="text-xs text-text-muted dark:text-text-dark-muted font-medium">עזרה</div>
+                      <div className="text-xs text-text-muted dark:text-text-dark-muted font-medium">×¢×–×¨×”</div>
                     </div>
                     <div>
                       <div className="text-xl font-bold text-warning">{event.pending}</div>
-                      <div className="text-xs text-text-muted dark:text-text-dark-muted font-medium">ממתינים</div>
+                      <div className="text-xs text-text-muted dark:text-text-dark-muted font-medium">×ž×ž×ª×™× ×™×</div>
                     </div>
                   </div>
                 </div>
@@ -237,10 +237,10 @@ const CommandCenter: React.FC = () => {
                 </svg>
               </div>
               <div className="text-lg font-semibold text-text dark:text-text-dark">
-                הכל רגוע
+                ×”×›×œ ×¨×’×•×¢
               </div>
               <div className="text-sm text-text-muted dark:text-text-dark-muted">
-                אין אירועים פעילים כרגע
+                ××™×Ÿ ××™×¨×•×¢×™× ×¤×¢×™×œ×™× ×›×¨×’×¢
               </div>
             </div>
           )}
@@ -261,18 +261,18 @@ const CommandCenter: React.FC = () => {
                     onClick={() => setShowCloseModal(true)}
                     className="px-4 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-all"
                   >
-                    סגור אירוע
+                    ×¡×’×•×¨ ××™×¨×•×¢
                   </button>
                 </div>
                 <div className="flex items-center gap-4 text-sm">
                   <span className="px-3 py-1 rounded-full bg-success/10 text-success font-semibold">
-                    ✓ {statusQuery.data.counts.ok} אישרו
+                    âœ“ {statusQuery.data.counts.ok} ××™×©×¨×•
                   </span>
                   <span className="px-3 py-1 rounded-full bg-danger/10 text-danger font-semibold">
-                    ! {statusQuery.data.counts.help} זקוקים לעזרה
+                    ! {statusQuery.data.counts.help} ×–×§×•×§×™× ×œ×¢×–×¨×”
                   </span>
                   <span className="px-3 py-1 rounded-full bg-warning/10 text-warning font-semibold">
-                    ⏳ {statusQuery.data.counts.pending} ממתינים
+                    â³ {statusQuery.data.counts.pending} ×ž×ž×ª×™× ×™×
                   </span>
                 </div>
               </div>
@@ -289,7 +289,7 @@ const CommandCenter: React.FC = () => {
                         : "bg-surface-2 dark:bg-surface-2-dark text-text dark:text-text-dark hover:bg-primary/10 border border-border dark:border-border-dark"
                     }`}
                   >
-                    {f === "ALL" ? "הכל" : f === "OK" ? "בסדר" : f === "HELP" ? "עזרה" : "ממתינים"}
+                    {formatStatus(f)}
                   </button>
                 ))}
               </div>
@@ -334,12 +334,12 @@ const CommandCenter: React.FC = () => {
                           ? "bg-danger/20 text-danger"
                           : "bg-warning/20 text-warning"
                       }`}>
-                        {soldier.responseStatus === "OK" ? "בסדר" : soldier.responseStatus === "HELP" ? "צריך עזרה" : "ממתין"}
+                        {formatStatus(soldier.responseStatus)}
                       </div>
                     </div>
                     {soldier.notes && (
                       <div className="mt-3 text-sm text-text-muted dark:text-text-dark-muted pt-3 border-t border-border/30">
-                        💬 {soldier.notes}
+                        ðŸ’¬ {soldier.notes}
                       </div>
                     )}
                   </div>
@@ -348,7 +348,7 @@ const CommandCenter: React.FC = () => {
             </div>
           ) : (
             <div className="flex items-center justify-center h-full text-text-muted dark:text-text-dark-muted">
-              בחר אירוע מהרשימה
+              ×‘×—×¨ ××™×¨×•×¢ ×ž×”×¨×©×™×ž×”
             </div>
           )}
         </div>
@@ -358,13 +358,13 @@ const CommandCenter: React.FC = () => {
       {showCreateAlert && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-surface-1 dark:bg-surface-1-dark rounded-2xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-text dark:text-text-dark mb-4">הקפצת אירוע חדש</h3>
+            <h3 className="text-xl font-bold text-text dark:text-text-dark mb-4">×”×§×¤×¦×ª ××™×¨×•×¢ ×—×“×©</h3>
             <select
               value={selectedArea}
               onChange={(e) => setSelectedArea(e.target.value)}
               className="w-full px-4 py-3 rounded-lg border-2 border-border dark:border-border-dark bg-surface-2 dark:bg-surface-2-dark mb-4"
             >
-              <option value="">בחר גזרה</option>
+              <option value="">×‘×—×¨ ×’×–×¨×”</option>
               {(user?.commanderAreas || []).map(area => (
                 <option key={area} value={area}>{formatAreaName(area)}</option>
               ))}
@@ -374,14 +374,14 @@ const CommandCenter: React.FC = () => {
                 onClick={() => setShowCreateAlert(false)}
                 className="flex-1 px-4 py-3 rounded-lg bg-surface-2 dark:bg-surface-2-dark hover:bg-surface-3 dark:hover:bg-surface-3-dark"
               >
-                ביטול
+                ×‘×™×˜×•×œ
               </button>
               <button
                 onClick={() => selectedArea && createAlertMutation.mutate(selectedArea)}
                 disabled={!selectedArea || createAlertMutation.isPending}
                 className="flex-1 px-4 py-3 rounded-lg bg-danger text-white font-bold hover:bg-danger/90 disabled:opacity-50"
               >
-                {createAlertMutation.isPending ? "שולח..." : "הקפץ אירוע"}
+                {createAlertMutation.isPending ? "×©×•×œ×—..." : "×”×§×¤×¥ ××™×¨×•×¢"}
               </button>
             </div>
           </div>
@@ -392,14 +392,14 @@ const CommandCenter: React.FC = () => {
       {showCloseModal && selectedEventId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-surface-1 dark:bg-surface-1-dark rounded-2xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-text dark:text-text-dark mb-4">סגירת אירוע</h3>
+            <h3 className="text-xl font-bold text-text dark:text-text-dark mb-4">×¡×’×™×¨×ª ××™×¨×•×¢</h3>
             <p className="text-text-muted dark:text-text-dark-muted mb-4">
-              האם אתה בטוח שברצונך לסגור את האירוע? ניתן להוסיף סיבה לסגירה.
+              ×”×× ××ª×” ×‘×˜×•×— ×©×‘×¨×¦×•× ×š ×œ×¡×’×•×¨ ××ª ×”××™×¨×•×¢? × ×™×ª×Ÿ ×œ×”×•×¡×™×£ ×¡×™×‘×” ×œ×¡×’×™×¨×”.
             </p>
             <textarea
               value={closeReason}
               onChange={(e) => setCloseReason(e.target.value)}
-              placeholder="סיבה לסגירה (אופציונלי)"
+              placeholder="×¡×™×‘×” ×œ×¡×’×™×¨×” (××•×¤×¦×™×•× ×œ×™)"
               className="w-full px-4 py-3 rounded-lg border-2 border-border dark:border-border-dark bg-surface-2 dark:bg-surface-2-dark mb-4 min-h-[100px]"
             />
             <div className="flex gap-3">
@@ -410,14 +410,14 @@ const CommandCenter: React.FC = () => {
                 }}
                 className="flex-1 px-4 py-3 rounded-lg bg-surface-2 dark:bg-surface-2-dark hover:bg-surface-3 dark:hover:bg-surface-3-dark"
               >
-                ביטול
+                ×‘×™×˜×•×œ
               </button>
               <button
                 onClick={() => closeAlertMutation.mutate({ eventId: selectedEventId, reason: closeReason })}
                 disabled={closeAlertMutation.isPending}
                 className="flex-1 px-4 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 disabled:opacity-50"
               >
-                {closeAlertMutation.isPending ? "סוגר..." : "סגור אירוע"}
+                {closeAlertMutation.isPending ? "×¡×•×’×¨..." : "×¡×’×•×¨ ××™×¨×•×¢"}
               </button>
             </div>
           </div>
@@ -428,3 +428,4 @@ const CommandCenter: React.FC = () => {
 };
 
 export default CommandCenter;
+

@@ -43,7 +43,27 @@ export const isEventActive = (dateString: string, windowMinutes = 10): boolean =
 };
 
 export const formatAreaName = (areaId: string): string => {
-  // Convert area-1, area-2, etc. to "גזרה 1", "גזרה 2"
+  const areaLabels: Record<string, string> = {
+    "jerusalem": "ירושלים והסביבה",
+    "gush-dan": "גוש דן",
+    "hashfela": "השפלה",
+    "hasharon": "השרון",
+    "shomron": "השומרון",
+    "lakhish": "לכיש",
+    "otef-aza": "עוטף עזה",
+    "negev": "הנגב",
+    "galil-elyon": "גליל עליון",
+    "galil-tahton": "גליל תחתון",
+    "haifa-krayot": "חיפה והקריות",
+    "emek-yizrael": "עמק יזרעאל",
+    "arava": "הערבה",
+    "eilat": "אילת",
+  };
+
+  if (areaLabels[areaId]) {
+    return areaLabels[areaId];
+  }
+
   const match = areaId.match(/area-(\d+)/);
   if (match) {
     return `גזרה ${match[1]}`;
@@ -52,10 +72,10 @@ export const formatAreaName = (areaId: string): string => {
 };
 
 export const formatStatus = (status: string): string => {
-  const statusMap: Record<string, string> = {
-    'OK': 'בסדר',
-    'HELP': 'עזרה',
-    'PENDING': 'ממתין'
-  };
-  return statusMap[status] || status;
+  if (status === "ALL") return tStatic("status.ALL");
+  if (status === "OK") return tStatic("status.OK");
+  if (status === "HELP") return tStatic("status.HELP");
+  if (status === "PENDING") return tStatic("status.PENDING");
+  return status;
 };
+import { tStatic } from "../i18n";

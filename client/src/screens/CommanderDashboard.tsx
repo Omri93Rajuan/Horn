@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { dashboardService } from "../services/dashboardService";
 import { alertService } from "../services/alertService";
 import { useAppSelector } from "../store/hooks";
-import { formatDate, formatEventLabel } from "../utils/dateUtils";
+import { formatAreaName, formatDate, formatEventLabel, formatStatus } from "../utils/dateUtils";
+import { toastError } from "../utils/toast";
 import {
   LineChart,
   Line,
@@ -153,7 +154,7 @@ const CommanderDashboard: React.FC = () => {
 
   useEffect(() => {
     if (user?.role !== "COMMANDER") {
-      alert("גישה למפקדים בלבד");
+      toastError("גישה למפקדים בלבד");
     }
   }, [user?.role]);
 
@@ -216,7 +217,7 @@ const CommanderDashboard: React.FC = () => {
   // Data for charts
   const areaChartData = useMemo(() => {
     return (overviewQuery.data?.areas ?? []).map((area, idx) => ({
-      name: `גזרה ${area.areaId}`,
+      name: formatAreaName(area.areaId),
       אירועים: area.last30Days,
       ממוצע: Math.round((overviewQuery.data?.areas.reduce((sum, a) => sum + a.last30Days, 0) ?? 0) / (overviewQuery.data?.areas.length ?? 1)),
     }));
@@ -224,7 +225,7 @@ const CommanderDashboard: React.FC = () => {
 
   const pieChartData = useMemo(() => {
     return (activeQuery.data?.areas ?? []).map((area) => ({
-      name: `גזרה ${area.areaId}`,
+      name: formatAreaName(area.areaId),
       value: area.totalUsers,
       responded: area.responded,
     }));
@@ -235,7 +236,7 @@ const CommanderDashboard: React.FC = () => {
       x: area.totalUsers,
       y: area.responded,
       z: Math.round((area.responded / area.totalUsers) * 100),
-      name: `גזרה ${area.areaId}`,
+      name: formatAreaName(area.areaId),
     }));
   }, [activeQuery.data]);
 
@@ -569,11 +570,11 @@ const CommanderDashboard: React.FC = () => {
                             ? "bg-danger text-white animate-pulse"
                             : "bg-warning text-white"
                         }`}>
-                          {area.areaId.replace('area-', '')}
+                          {formatAreaName(area.areaId).slice(0, 2)}
                         </div>
                         <div>
                           <h3 className="font-bold text-text dark:text-text-dark">
-                            גזרה {area.areaId} {area.events.length > 1 ? `(אירוע ${eventIndex + 1}/${area.events.length})` : ''}
+                            {formatAreaName(area.areaId)} {area.events.length > 1 ? `(אירוע ${eventIndex + 1}/${area.events.length})` : ''}
                           </h3>
                           <p className="text-xs text-text-muted dark:text-text-dark-muted">
                             {formatDate(event.triggeredAt)} • {formatEventLabel(event.triggeredAt, ACTION_LABEL)}
@@ -606,11 +607,11 @@ const CommanderDashboard: React.FC = () => {
                       <div className="grid grid-cols-3 gap-3 mb-4">
                         <div className="text-center p-3 rounded-lg bg-success/10 border border-success/20">
                           <div className="text-2xl font-bold text-success">{event.ok}</div>
-                          <div className="text-xs text-text-muted dark:text-text-dark-muted">בסדר</div>
+                          <div className="text-xs text-text-muted dark:text-text-dark-muted">{formatStatus("OK")}</div>
                         </div>
                         <div className="text-center p-3 rounded-lg bg-danger/10 border border-danger/20">
                           <div className="text-2xl font-bold text-danger">{event.help}</div>
-                          <div className="text-xs text-text-muted dark:text-text-dark-muted">צריך עזרה</div>
+                          <div className="text-xs text-text-muted dark:text-text-dark-muted">{formatStatus("HELP")}</div>
                         </div>
                         <div className="text-center p-3 rounded-lg bg-warning/10 border border-warning/20">
                           <div className="text-2xl font-bold text-warning">{event.pending}</div>
@@ -750,7 +751,7 @@ const CommanderDashboard: React.FC = () => {
                 פרטי חיילים
               </h2>
               <p className="mt-1 text-sm text-text-muted dark:text-text-dark-muted">
-                {selectedAreaId ? `גזרה ${selectedAreaId} - כל החיילים` : 'מעקב מפורט לפי אירוע'}
+                {selectedAreaId ? `${formatAreaName(selectedAreaId)} - כל החיילים` : 'מעקב מפורט לפי אירוע'}
               </p>
             </div>
             {selectedEventId && statusQuery.data && (
@@ -766,7 +767,7 @@ const CommanderDashboard: React.FC = () => {
                     }`}
                     onClick={() => setFilter(status)}
                   >
-                    {status === "ALL" ? "הכל" : status}
+                    {formatStatus(status)}
                   </button>
                 ))}
               </div>
@@ -781,7 +782,7 @@ const CommanderDashboard: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                   <span className="text-sm font-medium text-secondary dark:text-secondary-dark">
-                    גזרה {selectedAreaId}
+                    {formatAreaName(selectedAreaId || "")}
                   </span>
                 </div>
               </div>
@@ -935,7 +936,7 @@ const CommanderDashboard: React.FC = () => {
                               </div>
                             </td>
                             <td className="px-6 py-4 text-text-muted dark:text-text-dark-muted">
-                              {item.areaId}
+                              {formatAreaName(item.areaId)}
                             </td>
                             <td className="px-6 py-4">
                               {item.user.phone ? (
@@ -957,7 +958,7 @@ const CommanderDashboard: React.FC = () => {
                                   ? 'bg-danger bg-opacity-20 text-danger'
                                   : 'bg-warning bg-opacity-20 text-warning'
                               }`}>
-                                {item.responseStatus}
+                                {formatStatus(item.responseStatus)}
                               </span>
                             </td>
                             <td className="px-6 py-4 text-text-muted dark:text-text-dark-muted">
@@ -1048,7 +1049,7 @@ const CommanderDashboard: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-text-muted dark:text-text-dark-muted">
-                            {item.user.areaId}
+                            {formatAreaName(item.user.areaId)}
                           </td>
                           <td className="px-6 py-4">
                             {item.user.phone ? (
@@ -1070,7 +1071,7 @@ const CommanderDashboard: React.FC = () => {
                                 ? 'bg-danger bg-opacity-20 text-danger'
                                 : 'bg-warning bg-opacity-20 text-warning'
                             }`}>
-                              {item.responseStatus}
+                              {formatStatus(item.responseStatus)}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-text-muted dark:text-text-dark-muted">
@@ -1163,7 +1164,7 @@ const CommanderDashboard: React.FC = () => {
                   <option value="">-- בחר גזרה --</option>
                   {overviewQuery.data?.areas.map((area: any) => (
                     <option key={area.areaId} value={area.areaId}>
-                      גזרה {area.areaId} ({area.totalUsers} חיילים)
+                      {formatAreaName(area.areaId)} ({area.totalUsers} חיילים)
                     </option>
                   ))}
                 </select>
@@ -1258,3 +1259,7 @@ const CommanderDashboard: React.FC = () => {
 };
 
 export default CommanderDashboard;
+
+
+
+

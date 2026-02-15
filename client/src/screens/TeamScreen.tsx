@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "../services/api";
 import { useAppSelector } from "../store/hooks";
-import { formatAreaName } from "../utils/dateUtils";
+import { formatAreaName, formatStatus } from "../utils/dateUtils";
 
 interface TeamMember {
   id: string;
@@ -298,7 +298,7 @@ const TeamScreen: React.FC = () => {
                       גזרה
                     </div>
                     <div className="font-bold text-text dark:text-text-dark">
-                      {selectedMember.areaId}
+                      {formatAreaName(selectedMember.areaId)}
                     </div>
                   </div>
                   <div className="p-3 rounded-lg bg-surface-2 dark:bg-surface-2-dark">
@@ -325,7 +325,7 @@ const TeamScreen: React.FC = () => {
                         {selectedMember.responseStats.okResponses}
                       </div>
                       <div className="text-xs text-text-muted dark:text-text-dark-muted">
-                        OK
+                        {formatStatus("OK")}
                       </div>
                     </div>
                     <div className="text-center p-3 rounded-lg bg-danger/10">
@@ -333,7 +333,7 @@ const TeamScreen: React.FC = () => {
                         {selectedMember.responseStats.helpResponses}
                       </div>
                       <div className="text-xs text-text-muted dark:text-text-dark-muted">
-                        עזרה
+                        {formatStatus("HELP")}
                       </div>
                     </div>
                     <div className="text-center p-3 rounded-lg bg-primary/10">
@@ -388,3 +388,5 @@ const TeamScreen: React.FC = () => {
 };
 
 export default TeamScreen;
+
+

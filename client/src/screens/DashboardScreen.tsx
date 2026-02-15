@@ -10,7 +10,8 @@ import {
   setEvents,
   setMyResponses,
 } from "../store/dataSlice";
-import { formatDate, formatEventLabel, isEventActive } from "../utils/dateUtils";
+import { formatDate, formatEventLabel, formatAreaName, formatStatus, isEventActive } from "../utils/dateUtils";
+import { toastError } from "../utils/toast";
 
 const ACTION_LABEL = "ירוק בעיניים לאירוע";
 
@@ -67,7 +68,7 @@ const DashboardScreen: React.FC = () => {
       setShowConfirm(false);
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || "אירעה שגיאה בהקפצת האירוע");
+      toastError(error.response?.data?.message || "אירעה שגיאה בהקפצת האירוע");
     },
   });
 
@@ -111,7 +112,7 @@ const DashboardScreen: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  גזרה {user?.areaId}
+                  {formatAreaName(user?.areaId || "")}
                 </span>
                 {isCommander && (
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
@@ -282,7 +283,7 @@ const DashboardScreen: React.FC = () => {
                         <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
-                        דיווחת: {myResponse.status === 'OK' ? 'אני בסדר' : 'צריך עזרה'}
+                        דיווחת: {formatStatus(myResponse.status)}
                       </span>
                     )}
                   </div>
@@ -290,7 +291,7 @@ const DashboardScreen: React.FC = () => {
                     {formatEventLabel(event.triggeredAt, ACTION_LABEL)}
                   </p>
                   <p className="mt-1 text-xs text-text-muted dark:text-text-dark-muted">
-                    גזרה {event.areaId} • חלון אישור: {activeWindowMinutes} דקות
+                    {formatAreaName(event.areaId)} • חלון אישור: {activeWindowMinutes} דקות
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -383,7 +384,7 @@ const DashboardScreen: React.FC = () => {
                 >
                   {availableAreas.map((area) => (
                     <option key={area} value={area}>
-                      {area}
+                      {formatAreaName(area)}
                     </option>
                   ))}
                 </select>
@@ -414,3 +415,7 @@ const DashboardScreen: React.FC = () => {
 };
 
 export default DashboardScreen;
+
+
+
+

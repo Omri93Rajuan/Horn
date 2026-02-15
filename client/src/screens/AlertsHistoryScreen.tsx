@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { alertService } from "../services/alertService";
 import { dashboardService } from "../services/dashboardService";
 import { useAppSelector } from "../store/hooks";
-import { formatDate, formatAreaName } from "../utils/dateUtils";
+import { formatDate, formatAreaName, formatStatus } from "../utils/dateUtils";
 
-const ACTION_LABEL = "ירוק בעיניים לאירוע";
+const ACTION_LABEL = "×™×¨×•×§ ×‘×¢×™× ×™×™× ×œ××™×¨×•×¢";
 
 const AlertsHistoryScreen: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
@@ -116,10 +116,10 @@ const AlertsHistoryScreen: React.FC = () => {
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-text dark:text-text-dark mb-2">
-            גישה מוגבלת
+            ×’×™×©×” ×ž×•×’×‘×œ×ª
           </h2>
           <p className="text-text-muted dark:text-text-dark-muted">
-            מסך זה זמין למפקדים בלבד
+            ×ž×¡×š ×–×” ×–×ž×™×Ÿ ×œ×ž×¤×§×“×™× ×‘×œ×‘×“
           </p>
         </div>
       </section>
@@ -132,10 +132,10 @@ const AlertsHistoryScreen: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-semibold text-text dark:text-text-dark">
-            היסטוריית התראות
+            ×”×™×¡×˜×•×¨×™×™×ª ×”×ª×¨××•×ª
           </h2>
           <p className="text-sm text-text-muted dark:text-text-dark-muted">
-            כל ההתראות במערכת - חיפוש וניתוח
+            ×›×œ ×”×”×ª×¨××•×ª ×‘×ž×¢×¨×›×ª - ×—×™×¤×•×© ×•× ×™×ª×•×—
           </p>
         </div>
         <button
@@ -144,7 +144,7 @@ const AlertsHistoryScreen: React.FC = () => {
           disabled={eventsQuery.isFetching}
           className="action-btn ghost"
         >
-          רענן
+          ×¨×¢× ×Ÿ
         </button>
       </div>
 
@@ -153,19 +153,19 @@ const AlertsHistoryScreen: React.FC = () => {
         <div className="grid grid-cols-4 gap-4">
           <div className="card text-center">
             <div className="text-3xl font-bold text-primary mb-1">{stats.totalEvents}</div>
-            <div className="text-sm text-text-muted dark:text-text-dark-muted">סה"כ התראות</div>
+            <div className="text-sm text-text-muted dark:text-text-dark-muted">×¡×”"×› ×”×ª×¨××•×ª</div>
           </div>
           <div className="card text-center">
             <div className="text-3xl font-bold text-success mb-1">{stats.last7Days}</div>
-            <div className="text-sm text-text-muted dark:text-text-dark-muted">7 ימים אחרונים</div>
+            <div className="text-sm text-text-muted dark:text-text-dark-muted">7 ×™×ž×™× ××—×¨×•× ×™×</div>
           </div>
           <div className="card text-center">
             <div className="text-3xl font-bold text-warning mb-1">{stats.totalAreas}</div>
-            <div className="text-sm text-text-muted dark:text-text-dark-muted">גזרות</div>
+            <div className="text-sm text-text-muted dark:text-text-dark-muted">×’×–×¨×•×ª</div>
           </div>
           <div className="card text-center">
             <div className="text-3xl font-bold text-info mb-1">{stats.last30Days}</div>
-            <div className="text-sm text-text-muted dark:text-text-dark-muted">30 ימים אחרונים</div>
+            <div className="text-sm text-text-muted dark:text-text-dark-muted">30 ×™×ž×™× ××—×¨×•× ×™×</div>
           </div>
         </div>
       )}
@@ -181,7 +181,7 @@ const AlertsHistoryScreen: React.FC = () => {
               onChange={(e) => setSearchArea(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-border dark:border-border-dark bg-surface-2 dark:bg-surface-2-dark text-sm"
             >
-              <option value="">כל הגזרות</option>
+              <option value="">×›×œ ×”×’×–×¨×•×ª</option>
               {(user?.commanderAreas || []).map(area => (
                 <option key={area} value={area}>{formatAreaName(area)}</option>
               ))}
@@ -192,7 +192,7 @@ const AlertsHistoryScreen: React.FC = () => {
               value={searchDate}
               onChange={(e) => setSearchDate(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-border dark:border-border-dark bg-surface-2 dark:bg-surface-2-dark text-sm"
-              placeholder="תאריך"
+              placeholder="×ª××¨×™×š"
             />
             
             {(searchArea || searchDate) && (
@@ -203,26 +203,26 @@ const AlertsHistoryScreen: React.FC = () => {
                 }}
                 className="w-full px-3 py-2 rounded-lg bg-surface-2 dark:bg-surface-2-dark hover:bg-surface-3 dark:hover:bg-surface-3-dark text-sm"
               >
-                נקה סינון
+                × ×§×” ×¡×™× ×•×Ÿ
               </button>
             )}
             
             <div className="pt-2 text-xs text-text-muted dark:text-text-dark-muted text-center">
-              {filteredEvents.length} אירועים
+              {filteredEvents.length} ××™×¨×•×¢×™×
             </div>
           </div>
 
           {/* Events List */}
           <div className="card max-h-[600px] overflow-y-auto space-y-2">
             {eventsQuery.isLoading ? (
-              <p className="text-center text-text-muted dark:text-text-dark-muted p-8">טוען...</p>
+              <p className="text-center text-text-muted dark:text-text-dark-muted p-8">×˜×•×¢×Ÿ...</p>
             ) : filteredEvents.length === 0 ? (
               <div className="text-center p-8">
                 <svg className="w-16 h-16 mx-auto mb-2 text-text-muted dark:text-text-dark-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <p className="text-text-muted dark:text-text-dark-muted">
-                  {searchArea || searchDate ? "לא נמצאו תוצאות" : "אין התראות"}
+                  {searchArea || searchDate ? "×œ× × ×ž×¦××• ×ª×•×¦××•×ª" : "××™×Ÿ ×”×ª×¨××•×ª"}
                 </p>
               </div>
             ) : (
@@ -245,7 +245,7 @@ const AlertsHistoryScreen: React.FC = () => {
                       </span>
                       {event.completedAt && (
                         <span className="px-2 py-0.5 text-xs rounded-full bg-success/20 text-success font-semibold">
-                          נסגר
+                          × ×¡×’×¨
                         </span>
                       )}
                     </div>
@@ -258,7 +258,7 @@ const AlertsHistoryScreen: React.FC = () => {
                   </p>
                   {event.completionReason && (
                     <p className="text-xs text-success mt-1 truncate">
-                      📝 {event.completionReason}
+                      ðŸ“ {event.completionReason}
                     </p>
                   )}
                 </div>
@@ -277,15 +277,15 @@ const AlertsHistoryScreen: React.FC = () => {
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-text dark:text-text-dark mb-2">
-                בחר אירוע
+                ×‘×—×¨ ××™×¨×•×¢
               </h3>
               <p className="text-sm text-text-muted dark:text-text-dark-muted">
-                בחר אירוע מהרשימה כדי לראות פרטים
+                ×‘×—×¨ ××™×¨×•×¢ ×ž×”×¨×©×™×ž×” ×›×“×™ ×œ×¨××•×ª ×¤×¨×˜×™×
               </p>
             </div>
           ) : statusQuery.isLoading ? (
             <div className="text-center p-12">
-              <p className="text-text-muted dark:text-text-dark-muted">טוען פרטים...</p>
+              <p className="text-text-muted dark:text-text-dark-muted">×˜×•×¢×Ÿ ×¤×¨×˜×™×...</p>
             </div>
           ) : statusQuery.data ? (
             <div className="space-y-6">
@@ -297,7 +297,7 @@ const AlertsHistoryScreen: React.FC = () => {
                   </h3>
                   {selectedEvent?.completedAt && (
                     <span className="px-3 py-1 rounded-full bg-success/20 text-success font-semibold text-sm">
-                      ✓ נסגר
+                      âœ“ × ×¡×’×¨
                     </span>
                   )}
                 </div>
@@ -307,11 +307,11 @@ const AlertsHistoryScreen: React.FC = () => {
                 {selectedEvent?.completedAt && (
                   <div className="mt-3 p-3 rounded-lg bg-success/10 border border-success/20">
                     <p className="text-sm text-success font-semibold mb-1">
-                      נסגר בתאריך: {formatDate(selectedEvent.completedAt)}
+                      × ×¡×’×¨ ×‘×ª××¨×™×š: {formatDate(selectedEvent.completedAt)}
                     </p>
                     {selectedEvent.completionReason && (
                       <p className="text-sm text-text-muted dark:text-text-dark-muted">
-                        סיבה: {selectedEvent.completionReason}
+                        ×¡×™×‘×”: {selectedEvent.completionReason}
                       </p>
                     )}
                   </div>
@@ -322,15 +322,15 @@ const AlertsHistoryScreen: React.FC = () => {
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center p-4 rounded-lg bg-success/10">
                   <div className="text-2xl font-bold text-success">{statusQuery.data?.counts?.ok ?? 0}</div>
-                  <div className="text-xs text-text-muted dark:text-text-dark-muted">בסדר</div>
+                  <div className="text-xs text-text-muted dark:text-text-dark-muted">×‘×¡×“×¨</div>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-danger/10">
                   <div className="text-2xl font-bold text-danger">{statusQuery.data?.counts?.help ?? 0}</div>
-                  <div className="text-xs text-text-muted dark:text-text-dark-muted">עזרה</div>
+                  <div className="text-xs text-text-muted dark:text-text-dark-muted">×¢×–×¨×”</div>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-warning/10">
                   <div className="text-2xl font-bold text-warning">{statusQuery.data?.counts?.pending ?? 0}</div>
-                  <div className="text-xs text-text-muted dark:text-text-dark-muted">ממתינים</div>
+                  <div className="text-xs text-text-muted dark:text-text-dark-muted">×ž×ž×ª×™× ×™×</div>
                 </div>
               </div>
 
@@ -346,7 +346,7 @@ const AlertsHistoryScreen: React.FC = () => {
                         : "bg-surface-2 dark:bg-surface-2-dark hover:bg-primary/10"
                     }`}
                   >
-                    {f === "ALL" ? "הכל" : f === "OK" ? "בסדר" : f === "HELP" ? "עזרה" : "ממתינים"}
+                    {formatStatus(f)}
                   </button>
                 ))}
               </div>
@@ -395,11 +395,7 @@ const AlertsHistoryScreen: React.FC = () => {
                           : "bg-warning/20 text-warning"
                       }`}
                     >
-                      {item.responseStatus === "OK"
-                        ? "בסדר"
-                        : item.responseStatus === "HELP"
-                        ? "דורש עזרה"
-                        : "ממתין לתגובה"}
+                      {formatStatus(item.responseStatus)}
                     </div>
                   </div>
                 ))}
@@ -413,3 +409,4 @@ const AlertsHistoryScreen: React.FC = () => {
 };
 
 export default AlertsHistoryScreen;
+

@@ -23,7 +23,11 @@ export function validate(schema: SchemaShape) {
       return next();
     } catch (err) {
       if (err instanceof ZodError) {
-        return handleError(res, 400, "Validation error", { issues: err.errors });
+        const issues = err.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        }));
+        return handleError(res, 400, "Validation error", { issues });
       }
       return handleError(res, 400, "Validation error");
     }

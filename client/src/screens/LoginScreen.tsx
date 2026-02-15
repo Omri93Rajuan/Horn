@@ -4,14 +4,17 @@ import { useMutation } from "@tanstack/react-query";
 import { authService } from "../services/authService";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setCredentials, setLoading } from "../store/authSlice";
-import { validateEmail, validatePassword } from "../utils/validators";
+import { normalizeEmail, validateEmail, validatePassword } from "../utils/validators";
 import { reconnectSocket } from "../hooks/useSocket";
+import { toastError, toastWarning } from "../utils/toast";
+import { useI18n } from "../i18n";
 
 const LoginScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const auth = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
   const search = useSearch({ from: "/login" });
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -20,13 +23,12 @@ const LoginScreen: React.FC = () => {
     onMutate: () => dispatch(setLoading(true)),
     onSuccess: (data) => {
       dispatch(setCredentials(data));
-      // Reconnect socket with new token
       reconnectSocket();
       const redirectTo = data.user.role === 'COMMANDER' ? '/commander' : '/soldier';
       navigate({ to: search.redirect ?? redirectTo });
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || "אירעה שגיאה בהתחברות");
+      toastError(error.response?.data?.message || t("error.login"));
     },
     onSettled: () => dispatch(setLoading(false)),
   });
@@ -35,23 +37,32 @@ const LoginScreen: React.FC = () => {
     event.preventDefault();
 
     if (!email || !password) {
-      alert("נא למלא את כל השדות");
+      toastError(t("error.required_fields"));
       return;
     }
 
-    if (!validateEmail(email)) {
-      alert("נא להזין אימייל תקין");
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      toastError(emailValidation.message ?? t("error.invalid_email"));
       return;
     }
 
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
-      alert(passwordValidation.message);
+      toastError(passwordValidation.message ?? t("error.invalid_password"));
       return;
     }
 
-    loginMutation.mutate({ email, password });
+    loginMutation.mutate({ email: normalizeEmail(email), password });
   };
+
+  React.useEffect(() => {
+    const expired = sessionStorage.getItem("horn_auth_expired");
+    if (expired === "1") {
+      sessionStorage.removeItem("horn_auth_expired");
+      toastWarning(t("auth.expired"));
+    }
+  }, []);
 
   React.useEffect(() => {
     if (auth.token) {
@@ -65,15 +76,17 @@ const LoginScreen: React.FC = () => {
       <div className="w-full max-w-lg rounded-[36px] border border-border dark:border-border-dark bg-surface-1/98 dark:bg-surface-1-dark/98 p-10 shadow-2xl">
         <div className="space-y-6">
           <div className="space-y-3 text-right">
-            <h1 className="font-display text-3xl text-text dark:text-text-dark">כניסה למערכת</h1>
+            <h1 className="font-display text-3xl text-text dark:text-text-dark">{t("auth.login.title")}</h1>
             <p className="text-base text-text-muted dark:text-text-dark-muted">
-              התחבר כדי להמשיך למרכז השליטה.
+              {t("auth.login.subtitle")}
             </p>
           </div>
           <form className="grid gap-4" onSubmit={handleSubmit}>
             <label className="space-y-2 text-sm text-text-muted dark:text-text-dark-muted">
-              אימייל
+              {t("auth.login.email")}
               <input
+                id="login-email"
+                name="email"
                 className="input"
                 type="email"
                 value={email}
@@ -83,8 +96,10 @@ const LoginScreen: React.FC = () => {
               />
             </label>
             <label className="space-y-2 text-sm text-text-muted dark:text-text-dark-muted">
-              סיסמה
+              {t("auth.login.password")}
               <input
+                id="login-password"
+                name="password"
                 className="input"
                 type="password"
                 value={password}
@@ -94,14 +109,14 @@ const LoginScreen: React.FC = () => {
               />
             </label>
             <button className="action-btn primary h-12" type="submit" disabled={loginMutation.isPending}>
-              {loginMutation.isPending ? "מתחבר..." : "כניסה"}
+              {loginMutation.isPending ? t("auth.login.submitting") : t("auth.login.submit")}
             </button>
           </form>
           <div className="divider-line" />
           <p className="text-sm text-text-muted dark:text-text-dark-muted">
-            אין לך חשבון?{" "}
+            {t("auth.login.no_account")}{" "}
             <Link className="text-primary hover:text-primary-hover" to="/register">
-              הירשם עכשיו
+              {t("auth.login.register_now")}
             </Link>
           </p>
         </div>

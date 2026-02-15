@@ -1,9 +1,11 @@
-import React, { useCallback, useState, useRef } from 'react';
+﻿import React, { useCallback, useState, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMutation } from '@tanstack/react-query';
 import { useCommanderSocket, useSoldierSocket } from '../hooks/useSocket';
 import { useAppSelector } from '../store/hooks';
 import { responseService } from '../services/responseService';
+import { toastError } from '../utils/toast';
+import { formatAreaName } from '../utils/dateUtils';
 
 // Debounce mechanism for preventing excessive refetches
 const DEBOUNCE_MS = 1000; // Wait 1 second after last update before refetching
@@ -70,7 +72,7 @@ const GlobalSocketManager: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['my-responses'] });
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || 'שגיאה בשליחת התגובה');
+      toastError(error.response?.data?.message || 'שגיאה בשליחת התגובה');
     },
   });
 
@@ -207,7 +209,7 @@ const GlobalSocketManager: React.FC = () => {
             </div>
             <div>
               <h3 className="text-xl font-bold text-white">ירוק בעיניים</h3>
-              <p className="text-sm text-white/90">אירוע חדש באזור {newAlertNotification.areaId}</p>
+              <p className="text-sm text-white/90">אירוע חדש באזור {formatAreaName(newAlertNotification.areaId)}</p>
             </div>
           </div>
           <button
@@ -272,3 +274,7 @@ const GlobalSocketManager: React.FC = () => {
 };
 
 export default GlobalSocketManager;
+
+
+
+

@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { alertService } from "../services/alertService";
 import { dashboardService } from "../services/dashboardService";
 import { useAppSelector } from "../store/hooks";
-import { formatDate, formatEventLabel } from "../utils/dateUtils";
+import { formatAreaName, formatDate, formatEventLabel, formatStatus } from "../utils/dateUtils";
 
 const ACTION_LABEL = "ירוק בעיניים לאירוע";
 
@@ -330,7 +330,7 @@ const AlertsFullScreen: React.FC = () => {
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-semibold text-text dark:text-text-dark">
-                      גזרה {event.areaId}
+                      {formatAreaName(event.areaId)}
                     </span>
                     <span className="text-xs text-text-muted dark:text-text-dark-muted">
                       {formatDate(event.triggeredAt)}
@@ -370,7 +370,7 @@ const AlertsFullScreen: React.FC = () => {
               {/* Event Header */}
               <div className="pb-4 border-b border-border dark:border-border-dark">
                 <h3 className="text-xl font-bold text-text dark:text-text-dark mb-2">
-                  גזרה {selectedEvent?.areaId}
+                  {formatAreaName(selectedEvent?.areaId || "")}
                 </h3>
                 <p className="text-sm text-text-muted dark:text-text-dark-muted">
                   {selectedEvent && formatEventLabel(selectedEvent.triggeredAt, ACTION_LABEL)}
@@ -381,15 +381,15 @@ const AlertsFullScreen: React.FC = () => {
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center p-4 rounded-lg bg-success/10">
                   <div className="text-2xl font-bold text-success">{statusQuery.data?.counts?.ok ?? 0}</div>
-                  <div className="text-xs text-text-muted dark:text-text-dark-muted">OK</div>
+                  <div className="text-xs text-text-muted dark:text-text-dark-muted">{formatStatus("OK")}</div>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-danger/10">
                   <div className="text-2xl font-bold text-danger">{statusQuery.data?.counts?.help ?? 0}</div>
-                  <div className="text-xs text-text-muted dark:text-text-dark-muted">עזרה</div>
+                  <div className="text-xs text-text-muted dark:text-text-dark-muted">{formatStatus("HELP")}</div>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-warning/10">
                   <div className="text-2xl font-bold text-warning">{statusQuery.data?.counts?.pending ?? 0}</div>
-                  <div className="text-xs text-text-muted dark:text-text-dark-muted">ממתינים</div>
+                  <div className="text-xs text-text-muted dark:text-text-dark-muted">{formatStatus("PENDING")}</div>
                 </div>
               </div>
 
@@ -405,7 +405,7 @@ const AlertsFullScreen: React.FC = () => {
                         : "bg-surface-2 dark:bg-surface-2-dark hover:bg-primary/10"
                     }`}
                   >
-                    {f === "ALL" ? "הכל" : f === "OK" ? "בסדר" : f === "HELP" ? "עזרה" : "ממתינים"}
+                    {formatStatus(f)}
                   </button>
                 ))}
               </div>
@@ -454,11 +454,7 @@ const AlertsFullScreen: React.FC = () => {
                           : "bg-warning/20 text-warning"
                       }`}
                     >
-                      {item.responseStatus === "OK"
-                        ? "בסדר"
-                        : item.responseStatus === "HELP"
-                        ? "דורש עזרה"
-                        : "ממתין לתגובה"}
+                      {formatStatus(item.responseStatus)}
                     </div>
                   </div>
                 ))}
@@ -472,3 +468,5 @@ const AlertsFullScreen: React.FC = () => {
 };
 
 export default AlertsFullScreen;
+
+

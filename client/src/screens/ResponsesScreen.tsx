@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { responseService } from "../services/responseService";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setMyResponses } from "../store/dataSlice";
-import { formatDate } from "../utils/dateUtils";
+import { formatDate, formatStatus } from "../utils/dateUtils";
 
 const ResponsesScreen: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -65,7 +65,7 @@ const ResponsesScreen: React.FC = () => {
               }`}
               onClick={() => setFilter(status)}
             >
-              {status}
+              {formatStatus(status)}
             </button>
           ))}
         </div>
@@ -99,7 +99,7 @@ const ResponsesScreen: React.FC = () => {
                     <p className="text-xs text-text-muted dark:text-text-dark-muted">{response.notes}</p>
                   ) : null}
                 </div>
-                <span className="badge text-primary">{response.status}</span>
+                <span className="badge text-primary">{formatStatus(response.status)}</span>
               </div>
             ))}
           </div>

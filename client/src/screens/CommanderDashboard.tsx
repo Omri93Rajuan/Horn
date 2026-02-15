@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { dashboardService } from "../services/dashboardService";
 import { alertService } from "../services/alertService";
 import { useAppSelector } from "../store/hooks";
@@ -13,8 +13,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  ScatterChart,
-  Scatter,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -47,9 +45,19 @@ const COLORS = {
   }
 };
 
+const CHART_COLORS = [
+  COLORS.primary,
+  COLORS.success,
+  COLORS.warning,
+  COLORS.danger,
+  COLORS.info,
+  COLORS.purple,
+  COLORS.pink,
+  COLORS.teal,
+];
+
 const CommanderDashboard: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
-  const queryClient = useQueryClient();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"ALL" | "OK" | "HELP" | "PENDING">("ALL");
@@ -98,11 +106,11 @@ const CommanderDashboard: React.FC = () => {
   const statusQuery = useQuery({
     queryKey: ["event-status", selectedEventId],
     queryFn: async () => {
-      if (process.env.NODE_ENV !== 'production') {
+      if (import.meta.env.DEV) {
         console.log('🔍 Fetching event status for:', selectedEventId);
       }
       const result = await dashboardService.getEventStatus(selectedEventId!);
-      if (process.env.NODE_ENV !== 'production') {
+      if (import.meta.env.DEV) {
         console.log('🎁 Received event status:', result);
         console.log('📜 List length:', result?.list?.length);
       }
@@ -115,11 +123,11 @@ const CommanderDashboard: React.FC = () => {
   const areaSoldiersQuery = useQuery({
     queryKey: ["area-soldiers", selectedAreaId],
     queryFn: async () => {
-      if (process.env.NODE_ENV !== 'production') {
+      if (import.meta.env.DEV) {
         console.log('👥 Fetching soldiers for area:', selectedAreaId);
       }
       const result = await dashboardService.getAreaSoldiers(selectedAreaId!);
-      if (process.env.NODE_ENV !== 'production') {
+      if (import.meta.env.DEV) {
         console.log('🎁 Received soldiers:', result);
       }
       return result;
@@ -166,7 +174,7 @@ const CommanderDashboard: React.FC = () => {
     // Find first area with events
     const activeWithEvents = activeQuery.data?.areas.find((area) => area.events && area.events.length > 0);
     if (activeWithEvents?.events && activeWithEvents.events.length > 0) {
-      if (process.env.NODE_ENV !== 'production') {
+      if (import.meta.env.DEV) {
         console.log('🎯 Auto-selecting first event:', activeWithEvents.events[0].id);
       }
       setSelectedEventId(activeWithEvents.events[0].id);
@@ -178,7 +186,7 @@ const CommanderDashboard: React.FC = () => {
       return [];
     }
     
-    if (process.env.NODE_ENV !== 'production') {
+    if (import.meta.env.DEV) {
       console.log('📊 Status Query Data:', statusQuery.data);
       console.log('📜 Full list:', statusQuery.data.list);
       console.log('🔢 Counts:', statusQuery.data.counts);
@@ -195,28 +203,11 @@ const CommanderDashboard: React.FC = () => {
   const pending = activeQuery.data?.totals.pending ?? 0;
   const responseRate = totalUsers ? Math.round((responded / totalUsers) * 100) : 0;
   const activeAreas = activeQuery.data?.totals.activeAreas ?? 0;
-  const okCount = (activeQuery.data?.areas ?? []).reduce((sum, area) => sum + (area.okCount ?? 0), 0);
-  const helpCount = (activeQuery.data?.areas ?? []).reduce((sum, area) => sum + (area.helpCount ?? 0), 0);
-
-  const chartPoints = useMemo(() => {
-    const areas = overviewQuery.data?.areas ?? [];
-    if (areas.length === 0) {
-      return "0,40 20,35 40,32 60,30 80,28 100,26";
-    }
-    const values = areas.map((area) => area.last30Days);
-    const max = Math.max(...values, 1);
-    return values
-      .map((value, index) => {
-        const x = (index / Math.max(values.length - 1, 1)) * 100;
-        const y = 40 - (value / max) * 30;
-        return `${x},${y}`;
-      })
-      .join(" ");
-  }, [overviewQuery.data]);
+  const helpCount = activeQuery.data?.totals.help ?? 0;
 
   // Data for charts
   const areaChartData = useMemo(() => {
-    return (overviewQuery.data?.areas ?? []).map((area, idx) => ({
+    return (overviewQuery.data?.areas ?? []).map((area) => ({
       name: formatAreaName(area.areaId),
       אירועים: area.last30Days,
       ממוצע: Math.round((overviewQuery.data?.areas.reduce((sum, a) => sum + a.last30Days, 0) ?? 0) / (overviewQuery.data?.areas.length ?? 1)),
@@ -228,15 +219,6 @@ const CommanderDashboard: React.FC = () => {
       name: formatAreaName(area.areaId),
       value: area.totalUsers,
       responded: area.responded,
-    }));
-  }, [activeQuery.data]);
-
-  const scatterData = useMemo(() => {
-    return (activeQuery.data?.areas ?? []).map((area) => ({
-      x: area.totalUsers,
-      y: area.responded,
-      z: Math.round((area.responded / area.totalUsers) * 100),
-      name: formatAreaName(area.areaId),
     }));
   }, [activeQuery.data]);
 
@@ -258,19 +240,6 @@ const CommanderDashboard: React.FC = () => {
       },
     ];
   }, [responseRate]);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "OK":
-        return "border-2 bg-success bg-opacity-10 border-success border-opacity-30";
-      case "HELP":
-        return "border-2 bg-danger bg-opacity-10 border-danger border-opacity-30";
-      case "PENDING":
-        return "border-2 bg-warning bg-opacity-10 border-warning border-opacity-30";
-      default:
-        return "border-2 bg-surface-2 dark:bg-surface-2-dark border-border dark:border-border-dark";
-    }
-  };
 
   const handleCreateAlert = async () => {
     if (!selectedArea) {
@@ -487,8 +456,8 @@ const CommanderDashboard: React.FC = () => {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {pieChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={Object.values(COLORS)[index % Object.values(COLORS).length]} />
+                  {pieChartData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip
@@ -505,7 +474,7 @@ const CommanderDashboard: React.FC = () => {
                 <div key={idx} className="flex items-center gap-2">
                   <div
                     className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: Object.values(COLORS)[idx % Object.values(COLORS).length] }}
+                    style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }}
                   />
                   <span className="text-text-muted dark:text-text-dark-muted">{item.name}: {item.value}</span>
                 </div>

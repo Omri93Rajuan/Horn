@@ -1,9 +1,7 @@
 import React from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 
 const NotFoundScreen: React.FC = () => {
-  const navigate = useNavigate();
-
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4">
       <div className="w-full max-w-2xl">

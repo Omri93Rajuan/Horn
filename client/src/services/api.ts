@@ -3,9 +3,9 @@ import type { AxiosInstance } from "axios";
 import { store } from "../store";
 import { logout } from "../store/authSlice";
 import { disconnectSocket } from "../hooks/useSocket";
+import { clientEnv } from "../config/env";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ?? "http://localhost:3005/api";
+const API_BASE_URL = clientEnv.apiBaseUrl;
 const AUTH_EXPIRED_FLAG = "horn_auth_expired";
 
 let isHandlingUnauthorized = false;

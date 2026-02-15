@@ -1,14 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import type { AlertEvent, EventStatusItem, MyResponse } from "../types";
+import type { AlertEvent, EventStatusResult, MyResponse } from "../types";
 
 interface DataState {
   events: AlertEvent[];
   currentEvent: AlertEvent | null;
-  eventStatus: {
-    counts: { ok: number; help: number; pending: number };
-    list: EventStatusItem[];
-  } | null;
+  eventStatus: EventStatusResult | null;
   myResponses: MyResponse[];
   isLoading: boolean;
   error: string | null;
@@ -39,10 +36,7 @@ const dataSlice = createSlice({
     },
     setEventStatus: (
       state,
-      action: PayloadAction<{
-        counts: { ok: number; help: number; pending: number };
-        list: EventStatusItem[];
-      }>,
+      action: PayloadAction<EventStatusResult>,
     ) => {
       state.eventStatus = action.payload;
     },

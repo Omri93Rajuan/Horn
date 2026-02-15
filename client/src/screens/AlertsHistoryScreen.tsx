@@ -5,8 +5,6 @@ import { dashboardService } from "../services/dashboardService";
 import { useAppSelector } from "../store/hooks";
 import { formatDate, formatAreaName, formatStatus } from "../utils/dateUtils";
 
-const ACTION_LABEL = "×™×¨×•×§ ×‘×¢×™× ×™×™× ×œ××™×¨×•×¢";
-
 const AlertsHistoryScreen: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
   const isCommander = user?.role === "COMMANDER";

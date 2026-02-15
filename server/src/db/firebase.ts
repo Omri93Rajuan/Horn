@@ -1,4 +1,7 @@
 import admin from "firebase-admin";
+import { loadEnv } from "../config/env";
+
+loadEnv();
 
 function initAdmin() {
   if (admin.apps.length > 0) {

@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { clientEnv } from '../config/env';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3005';
+const SOCKET_URL = clientEnv.socketUrl;
 
 // Singleton socket instance - initialize immediately
 let globalSocket: Socket | null = null;

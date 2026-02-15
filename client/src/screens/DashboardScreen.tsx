@@ -286,7 +286,7 @@ const DashboardScreen: React.FC = () => {
                     {formatEventLabel(event.triggeredAt, ACTION_LABEL)}
                   </p>
                   <p className="mt-1 text-xs text-text-muted dark:text-text-dark-muted">
-                    {formatAreaName(event.areaId)} • ???? ?????: {activeWindowMinutes} ????
+                    {formatAreaName(event.areaId)} ï¿½ ???? ?????: {activeWindowMinutes} ????
                   </p>
                 </div>
                 <div className="flex gap-2">

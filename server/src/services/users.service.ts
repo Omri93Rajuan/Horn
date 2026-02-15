@@ -79,7 +79,6 @@ export async function getTeamMembers(commanderId: string) {
       throw err;
     }
 
-    // Get all users in commander's areas
     const users = await prisma.user.findMany({
       where: {
         areaId: { in: commander.commanderAreas }
@@ -105,14 +104,12 @@ export async function getTeamMembers(commanderId: string) {
       }
     });
 
-    // Calculate statistics for each user
     return users.map(user => {
       const responses = user.responses;
       const totalResponses = responses.length;
       const okResponses = responses.filter(r => r.status === 'OK').length;
       const helpResponses = responses.filter(r => r.status === 'HELP').length;
       
-      // Calculate average response time
       let totalResponseTime = 0;
       let validResponses = 0;
       responses.forEach(r => {
@@ -125,7 +122,7 @@ export async function getTeamMembers(commanderId: string) {
         }
       });
       
-      const avgResponseTime = validResponses > 0 ? totalResponseTime / validResponses / 1000 : 0; // in seconds
+      const avgResponseTime = validResponses > 0 ? totalResponseTime / validResponses / 1000 : 0;
       const lastResponseDate = responses.length > 0 
         ? responses.sort((a, b) => 
             new Date(b.respondedAt!).getTime() - new Date(a.respondedAt!).getTime()

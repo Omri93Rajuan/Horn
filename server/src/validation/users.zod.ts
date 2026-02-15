@@ -1,9 +1,16 @@
 import { z } from "zod";
+import {
+  deviceTokenSchema,
+  normalizedAreaSchema,
+  normalizedNameSchema,
+} from "./common.zod";
 
 export const registerDeviceSchema = {
-  body: z.object({
-    areaId: z.string().min(1),
-    deviceToken: z.string().min(1),
-    name: z.string().min(1).optional(),
-  }),
+  body: z
+    .object({
+      areaId: normalizedAreaSchema,
+      deviceToken: deviceTokenSchema,
+      name: normalizedNameSchema.optional(),
+    })
+    .strict(),
 };

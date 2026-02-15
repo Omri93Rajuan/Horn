@@ -1,14 +1,23 @@
 import { z } from "zod";
+import {
+  eventIdSchema,
+  normalizedAreaSchema,
+  optionalSafeTextSchema,
+} from "./common.zod";
 
 export const triggerAlertSchema = {
-  body: z.object({
-    areaId: z.string().min(1),
-  }),
+  body: z
+    .object({
+      areaId: normalizedAreaSchema,
+    })
+    .strict(),
 };
 
 export const closeAlertSchema = {
-  body: z.object({
-    eventId: z.string().min(1),
-    reason: z.string().optional(),
-  }),
+  body: z
+    .object({
+      eventId: eventIdSchema,
+      reason: optionalSafeTextSchema(280),
+    })
+    .strict(),
 };

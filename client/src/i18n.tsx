@@ -67,7 +67,7 @@ const he: Dict = {
   "error.login": "אירעה שגיאה בהתחברות",
   "error.register": "אירעה שגיאה בהרשמה",
   "error.required_fields": "נא למלא את כל השדות",
-  "error.required_fields_register": "נא למלא את כל השדות החובה",
+  "error.required_fields_register": "נא למלא את כל שדות החובה",
   "error.invalid_email": "נא להזין אימייל תקין",
   "error.invalid_name": "נא להזין שם מלא",
   "error.invalid_password": "הסיסמה אינה תקינה",
@@ -144,51 +144,6 @@ const en: Dict = {
 
 const resources: Record<Locale, Dict> = { he, en };
 
-const sourceEn: Dict = {
-  "הורן - מרכז שליטה": "Horn - Control Center",
-  "מרכז פיקוד": "Command Center",
-  "היסטוריית התראות": "Alerts History",
-  "הצוות": "Team",
-  "הדשבורד שלי": "My Dashboard",
-  "התגובות שלי": "My Responses",
-  "פרופיל": "Profile",
-  "מצב בהיר": "Light mode",
-  "מצב כהה": "Dark mode",
-  "כניסה למערכת": "Sign In",
-  "התחבר כדי להמשיך למרכז השליטה.": "Sign in to continue to the control center.",
-  "יצירת חשבון חדש": "Create New Account",
-  "מלא את הפרטים ונחבר אותך מיד למרכז השליטה.": "Fill details to connect immediately.",
-  "אימייל": "Email",
-  "סיסמה": "Password",
-  "שם מלא": "Full name",
-  "טלפון (אופציונלי)": "Phone (optional)",
-  "אזור שירות": "Service area",
-  "בחר אזור": "Select area",
-  "כניסה": "Sign In",
-  "מתחבר...": "Signing in...",
-  "הירשם": "Register",
-  "יוצר חשבון...": "Creating account...",
-  "כבר יש לך חשבון?": "Already have an account?",
-  "התחבר": "Login",
-  "אין לך חשבון?": "Don't have an account?",
-  "הירשם עכשיו": "Register now",
-  "התראות": "Notifications",
-  "פעולות": "Actions",
-  "התנתק": "Logout",
-  "מתנתק...": "Logging out...",
-  "פרטי משתמש": "User Details",
-  "שם": "Name",
-  "טלפון": "Phone",
-  "אזור": "Area",
-  "לא זמין": "Not available",
-  "לא הוגדר": "Not set",
-  "שלח התראת בדיקה": "Send test notification",
-  "תקין": "OK",
-  "סיוע": "Help",
-  "ממתין": "Pending",
-  "הכול": "All",
-};
-
 function getStoredLocale(): Locale {
   const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
   return stored === "en" ? "en" : "he";
@@ -198,39 +153,8 @@ function rawTranslate(locale: Locale, key: string) {
   return resources[locale][key] ?? resources.he[key] ?? key;
 }
 
-function translateSource(locale: Locale, value: string) {
-  if (locale === "he") return value;
-  return sourceEn[value] ?? value;
-}
-
-function translateNode(node: React.ReactNode, locale: Locale): React.ReactNode {
-  if (typeof node === "string") {
-    return translateSource(locale, node);
-  }
-
-  if (Array.isArray(node)) {
-    return node.map((child) => translateNode(child, locale));
-  }
-
-  if (!React.isValidElement(node)) {
-    return node;
-  }
-
-  const nodeProps = (node.props ?? {}) as Record<string, unknown>;
-  const props: Record<string, unknown> = {};
-  const translatableProps = ["placeholder", "title", "aria-label", "alt"] as const;
-  for (const prop of translatableProps) {
-    const value = nodeProps[prop];
-    if (typeof value === "string") {
-      props[prop] = translateSource(locale, value);
-    }
-  }
-
-  if (nodeProps.children !== undefined) {
-    props.children = translateNode(nodeProps.children as React.ReactNode, locale);
-  }
-
-  return React.cloneElement(node, props);
+function translateNode(node: React.ReactNode): React.ReactNode {
+  return node;
 }
 
 type I18nCtx = {
@@ -269,7 +193,7 @@ export const I18nProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     [locale, setLocale],
   );
 
-  const translatedTree = React.useMemo(() => translateNode(children, locale), [children, locale]);
+  const translatedTree = React.useMemo(() => translateNode(children), [children]);
 
   return <I18nContext.Provider value={value}>{translatedTree}</I18nContext.Provider>;
 };

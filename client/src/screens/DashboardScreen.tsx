@@ -13,7 +13,7 @@ import {
 import { formatEventLabel, formatAreaName, formatStatus, isEventActive } from "../utils/dateUtils";
 import { toastError } from "../utils/toast";
 
-const ACTION_LABEL = "???? ??????? ??????";
+const ACTION_LABEL = "Send new alert";
 
 const DashboardScreen: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -66,7 +66,7 @@ const DashboardScreen: React.FC = () => {
       setShowConfirm(false);
     },
     onError: (error: any) => {
-      toastError(error.response?.data?.message || "????? ????? ?????? ??????");
+      toastError(error.response?.data?.message || "Failed to trigger alert");
     },
   });
 
@@ -74,18 +74,16 @@ const DashboardScreen: React.FC = () => {
 
   const stats = useMemo(() => {
     const totalEvents = events.length;
-    const activeEvents = events.filter(event => 
-      isEventActive(event.triggeredAt, activeWindowMinutes)
+    const activeEvents = events.filter((event) =>
+      isEventActive(event.triggeredAt, activeWindowMinutes),
     );
     const totalResponses = responses.length;
-    const lastEvent = events[0]?.triggeredAt;
 
     return {
       totalEvents,
       activeEvents: activeEvents.length,
       activeEventsList: activeEvents,
       totalResponses,
-      lastEvent,
     };
   }, [events, responses, activeWindowMinutes]);
 
@@ -98,7 +96,7 @@ const DashboardScreen: React.FC = () => {
           <div className="mb-6 flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-text-muted dark:text-text-dark-muted">
-                ???? ???? ????
+                Live control status
               </p>
               <h2 className="mt-2 text-3xl font-semibold text-text dark:text-text-dark">
                 {user?.name}
@@ -116,7 +114,7 @@ const DashboardScreen: React.FC = () => {
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0" />
                     </svg>
-                    ????
+                    Commander
                   </span>
                 )}
               </div>
@@ -128,7 +126,7 @@ const DashboardScreen: React.FC = () => {
                 disabled={triggerMutation.isPending || !selectedArea}
                 className="action-btn danger"
               >
-                {triggerMutation.isPending ? "?????..." : ACTION_LABEL}
+                {triggerMutation.isPending ? "Sending..." : ACTION_LABEL}
               </button>
             )}
           </div>
@@ -137,7 +135,7 @@ const DashboardScreen: React.FC = () => {
             <div className="rounded-xl border border-border bg-surface-2/50 p-4 dark:border-border-dark dark:bg-surface-2-dark/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-text-muted dark:text-text-dark-muted">???????</p>
+                  <p className="text-xs font-medium text-text-muted dark:text-text-dark-muted">Total alerts</p>
                   <p className="mt-1 text-2xl font-bold text-text dark:text-text-dark">{stats.totalEvents}</p>
                 </div>
                 <div className="rounded-lg bg-info/10 p-2">
@@ -151,7 +149,7 @@ const DashboardScreen: React.FC = () => {
             <div className="rounded-xl border border-border bg-surface-2/50 p-4 dark:border-border-dark dark:bg-surface-2-dark/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-text-muted dark:text-text-dark-muted">??????</p>
+                  <p className="text-xs font-medium text-text-muted dark:text-text-dark-muted">Active now</p>
                   <p className="mt-1 text-2xl font-bold text-success">{stats.activeEvents}</p>
                 </div>
                 <div className="rounded-lg bg-success/10 p-2">
@@ -165,7 +163,7 @@ const DashboardScreen: React.FC = () => {
             <div className="rounded-xl border border-border bg-surface-2/50 p-4 dark:border-border-dark dark:bg-surface-2-dark/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-text-muted dark:text-text-dark-muted">????????</p>
+                  <p className="text-xs font-medium text-text-muted dark:text-text-dark-muted">My responses</p>
                   <p className="mt-1 text-2xl font-bold text-primary">{stats.totalResponses}</p>
                 </div>
                 <div className="rounded-lg bg-primary/10 p-2">
@@ -191,8 +189,8 @@ const DashboardScreen: React.FC = () => {
               </svg>
             </div>
             <div>
-              <p className="font-semibold text-text dark:text-text-dark">??????</p>
-              <p className="text-xs text-text-muted dark:text-text-dark-muted">????????? ???????</p>
+              <p className="font-semibold text-text dark:text-text-dark">Alerts</p>
+              <p className="text-xs text-text-muted dark:text-text-dark-muted">View active and history</p>
             </div>
           </div>
         </Link>
@@ -208,8 +206,8 @@ const DashboardScreen: React.FC = () => {
               </svg>
             </div>
             <div>
-              <p className="font-semibold text-text dark:text-text-dark">??????</p>
-              <p className="text-xs text-text-muted dark:text-text-dark-muted">???????? ???</p>
+              <p className="font-semibold text-text dark:text-text-dark">Responses</p>
+              <p className="text-xs text-text-muted dark:text-text-dark-muted">Review my updates</p>
             </div>
           </div>
         </Link>
@@ -225,8 +223,8 @@ const DashboardScreen: React.FC = () => {
               </svg>
             </div>
             <div>
-              <p className="font-semibold text-text dark:text-text-dark">??????</p>
-              <p className="text-xs text-text-muted dark:text-text-dark-muted">?????? ??????</p>
+              <p className="font-semibold text-text dark:text-text-dark">Profile</p>
+              <p className="text-xs text-text-muted dark:text-text-dark-muted">Manage account settings</p>
             </div>
           </div>
         </Link>
@@ -243,8 +241,8 @@ const DashboardScreen: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <p className="font-semibold text-text dark:text-text-dark">???? ?????</p>
-                <p className="text-xs text-text-muted dark:text-text-dark-muted">????? ????</p>
+                <p className="font-semibold text-text dark:text-text-dark">Command center</p>
+                <p className="text-xs text-text-muted dark:text-text-dark-muted">Operations overview</p>
               </div>
             </div>
           </Link>
@@ -254,10 +252,10 @@ const DashboardScreen: React.FC = () => {
       {stats.activeEventsList.length > 0 ? (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-text dark:text-text-dark">
-            ??????? ?????? ({stats.activeEventsList.length})
+            Active events ({stats.activeEventsList.length})
           </h3>
           {stats.activeEventsList.map((event) => {
-            const myResponse = responses.find(r => r.eventId === event.id);
+            const myResponse = responses.find((r) => r.eventId === event.id);
             return (
               <div key={event.id} className="card flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-2 border-danger/30 dark:border-danger/30">
                 <div className="flex-1">
@@ -266,19 +264,19 @@ const DashboardScreen: React.FC = () => {
                       <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
                         <circle cx="10" cy="10" r="10" />
                       </svg>
-                      ????? ????
+                      Active alert
                     </span>
                     <span className="text-sm text-text-muted dark:text-text-dark-muted">
-                      {isEventActive(event.triggeredAt, activeWindowMinutes) ? "???? ????" : "???? ????"}
+                      {isEventActive(event.triggeredAt, activeWindowMinutes) ? "Within response window" : "Window ended"}
                     </span>
                     {myResponse && (
                       <span className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold ${
-                        myResponse.status === 'OK' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'
+                        myResponse.status === "OK" ? "bg-success/10 text-success" : "bg-warning/10 text-warning"
                       }`}>
                         <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
-                        ??????: {formatStatus(myResponse.status)}
+                        Responded: {formatStatus(myResponse.status)}
                       </span>
                     )}
                   </div>
@@ -286,7 +284,7 @@ const DashboardScreen: React.FC = () => {
                     {formatEventLabel(event.triggeredAt, ACTION_LABEL)}
                   </p>
                   <p className="mt-1 text-xs text-text-muted dark:text-text-dark-muted">
-                    {formatAreaName(event.areaId)} � ???? ?????: {activeWindowMinutes} ????
+                    {formatAreaName(event.areaId)} • Response window: {activeWindowMinutes} min
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -296,7 +294,7 @@ const DashboardScreen: React.FC = () => {
                       onClick={() => dispatch(setCurrentEvent(event))}
                       className="action-btn success text-sm"
                     >
-                      ???? ?????
+                      Send response
                     </Link>
                   )}
                   <Link
@@ -304,7 +302,7 @@ const DashboardScreen: React.FC = () => {
                     onClick={() => dispatch(setCurrentEvent(event))}
                     className="action-btn ghost text-sm"
                   >
-                    {isCommander ? '??? ??????' : '?????'}
+                    {isCommander ? "View status" : "View"}
                   </Link>
                 </div>
               </div>
@@ -315,31 +313,31 @@ const DashboardScreen: React.FC = () => {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
         <div className="card">
-          <h3 className="text-lg font-semibold text-text dark:text-text-dark">????? ????</h3>
+          <h3 className="text-lg font-semibold text-text dark:text-text-dark">Quick actions</h3>
           <div className="mt-4 grid gap-3 text-sm text-text-muted dark:text-text-dark-muted">
             {isCommander ? (
               <Link className="glass rounded-2xl px-4 py-3 hover:border-primary/40" to="/commander">
-                ?????? ???????
+                Open command center
               </Link>
             ) : null}
             <Link className="glass rounded-2xl px-4 py-3 hover:border-primary/40" to="/alerts">
-              ??????? ?????????
+              Open alerts screen
             </Link>
             <Link className="glass rounded-2xl px-4 py-3 hover:border-primary/40" to="/responses">
-              ??????? ???
+              Open my responses
             </Link>
             <Link className="glass rounded-2xl px-4 py-3 hover:border-primary/40" to="/profile">
-              ?????? ???????
+              Open profile settings
             </Link>
           </div>
         </div>
         <div className="card">
-          <h3 className="text-lg font-semibold text-text dark:text-text-dark">??????? ???????</h3>
+          <h3 className="text-lg font-semibold text-text dark:text-text-dark">Recent alerts</h3>
           <div className="mt-4 space-y-3 text-sm text-text-muted dark:text-text-dark-muted">
             {eventsQuery.isFetching && events.length === 0 ? (
-              <p>???? ???????...</p>
+              <p>Loading alerts...</p>
             ) : events.length === 0 ? (
-              <p>??? ??????? ?????.</p>
+              <p>No alerts found.</p>
             ) : (
               events.slice(0, 6).map((event) => (
                 <button
@@ -364,14 +362,14 @@ const DashboardScreen: React.FC = () => {
           <div className="w-full max-w-xl rounded-[28px] border border-border dark:border-border-dark bg-surface-1/95 dark:bg-surface-1-dark/95 p-6 shadow-2xl">
             <div className="space-y-2">
               <span className="badge text-primary">{ACTION_LABEL}</span>
-              <h3 className="text-2xl font-semibold text-text dark:text-text-dark">????? ???? ?????</h3>
+              <h3 className="text-2xl font-semibold text-text dark:text-text-dark">Trigger new alert</h3>
               <p className="text-sm text-text-muted dark:text-text-dark-muted">
-                ?????? ???? ??? ???????? ????? ??????. ????? ?? ???? ????? ??????.
+                Choose a target area and send a new alert to users in that area.
               </p>
             </div>
             <div className="mt-6 space-y-4">
               <label className="space-y-2 text-sm text-text-muted dark:text-text-dark-muted">
-                ??? ???? ?????
+                Choose target area
                 <select
                   className="input"
                   value={selectedArea}
@@ -391,14 +389,14 @@ const DashboardScreen: React.FC = () => {
                   onClick={() => triggerMutation.mutate(selectedArea)}
                   disabled={!selectedArea || triggerMutation.isPending}
                 >
-                  {triggerMutation.isPending ? "?????..." : "??? ?????"}
+                  {triggerMutation.isPending ? "Sending..." : "Send alert"}
                 </button>
                 <button
                   type="button"
                   className="action-btn ghost"
                   onClick={() => setShowConfirm(false)}
                 >
-                  ?????
+                  Cancel
                 </button>
               </div>
             </div>

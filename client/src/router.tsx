@@ -17,6 +17,7 @@ import TeamScreen from "./screens/TeamScreen";
 import ResponsesScreen from "./screens/ResponsesScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import NotFoundScreen from "./screens/NotFoundScreen";
+import SplitDemoScreen from "./screens/SplitDemoScreen";
 import type { RootState } from "./store";
 import { useAppSelector } from "./store/hooks";
 import logoUrl from "./assets/mainlogo.webp";
@@ -62,6 +63,7 @@ const RootLayout = () => {
                   <Link className="hover:text-primary" to="/commander">{t("nav.command_center")}</Link>
                   <Link className="hover:text-primary" to="/alerts">{t("nav.alerts_history")}</Link>
                   <Link className="hover:text-primary" to="/team">{t("nav.team")}</Link>
+                  <Link className="hover:text-primary" to="/demo-split">Demo Split</Link>
                 </>
               ) : (
                 <>
@@ -212,6 +214,17 @@ const teamRoute = createRoute({
   component: TeamScreen,
 });
 
+const demoSplitRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/demo-split",
+  beforeLoad: ({ context }) => {
+    if (context.auth.user?.role !== "COMMANDER") {
+      throw redirect({ to: "/soldier" });
+    }
+  },
+  component: SplitDemoScreen,
+});
+
 const alertsRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/alerts",
@@ -254,6 +267,7 @@ const routeTree = rootRoute.addChildren([
     soldierRoute,
     commanderRoute,
     teamRoute,
+    demoSplitRoute,
     alertsRoute,
     responsesRoute,
     profileRoute,

@@ -123,9 +123,8 @@ const RootLayout = () => {
 const rootRoute = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
   beforeLoad: ({ context, location }) => {
-    // If accessing root and not logged in, redirect to login
     if (location.pathname === "/" && !context.auth.token) {
-      throw redirect({ to: "/login" });
+      throw redirect({ to: "/login", search: { redirect: undefined } });
     }
   },
 });
@@ -137,7 +136,6 @@ const loginRoute = createRoute({
     redirect: typeof search.redirect === "string" ? search.redirect : undefined,
   }),
   beforeLoad: ({ context }) => {
-    // If already logged in, redirect to appropriate page
     if (context.auth.token) {
       throw redirect({ to: "/alerts" });
     }
@@ -149,7 +147,6 @@ const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/register",
   beforeLoad: ({ context }) => {
-    // If already logged in, redirect to appropriate page
     if (context.auth.token) {
       throw redirect({ to: "/alerts" });
     }
@@ -175,7 +172,6 @@ const indexRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/",
   beforeLoad: ({ context }) => {
-    // Redirect based on role
     if (context.auth.user?.role === "COMMANDER") {
       throw redirect({ to: "/commander" });
     }
@@ -187,7 +183,6 @@ const soldierRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/soldier",
   beforeLoad: ({ context }) => {
-    // Only soldiers can access this route
     if (context.auth.user?.role === "COMMANDER") {
       throw redirect({ to: "/commander" });
     }
@@ -199,7 +194,6 @@ const commanderRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/commander",
   beforeLoad: ({ context }) => {
-    // Only commanders can access this route
     if (context.auth.user?.role !== "COMMANDER") {
       throw redirect({ to: "/soldier" });
     }
@@ -211,7 +205,6 @@ const teamRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/team",
   beforeLoad: ({ context }) => {
-    // Only commanders can access team management
     if (context.auth.user?.role !== "COMMANDER") {
       throw redirect({ to: "/soldier" });
     }
@@ -223,7 +216,6 @@ const alertsRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/alerts",
   beforeLoad: ({ context }) => {
-    // Only commanders can access alerts history
     if (context.auth.user?.role !== "COMMANDER") {
       throw redirect({ to: "/soldier" });
     }
@@ -235,7 +227,6 @@ const responsesRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/responses",
   beforeLoad: ({ context }) => {
-    // Only soldiers can access their responses
     if (context.auth.user?.role === "COMMANDER") {
       throw redirect({ to: "/commander" });
     }

@@ -1,5 +1,5 @@
-﻿import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { alertService } from "../services/alertService";
 import { responseService } from "../services/responseService";
@@ -10,16 +10,14 @@ import {
   setEvents,
   setMyResponses,
 } from "../store/dataSlice";
-import { formatDate, formatEventLabel, formatAreaName, formatStatus, isEventActive } from "../utils/dateUtils";
+import { formatEventLabel, formatAreaName, formatStatus, isEventActive } from "../utils/dateUtils";
 import { toastError } from "../utils/toast";
 
-const ACTION_LABEL = "ירוק בעיניים לאירוע";
+const ACTION_LABEL = "???? ??????? ??????";
 
 const DashboardScreen: React.FC = () => {
   const dispatch = useAppDispatch();
-  const queryClient = useQueryClient();
   const user = useAppSelector((state) => state.auth.user);
-  const currentEvent = useAppSelector((state) => state.data.currentEvent);
   const events = useAppSelector((state) => state.data.events);
   const responses = useAppSelector((state) => state.data.myResponses);
   const isCommander = user?.role === "COMMANDER";
@@ -68,7 +66,7 @@ const DashboardScreen: React.FC = () => {
       setShowConfirm(false);
     },
     onError: (error: any) => {
-      toastError(error.response?.data?.message || "אירעה שגיאה בהקפצת האירוע");
+      toastError(error.response?.data?.message || "????? ????? ?????? ??????");
     },
   });
 
@@ -76,7 +74,6 @@ const DashboardScreen: React.FC = () => {
 
   const stats = useMemo(() => {
     const totalEvents = events.length;
-    // Calculate active events - those within the active window
     const activeEvents = events.filter(event => 
       isEventActive(event.triggeredAt, activeWindowMinutes)
     );
@@ -101,7 +98,7 @@ const DashboardScreen: React.FC = () => {
           <div className="mb-6 flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-text-muted dark:text-text-dark-muted">
-                מרכז בקרה אישי
+                ???? ???? ????
               </p>
               <h2 className="mt-2 text-3xl font-semibold text-text dark:text-text-dark">
                 {user?.name}
@@ -117,9 +114,9 @@ const DashboardScreen: React.FC = () => {
                 {isCommander && (
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0" />
                     </svg>
-                    מפקד
+                    ????
                   </span>
                 )}
               </div>
@@ -131,17 +128,16 @@ const DashboardScreen: React.FC = () => {
                 disabled={triggerMutation.isPending || !selectedArea}
                 className="action-btn danger"
               >
-                {triggerMutation.isPending ? "מפעיל..." : ACTION_LABEL}
+                {triggerMutation.isPending ? "?????..." : ACTION_LABEL}
               </button>
             )}
           </div>
 
-          {/* Quick Stats */}
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-xl border border-border bg-surface-2/50 p-4 dark:border-border-dark dark:bg-surface-2-dark/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-text-muted dark:text-text-dark-muted">אירועים</p>
+                  <p className="text-xs font-medium text-text-muted dark:text-text-dark-muted">???????</p>
                   <p className="mt-1 text-2xl font-bold text-text dark:text-text-dark">{stats.totalEvents}</p>
                 </div>
                 <div className="rounded-lg bg-info/10 p-2">
@@ -155,7 +151,7 @@ const DashboardScreen: React.FC = () => {
             <div className="rounded-xl border border-border bg-surface-2/50 p-4 dark:border-border-dark dark:bg-surface-2-dark/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-text-muted dark:text-text-dark-muted">פעילים</p>
+                  <p className="text-xs font-medium text-text-muted dark:text-text-dark-muted">??????</p>
                   <p className="mt-1 text-2xl font-bold text-success">{stats.activeEvents}</p>
                 </div>
                 <div className="rounded-lg bg-success/10 p-2">
@@ -169,7 +165,7 @@ const DashboardScreen: React.FC = () => {
             <div className="rounded-xl border border-border bg-surface-2/50 p-4 dark:border-border-dark dark:bg-surface-2-dark/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-text-muted dark:text-text-dark-muted">תגובותיי</p>
+                  <p className="text-xs font-medium text-text-muted dark:text-text-dark-muted">????????</p>
                   <p className="mt-1 text-2xl font-bold text-primary">{stats.totalResponses}</p>
                 </div>
                 <div className="rounded-lg bg-primary/10 p-2">
@@ -183,7 +179,6 @@ const DashboardScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link
           to="/alerts"
@@ -196,8 +191,8 @@ const DashboardScreen: React.FC = () => {
               </svg>
             </div>
             <div>
-              <p className="font-semibold text-text dark:text-text-dark">התראות</p>
-              <p className="text-xs text-text-muted dark:text-text-dark-muted">היסטוריית אירועים</p>
+              <p className="font-semibold text-text dark:text-text-dark">??????</p>
+              <p className="text-xs text-text-muted dark:text-text-dark-muted">????????? ???????</p>
             </div>
           </div>
         </Link>
@@ -213,8 +208,8 @@ const DashboardScreen: React.FC = () => {
               </svg>
             </div>
             <div>
-              <p className="font-semibold text-text dark:text-text-dark">תגובות</p>
-              <p className="text-xs text-text-muted dark:text-text-dark-muted">הדיווחים שלי</p>
+              <p className="font-semibold text-text dark:text-text-dark">??????</p>
+              <p className="text-xs text-text-muted dark:text-text-dark-muted">???????? ???</p>
             </div>
           </div>
         </Link>
@@ -230,8 +225,8 @@ const DashboardScreen: React.FC = () => {
               </svg>
             </div>
             <div>
-              <p className="font-semibold text-text dark:text-text-dark">פרופיל</p>
-              <p className="text-xs text-text-muted dark:text-text-dark-muted">הגדרות אישיות</p>
+              <p className="font-semibold text-text dark:text-text-dark">??????</p>
+              <p className="text-xs text-text-muted dark:text-text-dark-muted">?????? ??????</p>
             </div>
           </div>
         </Link>
@@ -248,8 +243,8 @@ const DashboardScreen: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <p className="font-semibold text-text dark:text-text-dark">מרכז פיקוד</p>
-                <p className="text-xs text-text-muted dark:text-text-dark-muted">תצוגת מפקד</p>
+                <p className="font-semibold text-text dark:text-text-dark">???? ?????</p>
+                <p className="text-xs text-text-muted dark:text-text-dark-muted">????? ????</p>
               </div>
             </div>
           </Link>
@@ -259,7 +254,7 @@ const DashboardScreen: React.FC = () => {
       {stats.activeEventsList.length > 0 ? (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-text dark:text-text-dark">
-            אירועים פעילים ({stats.activeEventsList.length})
+            ??????? ?????? ({stats.activeEventsList.length})
           </h3>
           {stats.activeEventsList.map((event) => {
             const myResponse = responses.find(r => r.eventId === event.id);
@@ -271,10 +266,10 @@ const DashboardScreen: React.FC = () => {
                       <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
                         <circle cx="10" cy="10" r="10" />
                       </svg>
-                      אירוע פעיל
+                      ????? ????
                     </span>
                     <span className="text-sm text-text-muted dark:text-text-dark-muted">
-                      {isEventActive(event.triggeredAt, activeWindowMinutes) ? "חלון פתוח" : "חלון נסגר"}
+                      {isEventActive(event.triggeredAt, activeWindowMinutes) ? "???? ????" : "???? ????"}
                     </span>
                     {myResponse && (
                       <span className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold ${
@@ -283,7 +278,7 @@ const DashboardScreen: React.FC = () => {
                         <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
-                        דיווחת: {formatStatus(myResponse.status)}
+                        ??????: {formatStatus(myResponse.status)}
                       </span>
                     )}
                   </div>
@@ -291,7 +286,7 @@ const DashboardScreen: React.FC = () => {
                     {formatEventLabel(event.triggeredAt, ACTION_LABEL)}
                   </p>
                   <p className="mt-1 text-xs text-text-muted dark:text-text-dark-muted">
-                    {formatAreaName(event.areaId)} • חלון אישור: {activeWindowMinutes} דקות
+                    {formatAreaName(event.areaId)} � ???? ?????: {activeWindowMinutes} ????
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -301,7 +296,7 @@ const DashboardScreen: React.FC = () => {
                       onClick={() => dispatch(setCurrentEvent(event))}
                       className="action-btn success text-sm"
                     >
-                      דווח עכשיו
+                      ???? ?????
                     </Link>
                   )}
                   <Link
@@ -309,7 +304,7 @@ const DashboardScreen: React.FC = () => {
                     onClick={() => dispatch(setCurrentEvent(event))}
                     className="action-btn ghost text-sm"
                   >
-                    {isCommander ? 'צפה בסטטוס' : 'פרטים'}
+                    {isCommander ? '??? ??????' : '?????'}
                   </Link>
                 </div>
               </div>
@@ -320,31 +315,31 @@ const DashboardScreen: React.FC = () => {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
         <div className="card">
-          <h3 className="text-lg font-semibold text-text dark:text-text-dark">ניווט מהיר</h3>
+          <h3 className="text-lg font-semibold text-text dark:text-text-dark">????? ????</h3>
           <div className="mt-4 grid gap-3 text-sm text-text-muted dark:text-text-dark-muted">
             {isCommander ? (
               <Link className="glass rounded-2xl px-4 py-3 hover:border-primary/40" to="/commander">
-                דשבורד קומנדור
+                ?????? ???????
               </Link>
             ) : null}
             <Link className="glass rounded-2xl px-4 py-3 hover:border-primary/40" to="/alerts">
-              אירועים והיסטוריה
+              ??????? ?????????
             </Link>
             <Link className="glass rounded-2xl px-4 py-3 hover:border-primary/40" to="/responses">
-              התגובות שלי
+              ??????? ???
             </Link>
             <Link className="glass rounded-2xl px-4 py-3 hover:border-primary/40" to="/profile">
-              פרופיל והגדרות
+              ?????? ???????
             </Link>
           </div>
         </div>
         <div className="card">
-          <h3 className="text-lg font-semibold text-text dark:text-text-dark">אירועים אחרונים</h3>
+          <h3 className="text-lg font-semibold text-text dark:text-text-dark">??????? ???????</h3>
           <div className="mt-4 space-y-3 text-sm text-text-muted dark:text-text-dark-muted">
             {eventsQuery.isFetching && events.length === 0 ? (
-              <p>טוען אירועים...</p>
+              <p>???? ???????...</p>
             ) : events.length === 0 ? (
-              <p>אין אירועים להצגה.</p>
+              <p>??? ??????? ?????.</p>
             ) : (
               events.slice(0, 6).map((event) => (
                 <button
@@ -369,14 +364,14 @@ const DashboardScreen: React.FC = () => {
           <div className="w-full max-w-xl rounded-[28px] border border-border dark:border-border-dark bg-surface-1/95 dark:bg-surface-1-dark/95 p-6 shadow-2xl">
             <div className="space-y-2">
               <span className="badge text-primary">{ACTION_LABEL}</span>
-              <h3 className="text-2xl font-semibold text-text dark:text-text-dark">אישור הפצת אירוע</h3>
+              <h3 className="text-2xl font-semibold text-text dark:text-text-dark">????? ???? ?????</h3>
               <p className="text-sm text-text-muted dark:text-text-dark-muted">
-                האירוע יופץ לכל המשתמשים בגזרה הנבחרת. פעולה זו אינה ניתנת לביטול.
+                ?????? ???? ??? ???????? ????? ??????. ????? ?? ???? ????? ??????.
               </p>
             </div>
             <div className="mt-6 space-y-4">
               <label className="space-y-2 text-sm text-text-muted dark:text-text-dark-muted">
-                בחר גזרה להפצה
+                ??? ???? ?????
                 <select
                   className="input"
                   value={selectedArea}
@@ -396,14 +391,14 @@ const DashboardScreen: React.FC = () => {
                   onClick={() => triggerMutation.mutate(selectedArea)}
                   disabled={!selectedArea || triggerMutation.isPending}
                 >
-                  {triggerMutation.isPending ? "מפעיל..." : "אשר והפעל"}
+                  {triggerMutation.isPending ? "?????..." : "??? ?????"}
                 </button>
                 <button
                   type="button"
                   className="action-btn ghost"
                   onClick={() => setShowConfirm(false)}
                 >
-                  ביטול
+                  ?????
                 </button>
               </div>
             </div>
@@ -415,7 +410,3 @@ const DashboardScreen: React.FC = () => {
 };
 
 export default DashboardScreen;
-
-
-
-

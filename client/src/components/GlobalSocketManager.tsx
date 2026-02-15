@@ -17,7 +17,7 @@ const GlobalSocketManager: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   // Debounce timer for refetches - allows all rapid updates to queue up
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingInvalidationsRef = useRef<Set<string>>(new Set());
   
   const [newAlertNotification, setNewAlertNotification] = useState<{
@@ -274,7 +274,3 @@ const GlobalSocketManager: React.FC = () => {
 };
 
 export default GlobalSocketManager;
-
-
-
-

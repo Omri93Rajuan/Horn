@@ -1,5 +1,4 @@
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import http from "http";
@@ -13,42 +12,48 @@ import areasRoutes from "./routes/areas.routes";
 import { handleError } from "./utils/ErrorHandle";
 import { prisma } from "./db/prisma";
 import { seedIfEmpty } from "./db/seed";
+import { env, loadEnv } from "./config/env";
+import { verifyAccessToken } from "./helpers/jwt";
+import { requestLogger } from "./middlewares/requestLogger";
+import { logger } from "./utils/logger";
 
-dotenv.config();
+loadEnv();
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
+    origin: env.corsOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
-// Make io available to routes
 export { io };
 
-// CORS
-app.use(cors());
+app.use(
+  cors({
+    origin: env.corsOrigins,
+    credentials: true,
+  }),
+);
 
-// Rate Limiting
 const limiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 1000, // 1000 requests per minute (very high for development)
+  windowMs: env.generalRateLimitWindowMs,
+  max: env.generalRateLimitMax,
   message: "Too many requests from this IP, please try again later.",
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 login attempts per 15 minutes (relaxed for development)
+  windowMs: env.authRateLimitWindowMs,
+  max: env.authRateLimitMax,
   message: "Too many login attempts, please try again later.",
 });
 
 app.use(express.json());
+app.use(requestLogger);
 
-// Health check
-app.get("/health", (req, res) => {
+app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
@@ -63,99 +68,112 @@ app.use("/api/alerts", alertsRoutes);
 app.use("/api/responses", responsesRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
-app.use((req, res) => {
-  return handleError(res, 404, "Not found");
-});
+app.use((_req, res) => handleError(res, 404, "Not found"));
 
-const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
+const PORT = env.port;
 
-// WebSocket connection handling
 io.on("connection", (socket) => {
-  console.log("✅ Client connected:", socket.id);
+  logger.info("ws.connect", { socketId: socket.id });
 
   socket.on("join-commander-room", () => {
     socket.join("commanders");
-    console.log("👑 Client joined commanders room:", socket.id);
+    logger.info("ws.join.commanders", { socketId: socket.id });
   });
 
   socket.on("join-area-room", async (areaId: string) => {
     socket.join(`area-${areaId}`);
-    console.log(`🎖️ Client joined area room: ${areaId}`, socket.id);
-    
-    // Get user ID from socket auth
+    logger.info("ws.join.area", { socketId: socket.id, areaId });
+
     const token = socket.handshake.auth.token;
     if (!token) {
-      console.log('⚠️ No token in socket auth, skipping active events check');
+      logger.warn("ws.join.area.missing_token", { socketId: socket.id, areaId });
       return;
     }
-    
+
     try {
-      // Decode token to get userId (simple check, assume token is valid since socket connected)
-      const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET!);
+      const decoded = verifyAccessToken(token);
       const userId = decoded.userId;
-      
-      // Find the most recent event that this user hasn't responded to yet
-      const unrepondedEvent = await prisma.alertEvent.findFirst({
+
+      const unrespondedEvent = await prisma.alertEvent.findFirst({
         where: {
           areaId,
-          completedAt: null, // Only active (not closed) events
+          completedAt: null,
           responses: {
             none: {
-              userId: userId, // User hasn't responded
+              userId,
             },
           },
         },
         orderBy: {
-          triggeredAt: 'desc',
+          triggeredAt: "desc",
         },
       });
-      
-      if (unrepondedEvent) {
-        console.log(`📤 Sending most recent unresponded event to soldier: ${unrepondedEvent.id}`);
+
+      if (unrespondedEvent) {
+        logger.info("ws.new_alert.emit", {
+          socketId: socket.id,
+          areaId,
+          eventId: unrespondedEvent.id,
+        });
         socket.emit("new-alert", {
-          eventId: unrepondedEvent.id,
-          areaId: unrepondedEvent.areaId,
-          triggeredAt: unrepondedEvent.triggeredAt.toISOString(),
+          eventId: unrespondedEvent.id,
+          areaId: unrespondedEvent.areaId,
+          triggeredAt: unrespondedEvent.triggeredAt.toISOString(),
         });
       } else {
-        console.log('✅ No unresponded events for this soldier');
+        logger.debug("ws.join.area.no_unresponded_event", {
+          socketId: socket.id,
+          areaId,
+        });
       }
     } catch (error) {
-      console.error('❌ Error checking for active events:', error);
+      logger.error("ws.join.area.failed", {
+        socketId: socket.id,
+        areaId,
+        error: String(error),
+      });
     }
   });
 
   socket.on("leave-area-room", (areaId: string) => {
     socket.leave(`area-${areaId}`);
-    console.log(`Client left area room: ${areaId}`, socket.id);
+    logger.info("ws.leave.area", { socketId: socket.id, areaId });
   });
 
   socket.on("disconnect", () => {
-    console.log("❌ Client disconnected:", socket.id);
+    logger.info("ws.disconnect", { socketId: socket.id });
   });
 });
 
 async function start() {
-  const seedResult = await seedIfEmpty();
-  if (seedResult.seeded) {
-    console.log(
-      `Seeded database: users=${seedResult.users}, events=${seedResult.events}, responses=${seedResult.responses}, refreshTokens=${seedResult.refreshTokens}`,
-    );
+  if (env.seedOnStartup) {
+    const seedResult = await seedIfEmpty();
+    if (seedResult.seeded) {
+      logger.info("db.seed.completed", {
+        users: seedResult.users,
+        events: seedResult.events,
+        responses: seedResult.responses,
+        refreshTokens: seedResult.refreshTokens,
+      });
+    }
   }
 
   server.listen(PORT, () => {
-    console.log(`Horn backend listening on ${PORT}`);
-    console.log(`WebSocket server ready`);
+    logger.info("server.started", {
+      port: PORT,
+      env: env.appEnv,
+      corsOrigins: env.corsOrigins,
+    });
   });
 }
 
 start().catch((err) => {
-  console.error("Failed to start server", err);
+  logger.error("server.start.failed", { error: String(err) });
   process.exit(1);
 });
 
 function shutdown(signal: string) {
-  console.log(`Received ${signal}. Closing server...`);
+  logger.info("server.shutdown", { signal });
   prisma.$disconnect().finally(() => process.exit(0));
 }
 

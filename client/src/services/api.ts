@@ -1,8 +1,14 @@
 import axios from "axios";
 import type { AxiosInstance } from "axios";
+import { store } from "../store";
+import { logout } from "../store/authSlice";
+import { disconnectSocket } from "../hooks/useSocket";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ?? "http://localhost:3005/api";
+const AUTH_EXPIRED_FLAG = "horn_auth_expired";
+
+let isHandlingUnauthorized = false;
 
 class ApiService {
   private api: AxiosInstance;
@@ -30,9 +36,26 @@ class ApiService {
     this.api.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response?.status === 401) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
+        const status = error.response?.status;
+        const requestUrl = String(error.config?.url ?? "");
+        const isAuthRoute =
+          requestUrl.includes("/auth/login") ||
+          requestUrl.includes("/auth/register");
+
+        if (status === 401 && !isAuthRoute && !isHandlingUnauthorized) {
+          isHandlingUnauthorized = true;
+
+          disconnectSocket();
+          store.dispatch(logout());
+          sessionStorage.setItem(AUTH_EXPIRED_FLAG, "1");
+
+          if (!window.location.pathname.startsWith("/login")) {
+            window.location.assign("/login");
+          }
+
+          window.setTimeout(() => {
+            isHandlingUnauthorized = false;
+          }, 1500);
         }
         return Promise.reject(error);
       },

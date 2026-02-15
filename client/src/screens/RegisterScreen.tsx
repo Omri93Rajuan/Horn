@@ -6,16 +6,22 @@ import { areaService } from "../services/areaService";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setCredentials, setLoading } from "../store/authSlice";
 import {
+  normalizeEmail,
   validateEmail,
   validateName,
+  validatePhone,
   validatePassword,
 } from "../utils/validators";
 import { reconnectSocket } from "../hooks/useSocket";
+import { formatAreaName } from "../utils/dateUtils";
+import { toastError } from "../utils/toast";
+import { useI18n } from "../i18n";
 
 const RegisterScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const auth = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,13 +38,12 @@ const RegisterScreen: React.FC = () => {
     onMutate: () => dispatch(setLoading(true)),
     onSuccess: (data) => {
       dispatch(setCredentials(data));
-      // Reconnect socket with new token
       reconnectSocket();
       const redirectTo = data.user.role === 'COMMANDER' ? '/commander' : '/soldier';
       navigate({ to: redirectTo });
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || "אירעה שגיאה בהרשמה");
+      toastError(error.response?.data?.message || t("error.register"));
     },
     onSettled: () => dispatch(setLoading(false)),
   });
@@ -47,31 +52,39 @@ const RegisterScreen: React.FC = () => {
     event.preventDefault();
 
     if (!name || !email || !password || !areaId) {
-      alert("נא למלא את כל השדות החובה");
+      toastError(t("error.required_fields_register"));
       return;
     }
 
-    if (!validateName(name)) {
-      alert("נא להזין שם מלא");
+    const nameValidation = validateName(name);
+    if (!nameValidation.isValid) {
+      toastError(nameValidation.message ?? t("error.invalid_name"));
       return;
     }
 
-    if (!validateEmail(email)) {
-      alert("נא להזין אימייל תקין");
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      toastError(emailValidation.message ?? t("error.invalid_email"));
       return;
     }
 
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
-      alert(passwordValidation.message);
+      toastError(passwordValidation.message ?? t("error.invalid_password"));
+      return;
+    }
+
+    const phoneValidation = validatePhone(phone);
+    if (!phoneValidation.isValid) {
+      toastError(phoneValidation.message ?? "Invalid phone number");
       return;
     }
 
     registerMutation.mutate({
-      name,
-      email,
+      name: name.trim(),
+      email: normalizeEmail(email),
       password,
-      phone: phone || undefined,
+      phone: phoneValidation.value || undefined,
       areaId,
     });
   };
@@ -87,15 +100,17 @@ const RegisterScreen: React.FC = () => {
       <div className="w-full max-w-lg rounded-[36px] border border-border dark:border-border-dark bg-surface-1/98 dark:bg-surface-1-dark/98 p-10 shadow-2xl">
         <div className="space-y-6">
           <div className="space-y-3 text-right">
-            <h1 className="font-display text-3xl text-text dark:text-text-dark">יצירת חשבון חדש</h1>
+            <h1 className="font-display text-3xl text-text dark:text-text-dark">{t("auth.register.title")}</h1>
             <p className="text-base text-text-muted dark:text-text-dark-muted">
-              מלא את הפרטים ונחבר אותך מיד למרכז השליטה.
+              {t("auth.register.subtitle")}
             </p>
           </div>
           <form onSubmit={handleSubmit} className="grid gap-4">
             <label className="space-y-2 text-sm text-text-muted dark:text-text-dark-muted">
-              שם מלא
+              {t("auth.register.name")}
               <input
+                id="register-name"
+                name="name"
                 className="input"
                 type="text"
                 value={name}
@@ -104,8 +119,10 @@ const RegisterScreen: React.FC = () => {
               />
             </label>
             <label className="space-y-2 text-sm text-text-muted dark:text-text-dark-muted">
-              אימייל
+              {t("auth.register.email")}
               <input
+                id="register-email"
+                name="email"
                 className="input"
                 type="email"
                 value={email}
@@ -114,8 +131,10 @@ const RegisterScreen: React.FC = () => {
               />
             </label>
             <label className="space-y-2 text-sm text-text-muted dark:text-text-dark-muted">
-              סיסמה
+              {t("auth.register.password")}
               <input
+                id="register-password"
+                name="password"
                 className="input"
                 type="password"
                 value={password}
@@ -124,8 +143,10 @@ const RegisterScreen: React.FC = () => {
               />
             </label>
             <label className="space-y-2 text-sm text-text-muted dark:text-text-dark-muted">
-              טלפון (אופציונלי)
+              {t("auth.register.phone")}
               <input
+                id="register-phone"
+                name="phone"
                 className="input"
                 type="tel"
                 value={phone}
@@ -134,27 +155,31 @@ const RegisterScreen: React.FC = () => {
               />
             </label>
             <label className="space-y-2 text-sm text-text-muted dark:text-text-dark-muted">
-              אזור שירות
+              {t("auth.register.area")}
               {areasQuery.data && areasQuery.data.length > 0 ? (
                 <select
+                  id="register-area"
+                  name="areaId"
                   className="input"
                   value={areaId}
                   onChange={(event) => setAreaId(event.target.value)}
                 >
-                  <option value="">בחר אזור</option>
+                  <option value="">{t("auth.register.select_area")}</option>
                   {areasQuery.data.map((area) => (
                     <option key={area} value={area}>
-                      {area}
+                      {formatAreaName(area)}
                     </option>
                   ))}
                 </select>
               ) : (
                 <input
+                  id="register-area"
+                  name="areaId"
                   className="input"
                   type="text"
                   value={areaId}
                   onChange={(event) => setAreaId(event.target.value)}
-                  placeholder="area-1"
+                  placeholder="gush-dan"
                 />
               )}
               {areasQuery.isError ? (
@@ -164,12 +189,12 @@ const RegisterScreen: React.FC = () => {
               ) : null}
             </label>
             <button className="action-btn primary" type="submit" disabled={registerMutation.isPending}>
-              {registerMutation.isPending ? "יוצר חשבון..." : "הירשם"}
+              {registerMutation.isPending ? t("auth.register.submitting") : t("auth.register.submit")}
             </button>
             <p className="text-sm text-text-muted dark:text-text-dark-muted">
-              כבר יש לך חשבון?{" "}
+              {t("auth.register.have_account")}{" "}
               <Link className="text-primary hover:text-primary-hover" to="/login" search={{ redirect: undefined }}>
-                התחבר
+                {t("auth.register.login")}
               </Link>
             </p>
           </form>

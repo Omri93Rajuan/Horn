@@ -4,7 +4,7 @@ const STORAGE_KEY = "horn_a11y_prefs";
 
 type A11yPrefs = {
   fontScale: number;
-  highContrast: boolean;
+  contrastLevel: "normal" | "increased" | "high";
   underlineLinks: boolean;
   reduceMotion: boolean;
   readableFont: boolean;
@@ -13,11 +13,11 @@ type A11yPrefs = {
 
 const DEFAULT_PREFS: A11yPrefs = {
   fontScale: 1,
-  highContrast: false,
+  contrastLevel: "normal",
   underlineLinks: false,
   reduceMotion: false,
   readableFont: false,
-  barOpen: true,
+  barOpen: false,
 };
 
 const clampFont = (value: number) => Math.min(1.25, Math.max(0.9, value));
@@ -29,8 +29,12 @@ const AccessibilityBar: React.FC = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (!saved) return;
-      const parsed = JSON.parse(saved) as Partial<A11yPrefs>;
-      setPrefs({ ...DEFAULT_PREFS, ...parsed });
+      const parsed = JSON.parse(saved) as Partial<A11yPrefs> & { highContrast?: boolean };
+      const normalized: Partial<A11yPrefs> = { ...parsed };
+      if (parsed.highContrast) {
+        normalized.contrastLevel = "high";
+      }
+      setPrefs({ ...DEFAULT_PREFS, ...normalized });
     } catch {
       setPrefs(DEFAULT_PREFS);
     }
@@ -39,7 +43,8 @@ const AccessibilityBar: React.FC = () => {
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--a11y-font-scale", String(prefs.fontScale));
-    root.classList.toggle("a11y-contrast", prefs.highContrast);
+    root.classList.toggle("a11y-contrast-increased", prefs.contrastLevel === "increased");
+    root.classList.toggle("a11y-contrast-high", prefs.contrastLevel === "high");
     root.classList.toggle("a11y-underline", prefs.underlineLinks);
     root.classList.toggle("a11y-reduce-motion", prefs.reduceMotion);
     root.classList.toggle("a11y-readable-font", prefs.readableFont);
@@ -113,13 +118,36 @@ const AccessibilityBar: React.FC = () => {
             </div>
           </div>
 
-          <button
-            type="button"
-            className={`a11y-btn ${prefs.highContrast ? "is-active" : ""}`}
-            onClick={() => setPrefs((prev) => ({ ...prev, highContrast: !prev.highContrast }))}
-          >
-            ניגודיות גבוהה
-          </button>
+          <div className="a11y-group">
+            <span className="a11y-label">ניגודיות</span>
+            <div className="a11y-stepper">
+              <button
+                type="button"
+                className={`a11y-btn ${prefs.contrastLevel === "normal" ? "is-active" : ""}`}
+                onClick={() => setPrefs((prev) => ({ ...prev, contrastLevel: "normal" }))}
+                aria-label="ניגודיות רגילה"
+              >
+                רגילה
+              </button>
+              <button
+                type="button"
+                className={`a11y-btn ${prefs.contrastLevel === "increased" ? "is-active" : ""}`}
+                onClick={() => setPrefs((prev) => ({ ...prev, contrastLevel: "increased" }))}
+                aria-label="ניגודיות משופרת"
+              >
+                משופרת
+              </button>
+              <button
+                type="button"
+                className={`a11y-btn ${prefs.contrastLevel === "high" ? "is-active" : ""}`}
+                onClick={() => setPrefs((prev) => ({ ...prev, contrastLevel: "high" }))}
+                aria-label="ניגודיות גבוהה"
+              >
+                גבוהה
+              </button>
+            </div>
+          </div>
+
           <button
             type="button"
             className={`a11y-btn ${prefs.underlineLinks ? "is-active" : ""}`}

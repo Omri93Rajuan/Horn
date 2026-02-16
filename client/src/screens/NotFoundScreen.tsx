@@ -1,7 +1,11 @@
 import React from "react";
-import { Link } from "@tanstack/react-router";
 
-const NotFoundScreen: React.FC = () => {
+interface NotFoundScreenProps {
+  onNavigate?: (page: "alerts" | "responses" | "profile") => void;
+  onNavigateHome?: () => void;
+}
+
+const NotFoundScreen: React.FC<NotFoundScreenProps> = ({ onNavigate, onNavigateHome }) => {
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4">
       <div className="w-full max-w-2xl">
@@ -42,8 +46,9 @@ const NotFoundScreen: React.FC = () => {
             דפים זמינים
           </h3>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Link
-              to="/alerts"
+            <button
+              type="button"
+              onClick={() => onNavigateHome?.()}
               className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-surface-1 p-4 transition-all hover:border-primary hover:bg-surface-2 dark:border-border-dark dark:bg-surface-1-dark dark:hover:bg-surface-2-dark"
             >
               <svg
@@ -62,10 +67,11 @@ const NotFoundScreen: React.FC = () => {
               <span className="text-xs font-semibold text-text dark:text-text-dark">
                 עמוד הבית
               </span>
-            </Link>
+            </button>
 
-            <Link
-              to="/alerts"
+            <button
+              type="button"
+              onClick={() => onNavigate?.("alerts")}
               className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-surface-1 p-4 transition-all hover:border-danger hover:bg-surface-2 dark:border-border-dark dark:bg-surface-1-dark dark:hover:bg-surface-2-dark"
             >
               <svg
@@ -84,10 +90,11 @@ const NotFoundScreen: React.FC = () => {
               <span className="text-xs font-semibold text-text dark:text-text-dark">
                 התראות
               </span>
-            </Link>
+            </button>
 
-            <Link
-              to="/responses"
+            <button
+              type="button"
+              onClick={() => onNavigate?.("responses")}
               className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-surface-1 p-4 transition-all hover:border-success hover:bg-surface-2 dark:border-border-dark dark:bg-surface-1-dark dark:hover:bg-surface-2-dark"
             >
               <svg
@@ -106,10 +113,11 @@ const NotFoundScreen: React.FC = () => {
               <span className="text-xs font-semibold text-text dark:text-text-dark">
                 תגובות
               </span>
-            </Link>
+            </button>
 
-            <Link
-              to="/profile"
+            <button
+              type="button"
+              onClick={() => onNavigate?.("profile")}
               className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-surface-1 p-4 transition-all hover:border-secondary hover:bg-surface-2 dark:border-border-dark dark:bg-surface-1-dark dark:hover:bg-surface-2-dark"
             >
               <svg
@@ -128,7 +136,7 @@ const NotFoundScreen: React.FC = () => {
               <span className="text-xs font-semibold text-text dark:text-text-dark">
                 פרופיל
               </span>
-            </Link>
+            </button>
           </div>
         </div>
       </div>

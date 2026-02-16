@@ -1,6 +1,5 @@
 import React from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import { authService } from "../services/authService";
 import { useAppDispatch } from "../store/hooks";
 import { setCredentials, setLoading } from "../store/authSlice";
@@ -8,9 +7,12 @@ import { reconnectSocket } from "../hooks/useSocket";
 import { toastError, toastInfo } from "../utils/toast";
 import { useI18n } from "../i18n";
 
-const InvestorDemoScreen: React.FC = () => {
+interface InvestorDemoScreenProps {
+  onStartDemo?: () => void;
+}
+
+const InvestorDemoScreen: React.FC<InvestorDemoScreenProps> = ({ onStartDemo }) => {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const { t } = useI18n();
 
   const demoLoginMutation = useMutation({
@@ -20,7 +22,7 @@ const InvestorDemoScreen: React.FC = () => {
       dispatch(setCredentials(data));
       reconnectSocket();
       toastInfo(t("demo.session_ready"));
-      navigate({ to: "/demo-split" });
+      onStartDemo?.();
     },
     onError: (error: any) => {
       toastError(error?.response?.data?.message || t("demo.unable_start"));

@@ -1,19 +1,20 @@
 ﻿import React, { useState } from "react";
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { authService } from "../services/authService";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { useAppDispatch } from "../store/hooks";
 import { setCredentials, setLoading } from "../store/authSlice";
 import { normalizeEmail, validateEmail, validatePassword } from "../utils/validators";
 import { reconnectSocket } from "../hooks/useSocket";
 import { toastError, toastWarning } from "../utils/toast";
 import { useI18n } from "../i18n";
 
-const LoginScreen: React.FC = () => {
+interface LoginScreenProps {
+  onNavigateRegister?: () => void;
+  onNavigateDemo?: () => void;
+}
+
+const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigateRegister, onNavigateDemo }) => {
   const dispatch = useAppDispatch();
-  const auth = useAppSelector((state) => state.auth);
-  const navigate = useNavigate();
-  const search = useSearch({ from: "/login" });
   const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,8 +25,7 @@ const LoginScreen: React.FC = () => {
     onSuccess: (data) => {
       dispatch(setCredentials(data));
       reconnectSocket();
-      const redirectTo = data.user.role === 'COMMANDER' ? '/commander' : '/soldier';
-      navigate({ to: search.redirect ?? redirectTo });
+      onSuccess?.();
     },
     onError: (error: any) => {
       toastError(error.response?.data?.message || t("error.login"));
@@ -63,13 +63,6 @@ const LoginScreen: React.FC = () => {
       toastWarning(t("auth.expired"));
     }
   }, []);
-
-  React.useEffect(() => {
-    if (auth.token) {
-      const redirectTo = auth.user?.role === 'COMMANDER' ? '/commander' : '/soldier';
-      navigate({ to: redirectTo });
-    }
-  }, [auth.token, auth.user?.role, navigate]);
 
   return (
     <section className="grid min-h-[75vh] place-items-center">
@@ -165,31 +158,35 @@ const LoginScreen: React.FC = () => {
           <div className="divider-line" />
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-text-muted dark:text-text-dark-muted">
-              {t("auth.login.no_account")}{" "}
-              <Link 
-                className="text-primary hover:text-primary-hover underline" 
-                to="/register"
+              {t("auth.login.no_account")} {" "}
+              <button
+                type="button"
+                className="text-primary hover:text-primary-hover underline"
+                onClick={() => onNavigateRegister?.()}
               >
                 {t("auth.login.register_now")}
-              </Link>
+              </button>
             </p>
-            <Link 
-              to="/investor-demo"
-              className="group flex items-center gap-1.5 text-xs font-medium text-text-muted dark:text-text-dark-muted hover:text-primary dark:hover:text-primary transition-colors"
-              title={t("demo.nav")}
-              aria-label={t("demo.nav")}
-            >
-              <svg 
-                className="w-4 h-4 group-hover:scale-110 transition-transform" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-                aria-hidden="true"
+            {onNavigateDemo ? (
+              <button
+                type="button"
+                onClick={() => onNavigateDemo()}
+                className="group flex items-center gap-1.5 text-xs font-medium text-text-muted dark:text-text-dark-muted hover:text-primary dark:hover:text-primary transition-colors"
+                title={t("demo.nav")}
+                aria-label={t("demo.nav")}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-              <span>לדמו</span>
-            </Link>
+                <svg
+                  className="w-4 h-4 group-hover:scale-110 transition-transform"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+                <span>לדמו</span>
+              </button>
+            ) : null}
           </div>
         </div>
       </div>

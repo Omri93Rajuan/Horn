@@ -198,8 +198,12 @@ input[type="radio"] + label {
   font-weight: 500;
 }
 
-html.a11y-contrast body {
+html.a11y-contrast-increased body {
   filter: contrast(1.12) saturate(1.1);
+}
+
+html.a11y-contrast-high body {
+  filter: contrast(1.25) saturate(1.15);
 }
 
 html.a11y-underline a {
@@ -221,7 +225,8 @@ html.a11y-readable-font body {
 }
 
 html.a11y-bar-visible body {
-  padding-bottom: 96px;
+  padding-right: min(280px, 90vw);
+  direction: rtl;
 }
 
 /* SR-Only (Screen Reader Only) Class - 2.1.1 Keyboard */
@@ -256,29 +261,28 @@ html.a11y-bar-visible body {
 
 .a11y-bar {
   position: fixed;
-  left: 0;
+  top: 0;
   right: 0;
-  bottom: 0;
+  width: min(280px, 90vw);
+  height: 100vh;
   z-index: 70;
-  padding: 14px 18px;
+  padding: 18px 14px;
   background: linear-gradient(135deg, rgba(235, 223, 197, 0.98), rgba(255, 248, 235, 0.95));
-  border-top: 1px solid rgba(140, 120, 85, 0.25);
-  box-shadow: 0 -12px 30px rgba(31, 27, 16, 0.18);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  border-left: 1px solid rgba(140, 120, 85, 0.25);
+  box-shadow: -12px 0 30px rgba(31, 27, 16, 0.18);
+  overflow-y: auto;
+  direction: rtl;
 }
 
 html.dark .a11y-bar {
   background: linear-gradient(135deg, rgba(24, 24, 24, 0.96), rgba(38, 34, 26, 0.98));
-  border-top-color: rgba(120, 106, 80, 0.35);
-  box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.4);
+  border-left-color: rgba(120, 106, 80, 0.35);
+  box-shadow: -12px 0 30px rgba(0, 0, 0, 0.4);
 }
 
 .a11y-bar__content {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 18px;
   flex-wrap: wrap;
 }
@@ -319,9 +323,10 @@ html.dark .a11y-bar__hint {
 
 .a11y-bar__controls {
   display: flex;
+  flex-direction: column;
   flex-wrap: wrap;
   gap: 10px;
-  align-items: center;
+  align-items: stretch;
 }
 
 .a11y-group {
@@ -409,6 +414,8 @@ html.dark .a11y-btn {
   font-weight: 700;
   cursor: pointer;
   padding: 6px 10px;
+  align-self: flex-start;
+  margin-top: auto;
 }
 
 html.dark .a11y-collapse {
@@ -417,9 +424,9 @@ html.dark .a11y-collapse {
 
 .a11y-toggle {
   position: fixed;
-  bottom: 16px;
-  right: 16px;
-  z-index: 70;
+  top: 20px;
+  right: 20px;
+  z-index: 60;
   background: linear-gradient(135deg, #b98a2c, #d0a74c);
   color: #fff;
   border: none;

@@ -1,6 +1,5 @@
 ﻿import React, { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import { authService } from "../services/authService";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { logout, setCredentials } from "../store/authSlice";
@@ -12,7 +11,6 @@ import { useI18n } from "../i18n";
 
 const ProfileScreen: React.FC = () => {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const auth = useAppSelector((state) => state.auth);
   const user = auth.user;
   const { t } = useI18n();
@@ -36,7 +34,6 @@ const ProfileScreen: React.FC = () => {
     onSettled: () => {
       disconnectSocket();
       dispatch(logout());
-      navigate({ to: "/login", search: { redirect: undefined } });
     },
   });
 

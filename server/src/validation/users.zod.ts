@@ -22,8 +22,8 @@ export const updateProfileSchema = {
       name: normalizedNameSchema.optional(),
       phone: optionalPhoneSchema,
     })
+    .strict()
     .refine((data) => Boolean(data.name || data.phone), {
       message: "No profile fields provided",
-    })
-    .strict(),
+    }),
 };

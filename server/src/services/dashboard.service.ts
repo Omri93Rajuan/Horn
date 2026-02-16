@@ -114,7 +114,12 @@ export async function getEventStatus(
     }
 
     const [users, responses] = await Promise.all([
-      prisma.user.findMany({ where: { areaId: event.areaId } }),
+      prisma.user.findMany({ 
+        where: { 
+          areaId: event.areaId,
+          role: "USER" // Only include soldiers, not commanders
+        } 
+      }),
       prisma.response.findMany({ where: { eventId } }),
     ]);
 
@@ -290,7 +295,10 @@ export async function getCommanderActiveSummary(
 
     const usersCount = await prisma.user.groupBy({
       by: ["areaId"],
-      where: { areaId: { in: areas } },
+      where: { 
+        areaId: { in: areas },
+        role: "USER" // Only count soldiers, not commanders
+      },
       _count: { _all: true },
     });
     const usersCountMap = new Map(

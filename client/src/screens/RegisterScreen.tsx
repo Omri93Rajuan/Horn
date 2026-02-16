@@ -1,9 +1,8 @@
 ﻿import React, { useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { authService } from "../services/authService";
 import { areaService } from "../services/areaService";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { useAppDispatch } from "../store/hooks";
 import { setCredentials, setLoading } from "../store/authSlice";
 import {
   normalizeEmail,
@@ -17,10 +16,12 @@ import { formatAreaName } from "../utils/dateUtils";
 import { toastError } from "../utils/toast";
 import { useI18n } from "../i18n";
 
-const RegisterScreen: React.FC = () => {
+interface RegisterScreenProps {
+  onNavigateLogin?: () => void;
+}
+
+const RegisterScreen: React.FC<RegisterScreenProps> = ({ onNavigateLogin }) => {
   const dispatch = useAppDispatch();
-  const auth = useAppSelector((state) => state.auth);
-  const navigate = useNavigate();
   const { t } = useI18n();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -39,8 +40,6 @@ const RegisterScreen: React.FC = () => {
     onSuccess: (data) => {
       dispatch(setCredentials(data));
       reconnectSocket();
-      const redirectTo = data.user.role === 'COMMANDER' ? '/commander' : '/soldier';
-      navigate({ to: redirectTo });
     },
     onError: (error: any) => {
       toastError(error.response?.data?.message || t("error.register"));
@@ -89,23 +88,25 @@ const RegisterScreen: React.FC = () => {
     });
   };
 
-  React.useEffect(() => {
-    if (auth.token) {
-      navigate({ to: "/alerts" });
-    }
-  }, [auth.token, navigate]);
-
   return (
     <section className="grid min-h-[75vh] place-items-center">
       <div className="w-full max-w-lg rounded-[36px] border border-border dark:border-border-dark bg-surface-1/98 dark:bg-surface-1-dark/98 p-10 shadow-2xl">
         <div className="space-y-6">
           <div className="space-y-3 text-right">
             <h1 className="font-display text-3xl text-text dark:text-text-dark">{t("auth.register.title")}</h1>
-            <p className="text-base text-text-muted dark:text-text-dark-muted">
-              {t("auth.register.subtitle")}
+            <p className="text-sm text-text-muted dark:text-text-dark-muted">
+              {t("auth.register.have_account")} {" "}
+              <button
+                type="button"
+                className="text-primary hover:text-primary-hover underline"
+                onClick={() => onNavigateLogin?.()}
+              >
+                {t("auth.register.login")}
+              </button>
             </p>
           </div>
-          <form onSubmit={handleSubmit} className="grid gap-4">
+
+          <form className="grid gap-4" onSubmit={handleSubmit} aria-label={t("auth.register.title")} noValidate>
             <label className="space-y-2 text-sm text-text-muted dark:text-text-dark-muted">
               {t("auth.register.name")}
               <input
@@ -191,12 +192,6 @@ const RegisterScreen: React.FC = () => {
             <button className="action-btn primary" type="submit" disabled={registerMutation.isPending}>
               {registerMutation.isPending ? t("auth.register.submitting") : t("auth.register.submit")}
             </button>
-            <p className="text-sm text-text-muted dark:text-text-dark-muted">
-              {t("auth.register.have_account")}{" "}
-              <Link className="text-primary hover:text-primary-hover" to="/login" search={{ redirect: undefined }}>
-                {t("auth.register.login")}
-              </Link>
-            </p>
           </form>
         </div>
       </div>

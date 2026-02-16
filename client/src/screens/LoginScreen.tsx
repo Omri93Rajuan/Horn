@@ -81,9 +81,26 @@ const LoginScreen: React.FC = () => {
               {t("auth.login.subtitle")}
             </p>
           </div>
-          <form className="grid gap-4" onSubmit={handleSubmit}>
-            <label className="space-y-2 text-sm text-text-muted dark:text-text-dark-muted">
-              {t("auth.login.email")}
+          <form 
+            className="grid gap-4" 
+            onSubmit={handleSubmit}
+            aria-label={t("auth.login.title")}
+            noValidate
+          >
+            <div className="space-y-2">
+              <label 
+                htmlFor="login-email"
+                className="text-sm text-text-muted dark:text-text-dark-muted"
+              >
+                {t("auth.login.email")}
+                <span 
+                  aria-label="required"
+                  className="text-red-600 ml-1"
+                  role="img"
+                >
+                  *
+                </span>
+              </label>
               <input
                 id="login-email"
                 name="email"
@@ -93,10 +110,30 @@ const LoginScreen: React.FC = () => {
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="name@domain.com"
                 autoComplete="email"
+                required
+                aria-required="true"
+                aria-describedby={!validateEmail(email).isValid ? "email-error" : undefined}
               />
-            </label>
-            <label className="space-y-2 text-sm text-text-muted dark:text-text-dark-muted">
-              {t("auth.login.password")}
+              {!validateEmail(email).isValid && email && (
+                <div id="email-error" role="alert" className="text-sm text-red-600">
+                  {validateEmail(email).message}
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <label 
+                htmlFor="login-password"
+                className="text-sm text-text-muted dark:text-text-dark-muted"
+              >
+                {t("auth.login.password")}
+                <span 
+                  aria-label="required"
+                  className="text-red-600 ml-1"
+                  role="img"
+                >
+                  *
+                </span>
+              </label>
               <input
                 id="login-password"
                 name="password"
@@ -106,9 +143,22 @@ const LoginScreen: React.FC = () => {
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="********"
                 autoComplete="current-password"
+                required
+                aria-required="true"
+                aria-describedby={!validatePassword(password).isValid ? "password-error" : undefined}
               />
-            </label>
-            <button className="action-btn primary h-12" type="submit" disabled={loginMutation.isPending}>
+              {!validatePassword(password).isValid && password && (
+                <div id="password-error" role="alert" className="text-sm text-red-600">
+                  {validatePassword(password).message}
+                </div>
+              )}
+            </div>
+            <button 
+              className="action-btn primary h-12" 
+              type="submit" 
+              disabled={loginMutation.isPending}
+              aria-busy={loginMutation.isPending}
+            >
               {loginMutation.isPending ? t("auth.login.submitting") : t("auth.login.submit")}
             </button>
           </form>
@@ -116,15 +166,26 @@ const LoginScreen: React.FC = () => {
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-text-muted dark:text-text-dark-muted">
               {t("auth.login.no_account")}{" "}
-              <Link className="text-primary hover:text-primary-hover" to="/register">
+              <Link 
+                className="text-primary hover:text-primary-hover underline" 
+                to="/register"
+              >
                 {t("auth.login.register_now")}
               </Link>
             </p>
             <Link 
               to="/investor-demo"
               className="group flex items-center gap-1.5 text-xs font-medium text-text-muted dark:text-text-dark-muted hover:text-primary dark:hover:text-primary transition-colors"
+              title={t("demo.nav")}
+              aria-label={t("demo.nav")}
             >
-              <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg 
+                className="w-4 h-4 group-hover:scale-110 transition-transform" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+                aria-hidden="true"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
               <span>לדמו</span>

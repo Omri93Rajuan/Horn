@@ -72,6 +72,7 @@ export function useCommanderSocket(
   const socket = useSocket();
   const onNewAlertRef = useRef(onNewAlert);
   const onResponseUpdateRef = useRef(onResponseUpdate);
+  const isEnabled = Boolean(onNewAlert || onResponseUpdate);
   
   // Keep callback refs updated
   useEffect(() => {
@@ -80,7 +81,7 @@ export function useCommanderSocket(
   }, [onNewAlert, onResponseUpdate]);
 
   useEffect(() => {
-    if (!socket || (onNewAlert === null && onResponseUpdate === null)) {
+    if (!socket || !isEnabled) {
       console.log('❌ Commander socket not available or not needed');
       return;
     }
@@ -136,7 +137,7 @@ export function useCommanderSocket(
       socket.off('new-alert', alertHandler);
       socket.off('response-update', responseHandler);
     };
-  }, [socket]);
+  }, [socket, isEnabled]);
 
   return socket;
 }

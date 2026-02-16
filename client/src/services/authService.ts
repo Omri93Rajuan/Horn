@@ -21,6 +21,11 @@ export interface AuthResponse {
   refreshToken?: string;
 }
 
+export interface UpdateProfileRequest {
+  name?: string;
+  phone?: string;
+}
+
 export const authService = {
   login: async (
     data: LoginRequest,
@@ -56,6 +61,11 @@ export const authService = {
 
   getProfile: async (): Promise<AuthResponse> => {
     const response = await api.get("/auth/me");
+    return response.data;
+  },
+
+  updateProfile: async (data: UpdateProfileRequest): Promise<{ user: AuthUser }> => {
+    const response = await api.patch("/users/me", data);
     return response.data;
   },
 };

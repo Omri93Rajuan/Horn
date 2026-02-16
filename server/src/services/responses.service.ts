@@ -51,7 +51,10 @@ export async function submitResponse(
 
       // Check completion status after creating response (prevents race condition)
       const totalUsersInArea = await tx.user.count({
-        where: { areaId: event.areaId },
+        where: { 
+          areaId: event.areaId,
+          role: "USER" // Only count soldiers, not commanders
+        },
       });
       
       const responsesCount = await tx.response.count({

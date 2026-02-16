@@ -30,7 +30,7 @@ const ResponsesScreen: React.FC = () => {
         search.trim().length === 0
           ? true
           : response.notes?.toLowerCase().includes(search.toLowerCase()) ||
-            response.eventId.toLowerCase().includes(search.toLowerCase());
+            (response.event && formatAreaName(response.event.areaId).toLowerCase().includes(search.toLowerCase()));
       return matchesFilter && matchesSearch;
     });
   }, [responses, filter, search]);
@@ -75,7 +75,7 @@ const ResponsesScreen: React.FC = () => {
         <input
           className="input"
           type="text"
-          placeholder="חיפוש לפי אירוע או הערה"
+          placeholder="חיפוש לפי גזרה או הערה"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
@@ -95,9 +95,12 @@ const ResponsesScreen: React.FC = () => {
               >
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-text dark:text-text-dark">
-                    אירוע #{response.eventId}
+                    {response.event 
+                      ? `${formatEventLabel(response.event.triggeredAt, "ירוק בעיניים")} • גזרה ${formatAreaName(response.event.areaId)}`
+                      : `אירוע #${response.eventId}`
+                    }
                   </p>
-                  <p className="text-xs text-text-muted dark:text-text-dark-muted">{formatDate(response.respondedAt)}</p>
+                  <p className="text-xs text-text-muted dark:text-text-dark-muted">הגבתי: {formatDate(response.respondedAt)}</p>
                   {response.notes ? (
                     <p className="text-xs text-text-muted dark:text-text-dark-muted">{response.notes}</p>
                   ) : null}

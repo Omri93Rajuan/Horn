@@ -212,17 +212,22 @@ const CommandCenter: React.FC = () => {
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold shadow-md ${
-                        event.isComplete
-                          ? "bg-success text-white"
-                          : event.isOverdue
-                          ? "bg-danger text-white animate-pulse"
-                          : "bg-primary text-white"
-                      }`}>
-                        {formatAreaName(event.areaId)}
-                      </div>
                       <div>
-                        <div className="font-bold text-lg text-text dark:text-text-dark">{formatAreaName(event.areaId)}</div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`h-2.5 w-2.5 rounded-full ${
+                              event.isComplete
+                                ? "bg-success"
+                                : event.isOverdue
+                                ? "bg-danger"
+                                : "bg-warning"
+                            }`}
+                            aria-hidden="true"
+                          />
+                          <div className="font-bold text-lg text-text dark:text-text-dark">
+                            {formatAreaName(event.areaId)}
+                          </div>
+                        </div>
                         <div className="text-xs text-text-muted dark:text-text-dark-muted mt-0.5">
                           {formatEventLabel(event.triggeredAt, t("cc.alert_action"))}
                         </div>

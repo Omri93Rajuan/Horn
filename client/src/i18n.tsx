@@ -221,6 +221,7 @@ const en: Dict = {
   "auth.register.submitting": "Creating account...",
   "auth.register.have_account": "Already have an account?",
   "auth.register.login": "Login",
+  "auth.logout": "Logout",
   "profile.title": "Profile",
   "profile.subtitle": "Manage details, notifications and logout.",
   "profile.user_details": "User Details",

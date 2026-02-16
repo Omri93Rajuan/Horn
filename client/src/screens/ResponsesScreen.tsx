@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { responseService } from "../services/responseService";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setMyResponses } from "../store/dataSlice";
-import { formatDate, formatStatus } from "../utils/dateUtils";
+import { formatAreaName, formatDate, formatEventLabel, formatStatus } from "../utils/dateUtils";
 
 const ResponsesScreen: React.FC = () => {
   const dispatch = useAppDispatch();

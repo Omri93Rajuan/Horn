@@ -25,7 +25,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigateRegister, onNavigat
     onSuccess: (data) => {
       dispatch(setCredentials(data));
       reconnectSocket();
-      onSuccess?.();
     },
     onError: (error: any) => {
       toastError(error.response?.data?.message || t("error.login"));

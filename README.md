@@ -4,6 +4,34 @@ Team Presence Reporting System - Emergency Response Platform
 
 ---
 
+## ♿ **Accessibility & WCAG 2.1 AA Compliance**
+
+✅ **This system is fully compliant with:**
+- **WCAG 2.1 Level AA** standards
+- **Israeli Standard 5568** (סטנדרט ישראלי 5568)
+
+**🎊 Implementation Complete!**
+
+**Quick Verification (Dev Mode):**
+```javascript
+// Browser console:
+__a11yAuditor.audit()      // See any accessibility issues
+__a11yAuditor.passes()     // Check if page is fully accessible (returns true)
+```
+
+**Key Features:**
+- ✅ Full keyboard navigation support with skip links
+- ✅ Screen reader compatible (ARIA labels & live regions)
+- ✅ WCAG AA color contrast (4.5:1 minimum throughout)
+- ✅ Clear focus indicators (3px blue outline)
+- ✅ Properly labeled forms with validation messages
+- ✅ Live regions for dynamic announcements
+- ✅ User accessibility preferences (font size, contrast, etc)
+- ✅ Mobile/touch accessibility (44x44px targets)
+- ✅ Bidirectional text support (Hebrew RTL + English LTR)
+
+---
+
 ## 🆕 **Updating from Previous Version?**
 - ⚡ **Quick Update Guide:** [QUICK_UPDATE.md](QUICK_UPDATE.md) - 5 minutes
 - 📘 **Full Deployment Guide:** [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) - Complete instructions

@@ -46,7 +46,6 @@ export const App: React.FC = () => {
   const dispatch = useDispatch();
   const { t, locale, setLocale } = useI18n();
   const [currentPage, setCurrentPage] = React.useState<PageName>(() => getDefaultUnauthedPage());
-  const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [theme, setTheme] = React.useState<"dark" | "light">(() => {
     const stored = localStorage.getItem("horn-theme");
     return stored === "light" ? "light" : "dark";
@@ -275,71 +274,54 @@ export const App: React.FC = () => {
               </nav>
             ) : null}
 
-            <div className="relative">
+            <div
+              className="flex items-center gap-2 rounded-2xl border border-border/80 bg-surface-1/95 px-2 py-1.5 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.5)] backdrop-blur-sm dark:border-border-dark/80 dark:bg-surface-1-dark/95"
+              role="group"
+              aria-label={t("nav.settings")}
+            >
               <button
                 type="button"
-                onClick={() => setSettingsOpen((prev) => !prev)}
-                className="flex items-center gap-2 rounded-full border border-border/70 bg-surface-1/90 px-3 py-2 text-xs font-semibold text-text-muted shadow-[0_10px_30px_-18px_rgba(15,23,42,0.5)] transition hover:text-text dark:border-border-dark/70 dark:bg-surface-1-dark/90 dark:text-text-dark-muted"
-                aria-expanded={settingsOpen}
-                aria-controls="app-settings-menu"
-                aria-label={t("nav.settings")}
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                aria-label={theme === "dark" ? t("theme.light") : t("theme.dark")}
+                aria-pressed={theme === "dark"}
+                title={theme === "dark" ? t("theme.light") : t("theme.dark")}
+                className="group relative flex h-8 w-[62px] items-center rounded-full border border-border/80 bg-surface-2 px-1 transition-all duration-300 ease-out hover:shadow-[0_6px_16px_-10px_rgba(0,0,0,0.45)] active:scale-[0.98] dark:border-border-dark/80 dark:bg-surface-2-dark"
               >
-                <span aria-hidden="true">⚙️</span>
-                <span>{t("nav.settings")}</span>
+                <span className="pointer-events-none absolute left-2 text-[10px] opacity-70" aria-hidden="true">☀</span>
+                <span className="pointer-events-none absolute right-2 text-[10px] opacity-70" aria-hidden="true">🌙</span>
+                <span
+                  className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-primary shadow-[0_4px_14px_rgba(0,0,0,0.28)] ring-1 ring-white/35 transition-all duration-300 ease-out group-hover:shadow-[0_6px_18px_rgba(0,0,0,0.32)] ${
+                    theme === "dark" ? "translate-x-[30px]" : "translate-x-0"
+                  }`}
+                  aria-hidden="true"
+                />
               </button>
-
-              {settingsOpen ? (
-                <div
-                  id="app-settings-menu"
-                  role="menu"
-                  className="absolute right-0 mt-2 w-48 rounded-2xl border border-border/70 bg-surface-1/95 p-3 shadow-xl backdrop-blur-sm dark:border-border-dark/70 dark:bg-surface-1-dark/95"
-                >
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      setTheme(theme === "dark" ? "light" : "dark");
-                      setSettingsOpen(false);
-                    }}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium text-text hover:bg-surface-2 dark:text-text-dark dark:hover:bg-surface-2-dark"
-                  >
-                    <span>{theme === "dark" ? t("theme.light") : t("theme.dark")}</span>
-                    <span aria-hidden="true">{theme === "dark" ? "☀️" : "🌙"}</span>
-                  </button>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setLocale("he");
-                        setSettingsOpen(false);
-                      }}
-                      className={`rounded-xl border px-2 py-2 text-xs font-semibold transition ${
-                        locale === "he"
-                          ? "border-primary/90 bg-primary text-primary-contrast"
-                          : "border-border/70 bg-transparent text-text-muted hover:border-border hover:text-text dark:border-border-dark/70 dark:text-text-dark-muted dark:hover:border-border-dark dark:hover:text-text-dark"
-                      }`}
-                    >
-                      {t("lang.he")}
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setLocale("en");
-                        setSettingsOpen(false);
-                      }}
-                      className={`rounded-xl border px-2 py-2 text-xs font-semibold transition ${
-                        locale === "en"
-                          ? "border-primary/90 bg-primary text-primary-contrast"
-                          : "border-border/70 bg-transparent text-text-muted hover:border-border hover:text-text dark:border-border-dark/70 dark:text-text-dark-muted dark:hover:border-border-dark dark:hover:text-text-dark"
-                      }`}
-                    >
-                      EN
-                    </button>
-                  </div>
-                </div>
-              ) : null}
+              <button
+                type="button"
+                onClick={() => setLocale("he")}
+                aria-pressed={locale === "he"}
+                title={t("lang.he")}
+                className={`h-9 min-w-[74px] rounded-xl border px-3 text-xs font-semibold tracking-[0.08em] leading-none transition ${
+                  locale === "he"
+                    ? "border-primary/90 bg-primary text-primary-contrast shadow-[0_8px_18px_-14px_rgba(0,0,0,0.55)]"
+                    : "border-border/70 bg-transparent text-text-muted hover:border-border hover:text-text dark:border-border-dark/70 dark:text-text-dark-muted dark:hover:border-border-dark dark:hover:text-text-dark"
+                }`}
+              >
+                {t("lang.he")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocale("en")}
+                aria-pressed={locale === "en"}
+                title="English"
+                className={`h-9 min-w-[62px] rounded-xl border px-3 text-xs font-semibold tracking-[0.08em] leading-none transition ${
+                  locale === "en"
+                    ? "border-primary/90 bg-primary text-primary-contrast shadow-[0_8px_18px_-14px_rgba(0,0,0,0.55)]"
+                    : "border-border/70 bg-transparent text-text-muted hover:border-border hover:text-text dark:border-border-dark/70 dark:text-text-dark-muted dark:hover:border-border-dark dark:hover:text-text-dark"
+                }`}
+              >
+                EN
+              </button>
             </div>
 
             {auth.token ? (

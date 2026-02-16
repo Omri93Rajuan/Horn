@@ -45,6 +45,7 @@ const he: Dict = {
   "auth.register.submitting": "יוצר חשבון...",
   "auth.register.have_account": "כבר יש לך חשבון?",
   "auth.register.login": "התחבר",
+  "auth.logout": "התנתק",
   "profile.title": "פרופיל",
   "profile.subtitle": "ניהול פרטים, התראות ויציאה מהמערכת.",
   "profile.user_details": "פרטי משתמש",

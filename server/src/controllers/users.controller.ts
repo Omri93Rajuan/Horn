@@ -31,3 +31,13 @@ export async function getTeamMembers(req: Request, res: Response) {
     return handleError(res, err.status || 500, err.message || "Server error");
   }
 }
+
+export async function updateProfile(req: Request, res: Response) {
+  try {
+    const userId = req.user?.userId || "";
+    const result = await usersService.updateProfile({ userId, ...req.body });
+    return res.json({ success: true, ...result });
+  } catch (err: any) {
+    return handleError(res, err.status || 500, err.message || "Server error");
+  }
+}

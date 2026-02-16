@@ -9,6 +9,12 @@ type RegisterDeviceInput = {
   name?: string;
 };
 
+type UpdateProfileInput = {
+  userId: string;
+  name?: string;
+  phone?: string;
+};
+
 type UserDoc = {
   name: string;
   phone?: string;
@@ -145,6 +151,41 @@ export async function getTeamMembers(commanderId: string) {
         }
       };
     });
+  } catch (err) {
+    throw mapPrismaError(err, "Server error");
+  }
+}
+
+export async function updateProfile(input: UpdateProfileInput) {
+  try {
+    const existing = await prisma.user.findUnique({ where: { id: input.userId } });
+    if (!existing) {
+      const err: any = new Error("User not found");
+      err.status = 404;
+      throw err;
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: input.userId },
+      data: {
+        name: input.name ?? existing.name,
+        phone: input.phone ?? existing.phone,
+      },
+    });
+
+    return {
+      user: {
+        id: updated.id,
+        name: updated.name,
+        phone: updated.phone ?? undefined,
+        areaId: updated.areaId,
+        role: updated.role as "USER" | "COMMANDER",
+        commanderAreas: updated.commanderAreas,
+        deviceToken: updated.deviceToken,
+        createdAt: updated.createdAt.toISOString(),
+        email: updated.email ?? undefined,
+      },
+    };
   } catch (err) {
     throw mapPrismaError(err, "Server error");
   }

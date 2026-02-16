@@ -3,6 +3,7 @@ import {
   deviceTokenSchema,
   normalizedAreaSchema,
   normalizedNameSchema,
+  optionalPhoneSchema,
 } from "./common.zod";
 
 export const registerDeviceSchema = {
@@ -11,6 +12,18 @@ export const registerDeviceSchema = {
       areaId: normalizedAreaSchema,
       deviceToken: deviceTokenSchema,
       name: normalizedNameSchema.optional(),
+    })
+    .strict(),
+};
+
+export const updateProfileSchema = {
+  body: z
+    .object({
+      name: normalizedNameSchema.optional(),
+      phone: optionalPhoneSchema,
+    })
+    .refine((data) => Boolean(data.name || data.phone), {
+      message: "No profile fields provided",
     })
     .strict(),
 };

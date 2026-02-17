@@ -186,15 +186,15 @@ export const App: React.FC = () => {
           role="banner"
           aria-label={t("nav.main_navigation")}
         >
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-3">
-            {/* Logo */}
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-4 sm:py-5">
+            {/* Logo - Larger & Professional */}
             <button
               type="button"
               onClick={goHome}
-              className="flex items-center hover:opacity-75 transition-opacity"
+              className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0"
               aria-label={t("nav.logo_home")}
             >
-              <img src={logoUrl} alt="" className="h-10 w-auto sm:h-12" aria-hidden="true" />
+              <img src={logoUrl} alt="" className="h-14 sm:h-16 md:h-18 w-auto" aria-hidden="true" />
             </button>
 
             {/* Center Navigation - Desktop */}
@@ -208,7 +208,7 @@ export const App: React.FC = () => {
                   <>
                     <button
                       type="button"
-                      className={`px-3 py-2 text-sm rounded-lg transition ${
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
                         currentPage === "commander"
                           ? "bg-primary/10 text-primary font-semibold"
                           : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
@@ -220,7 +220,7 @@ export const App: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      className={`px-3 py-2 text-sm rounded-lg transition ${
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
                         currentPage === "alerts"
                           ? "bg-primary/10 text-primary font-semibold"
                           : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
@@ -232,7 +232,7 @@ export const App: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      className={`px-3 py-2 text-sm rounded-lg transition ${
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
                         currentPage === "team"
                           ? "bg-primary/10 text-primary font-semibold"
                           : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
@@ -245,7 +245,7 @@ export const App: React.FC = () => {
                     {clientEnv.isTestMode && (
                       <button
                         type="button"
-                        className={`px-3 py-2 text-sm rounded-lg transition ${
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
                           currentPage === "demo-split"
                             ? "bg-primary/10 text-primary font-semibold"
                             : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
@@ -261,7 +261,7 @@ export const App: React.FC = () => {
                   <>
                     <button
                       type="button"
-                      className={`px-3 py-2 text-sm rounded-lg transition ${
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
                         currentPage === "soldier"
                           ? "bg-primary/10 text-primary font-semibold"
                           : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
@@ -273,7 +273,7 @@ export const App: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      className={`px-3 py-2 text-sm rounded-lg transition ${
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
                         currentPage === "responses"
                           ? "bg-primary/10 text-primary font-semibold"
                           : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
@@ -310,18 +310,26 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="p-2 rounded-lg transition hover:bg-surface-2 dark:hover:bg-surface-2-dark"
+                className="p-2.5 rounded-lg transition hover:bg-surface-2 dark:hover:bg-surface-2-dark"
                 aria-label={theme === "dark" ? t("theme.light") : t("theme.dark")}
                 aria-pressed={theme === "dark"}
                 title={theme === "dark" ? t("theme.light") : t("theme.dark")}
               >
                 {theme === "dark" ? (
-                  <svg className="w-5 h-5 text-text dark:text-text-dark transition-transform hover:rotate-12" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                  <svg className="w-6 h-6 text-text dark:text-text-dark transition-transform hover:rotate-12" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5 text-text dark:text-text-dark transition-transform hover:rotate-12" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zm5.657-9.193a1 1 0 00-1.414 0l-.707.707A1 1 0 005.05 6.464l.707-.707a1 1 0 011.414 0zM5 17a1 1 0 100-2H4a1 1 0 100 2h1z" clipRule="evenodd" />
+                  <svg className="w-6 h-6 text-text dark:text-text-dark transition-transform hover:rotate-12" fill="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                   </svg>
                 )}
               </button>
@@ -533,8 +541,26 @@ export const App: React.FC = () => {
         </main>
 
         {auth.token && <GlobalSocketManager />}
+        <footer className="border-t border-text/10 bg-surface-1/50 dark:border-text-dark/10 dark:bg-surface-1-dark/50 py-3 mt-auto">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-primary rounded-lg hover:bg-surface-2 dark:hover:bg-surface-2-dark transition"
+              onClick={() => {
+                const bar = document.getElementById("a11y-panel");
+                if (bar) bar.classList.toggle("hidden");
+              }}
+              aria-label="Accessibility Settings"
+              title="Open Accessibility Settings"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10zm0 3c1.657 0 3 1.343 3 3s-1.343 3-3 3-3-1.343-3-3 1.343-3 3-3zm5.5 11c0-1.933-2.686-3-5.5-3s-5.5 1.067-5.5 3v3h11v-3z" />
+              </svg>
+              Accessibility
+            </button>
+          </div>
+        </footer>
         <AccessibilityBar />
-        <ToastViewport />
       </div>
     </ErrorBoundary>
   );

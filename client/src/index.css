@@ -424,18 +424,51 @@ html.dark .a11y-collapse {
 
 .a11y-toggle {
   position: fixed;
-  top: 20px;
+  bottom: 20px;
   right: 20px;
   z-index: 60;
-  background: linear-gradient(135deg, #b98a2c, #d0a74c);
+  background: linear-gradient(135deg, #1e63d6, #2f7df4);
   color: #fff;
   border: none;
   border-radius: 999px;
-  padding: 10px 16px;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 700;
   font-size: 12px;
-  box-shadow: 0 12px 22px rgba(73, 57, 28, 0.2);
+  box-shadow: 0 12px 22px rgba(21, 73, 163, 0.28);
   cursor: pointer;
+}
+
+.a11y-toggle:hover {
+  transform: translateY(-1px);
+}
+
+.a11y-toggle__icon {
+  width: 28px;
+  height: 28px;
+}
+
+@keyframes brand-logo-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.015);
+  }
+}
+
+.app-brand-logo {
+  animation: brand-logo-float 3.2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+html.a11y-reduce-motion .app-brand-logo {
+  animation: none;
 }
 
 .glass {

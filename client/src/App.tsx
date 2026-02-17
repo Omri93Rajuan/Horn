@@ -1,9 +1,10 @@
 import React, { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import type { RootState } from "./store";
 import ErrorBoundary from "./components/ErrorBoundary";
 import GlobalSocketManager from "./components/GlobalSocketManager";
-import ToastViewport from "./components/ToastViewport";
 import SkipLink from "./components/SkipLink";
 import AccessibilityBar from "./components/AccessibilityBar";
 import { initNetworkMonitoring } from "./utils/networkService";
@@ -75,7 +76,7 @@ export const App: React.FC = () => {
     }
 
     if (!auth.token) {
-      if (currentPage !== "login" && currentPage !== "register" && currentPage !== "investor-demo") {
+      if (currentPage !== "login" && currentPage !== "register" && currentPage !== "investor-demo" && currentPage !== "demo-split") {
         setCurrentPage(getDefaultUnauthedPage());
       }
       return;
@@ -83,7 +84,7 @@ export const App: React.FC = () => {
 
     const role = auth.user?.role;
 
-    if (currentPage === "login" || currentPage === "register" || currentPage === "investor-demo") {
+    if (currentPage === "login" || currentPage === "register") {
       if (role === "COMMANDER") {
         setCurrentPage("commander");
       } else {
@@ -97,13 +98,9 @@ export const App: React.FC = () => {
         setCurrentPage("commander");
       }
     } else {
-      if (currentPage === "commander" || currentPage === "team" || currentPage === "alerts" || currentPage === "demo-split") {
+      if (currentPage === "commander" || currentPage === "team" || currentPage === "alerts") {
         setCurrentPage("soldier");
       }
-    }
-
-    if (!clientEnv.isTestMode && currentPage === "demo-split") {
-      setCurrentPage(role === "COMMANDER" ? "commander" : "soldier");
     }
   }, [auth, currentPage, dispatch, isTokenExpired]);
 
@@ -146,7 +143,7 @@ export const App: React.FC = () => {
         return (
           <LoginScreen
             onNavigateRegister={() => setCurrentPage("register")}
-            onNavigateDemo={clientEnv.isTestMode ? () => setCurrentPage("investor-demo") : undefined}
+            onNavigateDemo={() => setCurrentPage("investor-demo")}
           />
         );
       case "register":
@@ -246,20 +243,18 @@ export const App: React.FC = () => {
                     >
                       {t("nav.team")}
                     </button>
-                    {clientEnv.isTestMode && (
-                      <button
-                        type="button"
-                        className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
-                          currentPage === "demo-split"
-                            ? "bg-primary/10 text-primary font-semibold"
-                            : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
-                        }`}
-                        onClick={() => setCurrentPage("demo-split")}
-                        aria-current={currentPage === "demo-split" ? "page" : undefined}
-                      >
-                        {t("demo.nav")}
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
+                        currentPage === "demo-split"
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
+                      }`}
+                      onClick={() => setCurrentPage("demo-split")}
+                      aria-current={currentPage === "demo-split" ? "page" : undefined}
+                    >
+                      {t("demo.nav")}
+                    </button>
                   </>
                 ) : (
                   <>
@@ -294,6 +289,18 @@ export const App: React.FC = () => {
 
             {/* Right Controls */}
             <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentPage("investor-demo");
+                  setMobileMenuOpen(false);
+                }}
+                className="px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg bg-primary text-primary-contrast hover:bg-primary-hover transition"
+                aria-current={currentPage === "investor-demo" ? "page" : undefined}
+              >
+                {t("demo.nav")}
+              </button>
+
               {/* Mobile Menu Toggle */}
               {auth.token && (
                 <button
@@ -438,23 +445,21 @@ export const App: React.FC = () => {
                     >
                       {t("nav.team")}
                     </button>
-                    {clientEnv.isTestMode && (
-                      <button
-                        type="button"
-                        className={`w-full text-left px-3 py-3 text-sm rounded-lg transition ${
-                          currentPage === "demo-split"
-                            ? "bg-primary/10 text-primary font-semibold"
-                            : "text-text dark:text-text-dark hover:bg-surface-2 dark:hover:bg-surface-2-dark"
-                        }`}
-                        onClick={() => {
-                          setCurrentPage("demo-split");
-                          setMobileMenuOpen(false);
-                        }}
-                        aria-current={currentPage === "demo-split" ? "page" : undefined}
-                      >
-                        {t("demo.nav")}
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className={`w-full text-left px-3 py-3 text-sm rounded-lg transition ${
+                        currentPage === "demo-split"
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-text dark:text-text-dark hover:bg-surface-2 dark:hover:bg-surface-2-dark"
+                      }`}
+                      onClick={() => {
+                        setCurrentPage("demo-split");
+                        setMobileMenuOpen(false);
+                      }}
+                      aria-current={currentPage === "demo-split" ? "page" : undefined}
+                    >
+                      {t("demo.nav")}
+                    </button>
                   </>
                 ) : (
                   <>
@@ -573,7 +578,15 @@ export const App: React.FC = () => {
 
         {auth.token && <GlobalSocketManager />}
         <AccessibilityBar />
-        <ToastViewport />
+        <ToastContainer
+          position="bottom-left"
+          autoClose={3800}
+          newestOnTop
+          rtl
+          theme={theme === "dark" ? "dark" : "light"}
+          closeOnClick
+          pauseOnHover
+        />
       </div>
     </ErrorBoundary>
   );

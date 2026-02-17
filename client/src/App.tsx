@@ -306,6 +306,7 @@ export const App: React.FC = () => {
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 className="p-2 rounded-lg transition hover:bg-surface-2 dark:hover:bg-surface-2-dark"
                 aria-label={theme === "dark" ? t("theme.light") : t("theme.dark")}
+                aria-pressed={theme === "dark"}
               >
                 {theme === "dark" ? (
                   <svg className="w-5 h-5 text-text dark:text-text-dark" fill="currentColor" viewBox="0 0 20 20">

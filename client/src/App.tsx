@@ -186,15 +186,19 @@ export const App: React.FC = () => {
           role="banner"
           aria-label={t("nav.main_navigation")}
         >
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-4 sm:py-5">
-            {/* Logo - Larger & Professional */}
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
+            {/* Brand */}
             <button
               type="button"
               onClick={goHome}
-              className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0"
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity flex-shrink-0"
               aria-label={t("nav.logo_home")}
             >
-              <img src={logoUrl} alt="" className="h-14 sm:h-16 md:h-18 w-auto" aria-hidden="true" />
+              <img src={logoUrl} alt="" className="h-16 sm:h-20 w-auto app-brand-logo" aria-hidden="true" />
+              <div className="hidden sm:flex flex-col items-start leading-tight">
+                <span className="text-sm font-semibold text-text dark:text-text-dark">Horn</span>
+                <span className="text-xs text-text-muted dark:text-text-dark-muted">Emergency Network</span>
+              </div>
             </button>
 
             {/* Center Navigation - Desktop */}
@@ -289,7 +293,7 @@ export const App: React.FC = () => {
             )}
 
             {/* Right Controls */}
-            <div className="flex items-center gap-3 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               {/* Mobile Menu Toggle */}
               {auth.token && (
                 <button
@@ -333,6 +337,33 @@ export const App: React.FC = () => {
                   </svg>
                 )}
               </button>
+
+              {!auth.token && (
+                <div className="hidden sm:flex items-center gap-1 border-r border-text/10 pr-3 dark:border-text-dark/10">
+                  <button
+                    type="button"
+                    onClick={() => setLocale("en")}
+                    className={`px-2 py-1 text-xs font-semibold rounded transition ${
+                      locale === "en"
+                        ? "bg-primary text-primary-contrast"
+                        : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
+                    }`}
+                  >
+                    EN
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLocale("he")}
+                    className={`px-2 py-1 text-xs font-semibold rounded transition ${
+                      locale === "he"
+                        ? "bg-primary text-primary-contrast"
+                        : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
+                    }`}
+                  >
+                    עברית
+                  </button>
+                </div>
+              )}
 
               {/* Logout Button - Desktop Only */}
               {auth.token && (
@@ -541,26 +572,8 @@ export const App: React.FC = () => {
         </main>
 
         {auth.token && <GlobalSocketManager />}
-        <footer className="border-t border-text/10 bg-surface-1/50 dark:border-text-dark/10 dark:bg-surface-1-dark/50 py-3 mt-auto">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 flex items-center justify-end gap-2">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-primary rounded-lg hover:bg-surface-2 dark:hover:bg-surface-2-dark transition"
-              onClick={() => {
-                const bar = document.getElementById("a11y-panel");
-                if (bar) bar.classList.toggle("hidden");
-              }}
-              aria-label="Accessibility Settings"
-              title="Open Accessibility Settings"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10zm0 3c1.657 0 3 1.343 3 3s-1.343 3-3 3-3-1.343-3-3 1.343-3 3-3zm5.5 11c0-1.933-2.686-3-5.5-3s-5.5 1.067-5.5 3v3h11v-3z" />
-              </svg>
-              Accessibility
-            </button>
-          </div>
-        </footer>
         <AccessibilityBar />
+        <ToastViewport />
       </div>
     </ErrorBoundary>
   );

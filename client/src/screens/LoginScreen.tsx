@@ -65,7 +65,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigateRegister, onNavigat
 
   return (
     <section className="grid min-h-[75vh] place-items-center">
-      <div className="w-full max-w-lg rounded-[36px] border border-border dark:border-border-dark bg-surface-1/98 dark:bg-surface-1-dark/98 p-10 shadow-2xl">
+      <div className="w-full max-w-lg rounded-[36px] border border-border dark:border-border-dark bg-surface-1/98 dark:bg-surface-1-dark/98 p-6 sm:p-10 shadow-2xl mx-3 sm:mx-0">
         <div className="space-y-6">
           <div className="space-y-3 text-right">
             <h1 className="font-display text-3xl text-text dark:text-text-dark">{t("auth.login.title")}</h1>

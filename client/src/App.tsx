@@ -181,21 +181,25 @@ export const App: React.FC = () => {
       <div className="relative min-h-screen overflow-hidden">
         <SkipLink targetId="main-content" />
         <header
-          className="sticky top-0 z-20 border-b border-border/70 bg-surface-1/95 backdrop-blur-xl dark:border-border-dark dark:bg-surface-1-dark/95"
+          className="sticky top-0 z-20 border-b border-text/10 bg-surface-1/98 backdrop-blur-sm dark:border-text-dark/10 dark:bg-surface-1-dark/98"
           role="banner"
           aria-label={t("nav.main_navigation")}
         >
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-3">
-            <div className="flex items-center gap-3">
-              <img src={logoUrl} alt={t("nav.logo_home")} className="h-16 w-auto" />
-              <div>
-                <h1 className="font-display text-lg text-text dark:text-text-dark">{t("app.title")}</h1>
-              </div>
-            </div>
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-3">
+            {/* Logo */}
+            <button
+              type="button"
+              onClick={goHome}
+              className="flex items-center hover:opacity-75 transition-opacity"
+              aria-label={t("nav.logo_home")}
+            >
+              <img src={logoUrl} alt="" className="h-10 w-auto sm:h-12" aria-hidden="true" />
+            </button>
 
-            {auth.token ? (
+            {/* Center Navigation */}
+            {auth.token && (
               <nav
-                className="flex items-center gap-4 text-sm font-medium text-text-muted dark:text-text-dark-muted"
+                className="hidden sm:flex items-center gap-1"
                 role="navigation"
                 aria-label={t("nav.main_navigation")}
               >
@@ -203,145 +207,166 @@ export const App: React.FC = () => {
                   <>
                     <button
                       type="button"
-                      className="hover:text-primary"
+                      className={`px-3 py-2 text-sm rounded-lg transition ${
+                        currentPage === "commander"
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
+                      }`}
                       onClick={() => setCurrentPage("commander")}
-                      title={t("nav.command_center")}
                       aria-current={currentPage === "commander" ? "page" : undefined}
                     >
                       {t("nav.command_center")}
                     </button>
                     <button
                       type="button"
-                      className="hover:text-primary"
+                      className={`px-3 py-2 text-sm rounded-lg transition ${
+                        currentPage === "alerts"
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
+                      }`}
                       onClick={() => setCurrentPage("alerts")}
-                      title={t("nav.alerts_history")}
                       aria-current={currentPage === "alerts" ? "page" : undefined}
                     >
                       {t("nav.alerts_history")}
                     </button>
                     <button
                       type="button"
-                      className="hover:text-primary"
+                      className={`px-3 py-2 text-sm rounded-lg transition ${
+                        currentPage === "team"
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
+                      }`}
                       onClick={() => setCurrentPage("team")}
-                      title={t("nav.team")}
                       aria-current={currentPage === "team" ? "page" : undefined}
                     >
                       {t("nav.team")}
                     </button>
-                    {clientEnv.isTestMode ? (
+                    {clientEnv.isTestMode && (
                       <button
                         type="button"
-                        className="hover:text-primary"
+                        className={`px-3 py-2 text-sm rounded-lg transition ${
+                          currentPage === "demo-split"
+                            ? "bg-primary/10 text-primary font-semibold"
+                            : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
+                        }`}
                         onClick={() => setCurrentPage("demo-split")}
-                        title={t("demo.nav")}
                         aria-current={currentPage === "demo-split" ? "page" : undefined}
                       >
                         {t("demo.nav")}
                       </button>
-                    ) : null}
+                    )}
                   </>
                 ) : (
                   <>
                     <button
                       type="button"
-                      className="hover:text-primary"
+                      className={`px-3 py-2 text-sm rounded-lg transition ${
+                        currentPage === "soldier"
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
+                      }`}
                       onClick={() => setCurrentPage("soldier")}
-                      title={t("nav.my_dashboard")}
                       aria-current={currentPage === "soldier" ? "page" : undefined}
                     >
                       {t("nav.my_dashboard")}
                     </button>
                     <button
                       type="button"
-                      className="hover:text-primary"
+                      className={`px-3 py-2 text-sm rounded-lg transition ${
+                        currentPage === "responses"
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
+                      }`}
                       onClick={() => setCurrentPage("responses")}
-                      title={t("nav.my_responses")}
                       aria-current={currentPage === "responses" ? "page" : undefined}
                     >
                       {t("nav.my_responses")}
                     </button>
                   </>
                 )}
+              </nav>
+            )}
+
+            {/* Right Controls */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              {auth.token && (
                 <button
                   type="button"
-                  className="hover:text-primary"
+                  className="hidden sm:inline-flex px-3 py-2 text-sm text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark rounded-lg transition"
                   onClick={() => setCurrentPage("profile")}
-                  title={t("nav.profile")}
                   aria-current={currentPage === "profile" ? "page" : undefined}
                 >
                   {t("nav.profile")}
                 </button>
-              </nav>
-            ) : null}
+              )}
 
-            <div
-              className="flex items-center gap-2 rounded-2xl border border-border/80 bg-surface-1/95 px-2 py-1.5 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.5)] backdrop-blur-sm dark:border-border-dark/80 dark:bg-surface-1-dark/95"
-              role="group"
-              aria-label={t("nav.settings")}
-            >
+              {/* Theme Toggle */}
               <button
                 type="button"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="p-2 rounded-lg transition hover:bg-surface-2 dark:hover:bg-surface-2-dark"
                 aria-label={theme === "dark" ? t("theme.light") : t("theme.dark")}
                 aria-pressed={theme === "dark"}
-                title={theme === "dark" ? t("theme.light") : t("theme.dark")}
-                className="group relative flex h-8 w-[62px] items-center rounded-full border border-border/80 bg-surface-2 px-1 transition-all duration-300 ease-out hover:shadow-[0_6px_16px_-10px_rgba(0,0,0,0.45)] active:scale-[0.98] dark:border-border-dark/80 dark:bg-surface-2-dark"
               >
-                <span className="pointer-events-none absolute left-2 text-[10px] opacity-70" aria-hidden="true">☀</span>
-                <span className="pointer-events-none absolute right-2 text-[10px] opacity-70" aria-hidden="true">🌙</span>
-                <span
-                  className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-primary shadow-[0_4px_14px_rgba(0,0,0,0.28)] ring-1 ring-white/35 transition-all duration-300 ease-out group-hover:shadow-[0_6px_18px_rgba(0,0,0,0.32)] ${
-                    theme === "dark" ? "translate-x-[30px]" : "translate-x-0"
-                  }`}
-                  aria-hidden="true"
-                />
+                {theme === "dark" ? (
+                  <svg className="w-5 h-5 text-text dark:text-text-dark" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 text-text dark:text-text-dark" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zm5.657-9.193a1 1 0 00-1.414 0l-.707.707A1 1 0 005.05 6.464l.707-.707a1 1 0 011.414 0zM5 17a1 1 0 100-2H4a1 1 0 100 2h1z" clipRule="evenodd" />
+                  </svg>
+                )}
               </button>
-              <button
-                type="button"
-                onClick={() => setLocale("he")}
-                aria-pressed={locale === "he"}
-                title={t("lang.he")}
-                className={`h-9 min-w-[74px] rounded-xl border px-3 text-xs font-semibold tracking-[0.08em] leading-none transition ${
-                  locale === "he"
-                    ? "border-primary/90 bg-primary text-primary-contrast shadow-[0_8px_18px_-14px_rgba(0,0,0,0.55)]"
-                    : "border-border/70 bg-transparent text-text-muted hover:border-border hover:text-text dark:border-border-dark/70 dark:text-text-dark-muted dark:hover:border-border-dark dark:hover:text-text-dark"
-                }`}
-              >
-                {t("lang.he")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setLocale("en")}
-                aria-pressed={locale === "en"}
-                title="English"
-                className={`h-9 min-w-[62px] rounded-xl border px-3 text-xs font-semibold tracking-[0.08em] leading-none transition ${
-                  locale === "en"
-                    ? "border-primary/90 bg-primary text-primary-contrast shadow-[0_8px_18px_-14px_rgba(0,0,0,0.55)]"
-                    : "border-border/70 bg-transparent text-text-muted hover:border-border hover:text-text dark:border-border-dark/70 dark:text-text-dark-muted dark:hover:border-border-dark dark:hover:text-text-dark"
-                }`}
-              >
-                EN
-              </button>
-            </div>
 
-            {auth.token ? (
-              <button
-                type="button"
-                onClick={() => {
-                  disconnectSocket();
-                  dispatch(logout());
-                  setCurrentPage(getDefaultUnauthedPage());
-                }}
-                className="text-xs font-semibold tracking-[0.12em] uppercase text-error"
-                aria-label={t("auth.logout")}
-              >
-                {t("auth.logout")}
-              </button>
-            ) : null}
+              {/* Language - Vertical Divider + Switcher */}
+              <div className="flex items-center gap-1 border-l border-text/10 pl-3 dark:border-text-dark/10">
+                <button
+                  type="button"
+                  onClick={() => setLocale("en")}
+                  className={`px-2 py-1 text-xs font-semibold rounded transition ${
+                    locale === "en"
+                      ? "bg-primary text-primary-contrast"
+                      : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
+                  }`}
+                >
+                  EN
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocale("he")}
+                  className={`px-2 py-1 text-xs font-semibold rounded transition ${
+                    locale === "he"
+                      ? "bg-primary text-primary-contrast"
+                      : "text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark"
+                  }`}
+                >
+                  עברית
+                </button>
+              </div>
+
+              {/* Logout Button */}
+              {auth.token && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    disconnectSocket();
+                    dispatch(logout());
+                    setCurrentPage(getDefaultUnauthedPage());
+                  }}
+                  className="px-3 py-2 text-xs sm:text-sm font-semibold text-error hover:bg-error/10 rounded-lg transition"
+                  aria-label={t("auth.logout")}
+                >
+                  {t("auth.logout")}
+                </button>
+              )}
+            </div>
+          </div>
+        </header>
           </div>
         </header>
 
-        <main id="main-content" className="mx-auto max-w-6xl px-6 py-10" role="main">
+        <main id="main-content" className="mx-auto max-w-6xl px-3 py-6 sm:px-6 sm:py-10" role="main">
           {renderContent}
         </main>
 

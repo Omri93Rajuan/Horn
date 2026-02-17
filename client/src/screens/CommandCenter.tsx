@@ -154,14 +154,14 @@ const CommandCenter: React.FC = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-4 gap-4 mt-6">
-          <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
-            <div className="text-4xl font-bold text-success mb-1">{activeQuery.data?.totals.ok ?? 0}</div>
-            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">{t("cc.ok")}</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mt-4 sm:mt-6">
+          <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-3 sm:p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
+            <div className="text-3xl sm:text-4xl font-bold text-success mb-1">{activeQuery.data?.totals.ok ?? 0}</div>
+            <div className="text-xs sm:text-sm font-medium text-text-muted dark:text-text-dark-muted">{t("cc.ok")}</div>
           </div>
-          <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
-            <div className="text-4xl font-bold text-danger mb-1">{activeQuery.data?.totals.help ?? 0}</div>
-            <div className="text-sm font-medium text-text-muted dark:text-text-dark-muted">{t("cc.help")}</div>
+          <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-3 sm:p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
+            <div className="text-3xl sm:text-4xl font-bold text-danger mb-1">{activeQuery.data?.totals.help ?? 0}</div>
+            <div className="text-xs sm:text-sm font-medium text-text-muted dark:text-text-dark-muted">{t("cc.help")}</div>
           </div>
           <div className="bg-white dark:bg-surface-1-dark rounded-2xl p-5 backdrop-blur shadow-lg border border-border dark:border-border-dark">
             <div className="text-4xl font-bold text-warning mb-1">{activeQuery.data?.totals.pending ?? 0}</div>

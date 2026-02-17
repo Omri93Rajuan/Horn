@@ -50,6 +50,7 @@ export const App: React.FC = () => {
     const stored = localStorage.getItem("horn-theme");
     return stored === "light" ? "light" : "dark";
   });
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const isTokenExpired = React.useCallback((token: string) => {
     try {
@@ -196,7 +197,7 @@ export const App: React.FC = () => {
               <img src={logoUrl} alt="" className="h-10 w-auto sm:h-12" aria-hidden="true" />
             </button>
 
-            {/* Center Navigation */}
+            {/* Center Navigation - Desktop */}
             {auth.token && (
               <nav
                 className="hidden sm:flex items-center gap-1"
@@ -288,39 +289,45 @@ export const App: React.FC = () => {
             )}
 
             {/* Right Controls */}
-            <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
+              {/* Mobile Menu Toggle */}
               {auth.token && (
                 <button
                   type="button"
-                  className="hidden sm:inline-flex px-3 py-2 text-sm text-text-muted dark:text-text-dark-muted hover:text-text dark:hover:text-text-dark rounded-lg transition"
-                  onClick={() => setCurrentPage("profile")}
-                  aria-current={currentPage === "profile" ? "page" : undefined}
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="sm:hidden p-2 rounded-lg transition hover:bg-surface-2 dark:hover:bg-surface-2-dark"
+                  aria-label={mobileMenuOpen ? t("nav.close_menu") || "סגור תפריט" : t("nav.open_menu") || "פתח תפריט"}
+                  aria-expanded={mobileMenuOpen}
+                  aria-controls="mobile-menu"
                 >
-                  {t("nav.profile")}
+                  <svg className="w-5 h-5 text-text dark:text-text-dark" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                  </svg>
                 </button>
               )}
 
-              {/* Theme Toggle */}
+              {/* Theme Toggle with Label */}
               <button
                 type="button"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="p-2 rounded-lg transition hover:bg-surface-2 dark:hover:bg-surface-2-dark"
+                className="p-2 rounded-lg transition hover:bg-surface-2 dark:hover:bg-surface-2-dark group"
                 aria-label={theme === "dark" ? t("theme.light") : t("theme.dark")}
                 aria-pressed={theme === "dark"}
+                title={theme === "dark" ? t("theme.light") : t("theme.dark")}
               >
                 {theme === "dark" ? (
-                  <svg className="w-5 h-5 text-text dark:text-text-dark" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-text dark:text-text-dark transition-transform group-hover:rotate-12" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5 text-text dark:text-text-dark" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-text dark:text-text-dark transition-transform group-hover:rotate-12" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zm5.657-9.193a1 1 0 00-1.414 0l-.707.707A1 1 0 005.05 6.464l.707-.707a1 1 0 011.414 0zM5 17a1 1 0 100-2H4a1 1 0 100 2h1z" clipRule="evenodd" />
                   </svg>
                 )}
               </button>
 
               {/* Language - Vertical Divider + Switcher */}
-              <div className="flex items-center gap-1 border-l border-text/10 pl-3 dark:border-text-dark/10">
+              <div className="hidden sm:flex items-center gap-1 border-l border-text/10 pl-3 dark:border-text-dark/10">
                 <button
                   type="button"
                   onClick={() => setLocale("en")}
@@ -354,7 +361,7 @@ export const App: React.FC = () => {
                     dispatch(logout());
                     setCurrentPage(getDefaultUnauthedPage());
                   }}
-                  className="px-3 py-2 text-xs sm:text-sm font-semibold text-error hover:bg-error/10 rounded-lg transition"
+                  className="hidden sm:inline-flex px-3 py-2 text-xs sm:text-sm font-semibold text-error hover:bg-error/10 rounded-lg transition"
                   aria-label={t("auth.logout")}
                 >
                   {t("auth.logout")}
@@ -362,6 +369,189 @@ export const App: React.FC = () => {
               )}
             </div>
           </div>
+
+          {/* Mobile Menu */}
+          {auth.token && mobileMenuOpen && (
+            <nav
+              id="mobile-menu"
+              className="sm:hidden border-t border-text/10 dark:border-text-dark/10 bg-surface-1 dark:bg-surface-1-dark overflow-y-auto max-h-[70vh]"
+              role="navigation"
+            >
+              <div className="px-4 py-3 space-y-2">
+                {auth.user?.role === "COMMANDER" ? (
+                  <>
+                    <button
+                      type="button"
+                      className={`w-full text-left px-3 py-3 text-sm rounded-lg transition ${
+                        currentPage === "commander"
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-text dark:text-text-dark hover:bg-surface-2 dark:hover:bg-surface-2-dark"
+                      }`}
+                      onClick={() => {
+                        setCurrentPage("commander");
+                        setMobileMenuOpen(false);
+                      }}
+                      aria-current={currentPage === "commander" ? "page" : undefined}
+                    >
+                      {t("nav.command_center")}
+                    </button>
+                    <button
+                      type="button"
+                      className={`w-full text-left px-3 py-3 text-sm rounded-lg transition ${
+                        currentPage === "alerts"
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-text dark:text-text-dark hover:bg-surface-2 dark:hover:bg-surface-2-dark"
+                      }`}
+                      onClick={() => {
+                        setCurrentPage("alerts");
+                        setMobileMenuOpen(false);
+                      }}
+                      aria-current={currentPage === "alerts" ? "page" : undefined}
+                    >
+                      {t("nav.alerts_history")}
+                    </button>
+                    <button
+                      type="button"
+                      className={`w-full text-left px-3 py-3 text-sm rounded-lg transition ${
+                        currentPage === "team"
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-text dark:text-text-dark hover:bg-surface-2 dark:hover:bg-surface-2-dark"
+                      }`}
+                      onClick={() => {
+                        setCurrentPage("team");
+                        setMobileMenuOpen(false);
+                      }}
+                      aria-current={currentPage === "team" ? "page" : undefined}
+                    >
+                      {t("nav.team")}
+                    </button>
+                    {clientEnv.isTestMode && (
+                      <button
+                        type="button"
+                        className={`w-full text-left px-3 py-3 text-sm rounded-lg transition ${
+                          currentPage === "demo-split"
+                            ? "bg-primary/10 text-primary font-semibold"
+                            : "text-text dark:text-text-dark hover:bg-surface-2 dark:hover:bg-surface-2-dark"
+                        }`}
+                        onClick={() => {
+                          setCurrentPage("demo-split");
+                          setMobileMenuOpen(false);
+                        }}
+                        aria-current={currentPage === "demo-split" ? "page" : undefined}
+                      >
+                        {t("demo.nav")}
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className={`w-full text-left px-3 py-3 text-sm rounded-lg transition ${
+                        currentPage === "soldier"
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-text dark:text-text-dark hover:bg-surface-2 dark:hover:bg-surface-2-dark"
+                      }`}
+                      onClick={() => {
+                        setCurrentPage("soldier");
+                        setMobileMenuOpen(false);
+                      }}
+                      aria-current={currentPage === "soldier" ? "page" : undefined}
+                    >
+                      {t("nav.my_dashboard")}
+                    </button>
+                    <button
+                      type="button"
+                      className={`w-full text-left px-3 py-3 text-sm rounded-lg transition ${
+                        currentPage === "responses"
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-text dark:text-text-dark hover:bg-surface-2 dark:hover:bg-surface-2-dark"
+                      }`}
+                      onClick={() => {
+                        setCurrentPage("responses");
+                        setMobileMenuOpen(false);
+                      }}
+                      aria-current={currentPage === "responses" ? "page" : undefined}
+                    >
+                      {t("nav.my_responses")}
+                    </button>
+                  </>
+                )}
+
+                {/* Mobile divider */}
+                <div className="my-2 h-px bg-text/10 dark:bg-text-dark/10" />
+
+                {/* Profile button */}
+                <button
+                  type="button"
+                  className={`w-full text-left px-3 py-3 text-sm rounded-lg transition ${
+                    currentPage === "profile"
+                      ? "bg-primary/10 text-primary font-semibold"
+                      : "text-text dark:text-text-dark hover:bg-surface-2 dark:hover:bg-surface-2-dark"
+                  }`}
+                  onClick={() => {
+                    setCurrentPage("profile");
+                    setMobileMenuOpen(false);
+                  }}
+                  aria-current={currentPage === "profile" ? "page" : undefined}
+                >
+                  {t("nav.profile")}
+                </button>
+
+                {/* Language Switcher */}
+                <div className="space-y-2 mt-2">
+                  <div className="text-xs font-semibold text-text-muted dark:text-text-dark-muted px-3 py-2">
+                    {t("nav.language") || "שפה"}
+                  </div>
+                  <div className="flex gap-2 px-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLocale("en");
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`flex-1 px-2 py-2 text-xs font-semibold rounded transition ${
+                        locale === "en"
+                          ? "bg-primary text-primary-contrast"
+                          : "bg-surface-2 dark:bg-surface-2-dark text-text dark:text-text-dark hover:bg-surface-3 dark:hover:bg-surface-3-dark"
+                      }`}
+                    >
+                      English
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLocale("he");
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`flex-1 px-2 py-2 text-xs font-semibold rounded transition ${
+                        locale === "he"
+                          ? "bg-primary text-primary-contrast"
+                          : "bg-surface-2 dark:bg-surface-2-dark text-text dark:text-text-dark hover:bg-surface-3 dark:hover:bg-surface-3-dark"
+                      }`}
+                    >
+                      עברית
+                    </button>
+                  </div>
+                </div>
+
+                {/* Logout Button - Mobile */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    disconnectSocket();
+                    dispatch(logout());
+                    setCurrentPage(getDefaultUnauthedPage());
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-3 text-sm font-semibold text-error hover:bg-error/10 rounded-lg transition mt-2"
+                  aria-label={t("auth.logout")}
+                >
+                  {t("auth.logout")}
+                </button>
+              </div>
+            </nav>
+          )}
         </header>
 
         <main id="main-content" className="mx-auto max-w-6xl px-3 py-6 sm:px-6 sm:py-10" role="main">

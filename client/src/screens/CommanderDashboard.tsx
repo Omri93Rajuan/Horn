@@ -962,22 +962,22 @@ const CommanderDashboard: React.FC = () => {
               ) : allSoldiersQuery.data && allSoldiersQuery.data.length > 0 ? (
                 <div className="overflow-hidden rounded-xl border border-border dark:border-border-dark">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-xs sm:text-sm">
                       <thead className="bg-surface-2 dark:bg-surface-2-dark">
                         <tr>
-                          <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
+                          <th className="px-2 sm:px-6 py-2 sm:py-4 text-right font-semibold text-text dark:text-text-dark">
                             חייל
                           </th>
-                          <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
+                          <th className="px-2 sm:px-6 py-2 sm:py-4 text-right font-semibold text-text dark:text-text-dark">
                             גזרה
                           </th>
-                          <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
+                          <th className="hidden sm:table-cell px-2 sm:px-6 py-2 sm:py-4 text-right font-semibold text-text dark:text-text-dark">
                             טלפון
                           </th>
-                          <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
+                          <th className="px-2 sm:px-6 py-2 sm:py-4 text-right font-semibold text-text dark:text-text-dark">
                             סטטוס
                           </th>
-                          <th className="px-6 py-4 text-right font-semibold text-text dark:text-text-dark">
+                          <th className="hidden md:table-cell px-2 sm:px-6 py-2 sm:py-4 text-right font-semibold text-text dark:text-text-dark">
                             הערות
                           </th>
                         </tr>
@@ -988,7 +988,7 @@ const CommanderDashboard: React.FC = () => {
                             key={`${item.user.id}-${item.eventId}`}
                             className="transition-colors hover:bg-surface-2 dark:hover:bg-surface-2-dark"
                           >
-                            <td className="px-6 py-4">
+                            <td className="px-2 sm:px-6 py-2 sm:py-4">
                               <div className="flex items-center gap-3">
                                 <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
                                   item.responseStatus === 'OK'
@@ -1004,10 +1004,10 @@ const CommanderDashboard: React.FC = () => {
                                 </span>
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-text-muted dark:text-text-dark-muted">
+                            <td className="px-2 sm:px-6 py-2 sm:py-4 text-text-muted dark:text-text-dark-muted">
                               {formatAreaName(item.areaId)}
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="hidden sm:table-cell px-2 sm:px-6 py-2 sm:py-4">
                               {item.user.phone ? (
                                 <a
                                   href={`tel:${item.user.phone}`}
@@ -1019,7 +1019,7 @@ const CommanderDashboard: React.FC = () => {
                                 <span className="text-text-muted dark:text-text-dark-muted">-</span>
                               )}
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-2 sm:px-6 py-2 sm:py-4">
                               <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
                                 item.responseStatus === 'OK'
                                   ? 'bg-success bg-opacity-20 text-success'
@@ -1091,7 +1091,7 @@ const CommanderDashboard: React.FC = () => {
                   <tbody className="divide-y divide-border dark:divide-border-dark">
                     {filteredStatusList.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-6 py-12 text-center text-text-muted dark:text-text-dark-muted">
+                        <td colSpan={5} className="px-2 sm:px-6 py-6 sm:py-12 text-center text-text-muted dark:text-text-dark-muted">
                           אין חיילים בסטטוס זה
                         </td>
                       </tr>
@@ -1101,9 +1101,9 @@ const CommanderDashboard: React.FC = () => {
                           key={item.user.id}
                           className="transition-colors hover:bg-surface-2 dark:hover:bg-surface-2-dark"
                         >
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
+                          <td className="px-2 sm:px-6 py-2 sm:py-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <div className={`flex h-8 sm:h-10 w-8 sm:w-10 items-center justify-center rounded-full text-xs sm:text-sm font-bold ${
                                 item.responseStatus === 'OK'
                                   ? 'bg-success bg-opacity-20 text-success'
                                   : item.responseStatus === 'HELP'
@@ -1112,19 +1112,19 @@ const CommanderDashboard: React.FC = () => {
                               }`}>
                                 {item.user.name.charAt(0)}
                               </div>
-                              <span className="font-medium text-text dark:text-text-dark">
+                              <span className="font-medium text-xs sm:text-base text-text dark:text-text-dark">
                                 {item.user.name}
                               </span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-text-muted dark:text-text-dark-muted">
+                          <td className="px-2 sm:px-6 py-2 sm:py-4 text-xs sm:text-base text-text-muted dark:text-text-dark-muted">
                             {formatAreaName(item.user.areaId)}
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="hidden sm:table-cell px-2 sm:px-6 py-2 sm:py-4">
                             {item.user.phone ? (
                               <a
                                 href={`tel:${item.user.phone}`}
-                                className="text-primary hover:text-primary-hover dark:text-primary dark:hover:text-primary-hover"
+                                className="text-primary hover:text-primary-hover dark:text-primary dark:hover:text-primary-hover text-xs sm:text-base"
                               >
                                 {item.user.phone}
                               </a>
@@ -1132,8 +1132,8 @@ const CommanderDashboard: React.FC = () => {
                               <span className="text-text-muted dark:text-text-dark-muted">-</span>
                             )}
                           </td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                          <td className="px-2 sm:px-6 py-2 sm:py-4">
+                            <span className={`inline-flex items-center rounded-full px-2 sm:px-3 py-1 text-xs font-semibold ${
                               item.responseStatus === 'OK'
                                 ? 'bg-success bg-opacity-20 text-success'
                                 : item.responseStatus === 'HELP'
@@ -1143,7 +1143,7 @@ const CommanderDashboard: React.FC = () => {
                               {formatStatus(item.responseStatus)}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-text-muted dark:text-text-dark-muted">
+                          <td className="hidden md:table-cell px-2 sm:px-6 py-2 sm:py-4 text-xs sm:text-base text-text-muted dark:text-text-dark-muted">
                             {item.notes || '-'}
                           </td>
                         </tr>

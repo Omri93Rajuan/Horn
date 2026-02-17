@@ -185,17 +185,17 @@ export const App: React.FC = () => {
           role="banner"
           aria-label={t("nav.main_navigation")}
         >
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-3">
-            <div className="flex items-center gap-3">
-              <img src={logoUrl} alt={t("nav.logo_home")} className="h-16 w-auto" />
-              <div>
-                <h1 className="font-display text-lg text-text dark:text-text-dark">{t("app.title")}</h1>
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <img src={logoUrl} alt={t("nav.logo_home")} className="h-10 w-auto sm:h-14 md:h-16" />
+              <div className="text-left sm:text-left">
+                <h1 className="font-display text-xs sm:text-sm md:text-lg text-text dark:text-text-dark">{t("app.title")}</h1>
               </div>
             </div>
 
             {auth.token ? (
               <nav
-                className="flex items-center gap-4 text-sm font-medium text-text-muted dark:text-text-dark-muted"
+                className="flex flex-wrap items-center justify-end gap-2 text-xs sm:gap-4 sm:text-sm font-medium text-text-muted dark:text-text-dark-muted"
                 role="navigation"
                 aria-label={t("nav.main_navigation")}
               >
@@ -275,7 +275,7 @@ export const App: React.FC = () => {
             ) : null}
 
             <div
-              className="flex items-center gap-2 rounded-2xl border border-border/80 bg-surface-1/95 px-2 py-1.5 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.5)] backdrop-blur-sm dark:border-border-dark/80 dark:bg-surface-1-dark/95"
+              className="flex flex-wrap items-center justify-end gap-1 sm:gap-2 rounded-2xl border border-border/80 bg-surface-1/95 px-1.5 sm:px-2 py-1 sm:py-1.5 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.5)] backdrop-blur-sm dark:border-border-dark/80 dark:bg-surface-1-dark/95"
               role="group"
               aria-label={t("nav.settings")}
             >
@@ -301,7 +301,7 @@ export const App: React.FC = () => {
                 onClick={() => setLocale("he")}
                 aria-pressed={locale === "he"}
                 title={t("lang.he")}
-                className={`h-9 min-w-[74px] rounded-xl border px-3 text-xs font-semibold tracking-[0.08em] leading-none transition ${
+                className={`h-8 sm:h-9 min-w-[54px] sm:min-w-[74px] rounded-xl border px-2 sm:px-3 text-xs font-semibold tracking-[0.08em] leading-none transition ${
                   locale === "he"
                     ? "border-primary/90 bg-primary text-primary-contrast shadow-[0_8px_18px_-14px_rgba(0,0,0,0.55)]"
                     : "border-border/70 bg-transparent text-text-muted hover:border-border hover:text-text dark:border-border-dark/70 dark:text-text-dark-muted dark:hover:border-border-dark dark:hover:text-text-dark"
@@ -314,7 +314,7 @@ export const App: React.FC = () => {
                 onClick={() => setLocale("en")}
                 aria-pressed={locale === "en"}
                 title="English"
-                className={`h-9 min-w-[62px] rounded-xl border px-3 text-xs font-semibold tracking-[0.08em] leading-none transition ${
+                className={`h-8 sm:h-9 min-w-[54px] sm:min-w-[62px] rounded-xl border px-2 sm:px-3 text-xs font-semibold tracking-[0.08em] leading-none transition ${
                   locale === "en"
                     ? "border-primary/90 bg-primary text-primary-contrast shadow-[0_8px_18px_-14px_rgba(0,0,0,0.55)]"
                     : "border-border/70 bg-transparent text-text-muted hover:border-border hover:text-text dark:border-border-dark/70 dark:text-text-dark-muted dark:hover:border-border-dark dark:hover:text-text-dark"
@@ -341,7 +341,7 @@ export const App: React.FC = () => {
           </div>
         </header>
 
-        <main id="main-content" className="mx-auto max-w-6xl px-6 py-10" role="main">
+        <main id="main-content" className="mx-auto max-w-6xl px-3 py-6 sm:px-6 sm:py-10" role="main">
           {renderContent}
         </main>
 

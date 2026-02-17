@@ -91,7 +91,7 @@ const SoldierDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         <div className="col-span-1 space-y-2">
           <h3 className="mb-3 px-2 font-semibold text-text dark:text-text-dark">{t("sd.my_area_events")}</h3>
 

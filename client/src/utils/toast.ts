@@ -1,4 +1,5 @@
 import { tStatic } from "../i18n";
+import { toast } from "react-toastify";
 
 export type ToastVariant = "success" | "error" | "info" | "warning";
 
@@ -10,30 +11,34 @@ export type ToastPayload = {
   durationMs?: number;
 };
 
-const TOAST_EVENT = "horn:toast";
+function formatMessage(payload: ToastPayload) {
+  if (!payload.title) {
+    return payload.message;
+  }
 
-function emitToast(payload: ToastPayload) {
-  window.dispatchEvent(new CustomEvent<ToastPayload>(TOAST_EVENT, { detail: payload }));
+  return `${payload.title}: ${payload.message}`;
 }
 
 export function showToast(payload: ToastPayload) {
-  emitToast(payload);
+  toast(formatMessage(payload), {
+    type: payload.variant ?? "info",
+    toastId: payload.id,
+    autoClose: payload.durationMs ?? 3800,
+  });
 }
 
 export function toastSuccess(message: string, title = tStatic("toast.success")) {
-  emitToast({ message, title, variant: "success" });
+  showToast({ message, title, variant: "success" });
 }
 
 export function toastError(message: string, title = tStatic("toast.error")) {
-  emitToast({ message, title, variant: "error" });
+  showToast({ message, title, variant: "error" });
 }
 
 export function toastInfo(message: string, title = tStatic("toast.info")) {
-  emitToast({ message, title, variant: "info" });
+  showToast({ message, title, variant: "info" });
 }
 
 export function toastWarning(message: string, title = tStatic("toast.warning")) {
-  emitToast({ message, title, variant: "warning" });
+  showToast({ message, title, variant: "warning" });
 }
-
-export { TOAST_EVENT };
